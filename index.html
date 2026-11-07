@@ -201,8 +201,10 @@ textarea {
 .ta-wrap { position: relative; display: flex; }
 .pane-in .ta-wrap { flex: 1; min-height: 200px; }
 .ta-wrap textarea { position: relative; z-index: 1; background: transparent !important; flex: 1; }
+.ta-wrap textarea { color: transparent !important; caret-color: var(--ink); }
+.ta-wrap textarea::selection { background: rgba(45, 79, 134, .28); color: transparent; }
 .ta-back {
-  position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; color: transparent;
+  position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; color: var(--ink);
   background: var(--paper); border-radius: 6px; white-space: pre-wrap; overflow-wrap: break-word; word-break: normal;
   scrollbar-color: transparent transparent;
 }
@@ -266,6 +268,12 @@ kbd { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel)
 .chk-line { font-size: 12.5px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
 .wf-acts.end { justify-content: flex-end; }
 #wf-chip.dirty { background: var(--warn-soft); color: var(--warn); }
+:root { --hl-tag: #2d4f86; --hl-tag2: #7a4fa8; --hl-cmd: #0f7a6c; --hl-ref: #1f6fb2; --hl-lbl: #b05a00; --hl-html: #8a93a3; --hl-j: #b3261e; --hl-mut: #8a93a3; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --hl-tag: #93b2e8; --hl-tag2: #c4a3ea; --hl-cmd: #5fd0bf; --hl-ref: #79b8f0; --hl-lbl: #f0a65c; --hl-html: #7d8696; --hl-j: #f08a80; --hl-mut: #7d8696; } }
+:root[data-theme="dark"] { --hl-tag: #93b2e8; --hl-tag2: #c4a3ea; --hl-cmd: #5fd0bf; --hl-ref: #79b8f0; --hl-lbl: #f0a65c; --hl-html: #7d8696; --hl-j: #f08a80; --hl-mut: #7d8696; }
+.hl-tag { color: var(--hl-tag); } .hl-tag2 { color: var(--hl-tag2); } .hl-cmd { color: var(--hl-cmd); }
+.hl-ref { color: var(--hl-ref); } .hl-lbl { color: var(--hl-lbl); } .hl-html { color: var(--hl-html); }
+.hl-j { color: var(--hl-j); } .hl-bul, .hl-done, .hl-br { color: var(--hl-mut); } .hl-note { color: var(--hl-mut); font-style: italic; }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent-soft); } }
 
@@ -331,8 +339,8 @@ kbd { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel)
     <p class="wf-status" id="wf-status" role="status"></p>
     <label for="wf-url">原稿のURL</label>
     <input type="text" id="wf-url" autocomplete="off" spellcheck="false" placeholder="原稿のいちばん上のbulletのURL（またはID）">
-    <div class="wf-acts"><button type="button" id="wf-load" class="primary">読み込む</button><button type="button" id="wf-sync">Workflowyへ保存</button><button type="button" id="wf-unlink">つなぐのをやめる</button></div>
-    <p class="hint">保存は ⌘+S でもできます。消した行はWorkflowyから消さず、「thyncSource 削除済み」というbulletの下へ移します。</p>
+    <div class="wf-acts"><button type="button" id="wf-load" class="primary">読み込む</button><button type="button" id="wf-sync">Workflowyへ保存</button><button type="button" id="wf-pull">Workflowyから取り込む</button><button type="button" id="wf-unlink">つなぐのをやめる</button></div>
+    <p class="hint">保存は ⌘+S でもできます。消した行はWorkflowyから消さず、「thyncSource 削除済み」というbulletの下へ移します。Workflowy側で直した分は、こちらに未保存の変更がなければ1分ごとに自動で取り込みます。未保存の変更があるときは、保存したあとに取り込みます。</p>
     <p class="wf-status" id="wf-doc-status" role="status"></p>
   </div>
   <div class="pop" id="font-pop" hidden>
@@ -2023,6 +2031,10 @@ async function runSync(plan) {
     saveWf();
     docStatus(`保存しました（${stamp(wf.savedAt)}）`, "ok");
     updateWfChip();
+    syncing = false;
+    // 保存のあと、Workflowy側で足された分などを取り込む
+    const pulled = await pullFromWorkflowy({ silent: true, allowList: true });
+    if (pulled) docStatus(`保存しました。Workflowy側での変更も取り込みました（${stamp(wf.savedAt)}）`, "ok");
     return true;
   } catch (e) {
     docStatus(`途中で止まりました：${e.message}　いったん「読み込む」でWorkflowyの今の状態を読み直してから、もう一度直してください。`, "ng");
@@ -2064,7 +2076,7 @@ function updateWfChip() {
   c.hidden = false;
   const dirty = wfDirty();
   c.classList.toggle("dirty", dirty);
-  c.textContent = dirty ? "Workflowy・未保存の変更あり" : "Workflowy・保存済み";
+  c.textContent = dirty ? (remotePending ? "Workflowy・未保存の変更あり（Workflowy側にも変更）" : "Workflowy・未保存の変更あり") : "Workflowy・保存済み";
 }
 $("wf-chip").addEventListener("click", () => { if (wfDirty()) syncToWorkflowy(); else { $("wf-pop").hidden = false; } });
 
@@ -2103,6 +2115,54 @@ async function loadFromWorkflowy() {
     docStatus(`読み込めませんでした：${e.message}`, "ng");
   }
 }
+
+// Workflowy側の今の状態を取り込む
+let lastPullAt = 0, remotePending = false;
+async function pullFromWorkflowy({ silent = false, allowList = true } = {}) {
+  if (!wf || syncing) return false;
+  if (silent && (editors.length || document.hidden)) return false;
+  try {
+    const rootRes = await wfFetch("/nodes/" + encodeURIComponent(wf.rootId));
+    let tree;
+    try {
+      const all = await wfFetch("/nodes-export", { noRetry: true });
+      const byParent = new Map();
+      for (const n of all.nodes || []) { const k = n.parent_id || "None"; if (!byParent.has(k)) byParent.set(k, []); byParent.get(k).push(n); }
+      tree = byParent;
+    } catch (e) {
+      if (!allowList || (e.status && e.status !== 429)) { if (!silent) docStatus(`取り込めませんでした：${e.message}`, "ng"); return false; }
+      tree = (await loadSubtree(rootRes.node.id)).byParent;
+    }
+    lastPullAt = Date.now();
+    const fresh = treeToBase(rootRes.node, tree).base;
+    const same = baseToSource(fresh) === baseToSource(wf.base);
+    if (same) { remotePending = false; updateWfChip(); if (!silent) docStatus("Workflowy側に新しい変更はありません。", "ok"); return false; }
+    if (wfDirty()) {
+      remotePending = true; updateWfChip();
+      if (!silent) docStatus("Workflowy側にも変更があります。こちらの変更を保存すると、そのあとで合わせて取り込みます。", "ng");
+      return false;
+    }
+    wf.base = fresh; saveWf();
+    remotePending = false;
+    editors = [];
+    src.value = baseToSource(fresh);
+    keepScroll(render);
+    recordHistory("Workflowyでの変更を取り込んだ");
+    docStatus(`Workflowyでの変更を取り込みました（${stamp(new Date().toISOString())}）`, "ok");
+    toast("Workflowyでの変更を取り込みました");
+    return true;
+  } catch (e) {
+    if (!silent) docStatus(`取り込めませんでした：${e.message}`, "ng");
+    return false;
+  }
+}
+$("wf-pull").addEventListener("click", () => {
+  if (wfDirty()) { docStatus("先にこちらの変更を保存してください。保存したあとで、Workflowy側の変更も合わせて取り込みます。", "ng"); return; }
+  pullFromWorkflowy({ silent: false });
+});
+// 1分ごと、またはこの画面に戻ってきたときに、そっと確かめる（全体の書き出しは1分に1回までなので）
+setInterval(() => { if (wf && Date.now() - lastPullAt > 60000) pullFromWorkflowy({ silent: true, allowList: false }); }, 15000);
+window.addEventListener("focus", () => { if (wf && Date.now() - lastPullAt > 60000) pullFromWorkflowy({ silent: true, allowList: false }); });
 $("wf-url").value = store.get("thync.wfurl") || "";
 $("wf-load").addEventListener("click", loadFromWorkflowy);
 $("wf-sync").addEventListener("click", syncToWorkflowy);
@@ -2189,6 +2249,34 @@ applyFonts();
 renderMemos();
 renderHist();
 
+/* ---------- 入力欄の記法の色分け ---------- */
+const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "settings"]);
+const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror):[^}]*\})|([_^]\{|\{[a-z]+:|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))#[\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
+function hlRest(s) {
+  let out = "", last = 0;
+  s.replace(HL_RE, (m, lbl, ref, cmd, tag, html, br, off) => {
+    out += esc(s.slice(last, off));
+    const cls = lbl ? "hl-lbl" : ref ? "hl-ref" : cmd ? "hl-cmd" : tag ? (KNOWN_TAG.has(tag.slice(1).toLowerCase()) ? "hl-tag" : "hl-tag2") : html ? "hl-html" : "hl-br";
+    out += `<span class="${cls}">${esc(m)}</span>`;
+    last = off + m.length;
+    return m;
+  });
+  return out + esc(s.slice(last));
+}
+function hlLine(l) {
+  const m = l.match(/^(\s*)([-•](?:\s|$))?/);
+  const ws = m[1], bul = m[2];
+  if (!bul) return l.trim() ? esc(ws) + `<span class="hl-note">${esc(l.slice(ws.length))}</span>` : esc(l);
+  let rest = l.slice(ws.length + bul.length), pre = esc(ws) + `<span class="hl-bul">${esc(bul)}</span>`;
+  const done = rest.match(/^\[(?:x|COMPLETE|COMPLETED)\]\s*/i);
+  if (done) { pre += `<span class="hl-done">${esc(done[0])}</span>`; rest = rest.slice(done[0].length); }
+  const lb = rest.match(/^(\{lbl:[^}]*\}\s*)/);
+  if (lb) { pre += `<span class="hl-lbl">${esc(lb[1])}</span>`; rest = rest.slice(lb[1].length); }
+  const j = rest.match(/^(\?\*|\?\?|\*|\?|%|\{#\}|\{j:[^}]*\})(?=\s)/);
+  if (j) { pre += `<span class="hl-j">${esc(j[1])}</span>`; rest = rest.slice(j[1].length); }
+  return pre + hlRest(rest);
+}
+
 /* ---------- バレットごとの色分け ---------- */
 let colorOn = store.get("thync.color") === "1";
 const BACK_PROPS = ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "wordSpacing", "tabSize",
@@ -2207,12 +2295,11 @@ function attachBackdrop(ta, offsetFn) {
     for (const k of BACK_PROPS) back.style[k] = cs[k];
     back.style.borderStyle = "solid"; back.style.borderColor = "transparent";
     back.style.overflowY = cs.overflowY === "hidden" ? "hidden" : "scroll";
-    if (!colorOn) { back.innerHTML = ""; return; }
     const off = offsetFn();
     let cur = ((off % 10) + 10) % 10;
     back.innerHTML = ta.value.split("\n").map((l, i) => {
       if (/^\s*[-•](\s|$)/.test(l)) cur = (off + i) % 10;
-      return `<div data-c="${cur}">${esc(l) || "​"}</div>`;
+      return `<div${colorOn ? ` data-c="${cur}"` : ""}>${hlLine(l) || "\u200b"}</div>`;
     }).join("");
     back.scrollTop = ta.scrollTop;
   };
