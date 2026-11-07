@@ -78,7 +78,7 @@ main { min-height: 0; display: grid; grid-template-columns: minmax(320px, 40%) 1
 .hint { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 0; }
 textarea {
   flex: 1; min-height: 200px; resize: none; width: 100%;
-  font-family: var(--font-mono); font-size: 13px; line-height: 1.65; tab-size: 2;
+  font-family: var(--font-mono); font-size: calc(13px * var(--code-scale, 1)); line-height: 1.65; tab-size: 2;
   color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px;
 }
 .stats { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
@@ -137,7 +137,7 @@ textarea {
 }
 .inline-edit textarea {
   flex: none; min-height: 3em; overflow: hidden; resize: none; background: var(--paper);
-  font-size: 13.5px; line-height: 1.7;
+  font-size: calc(13.5px * var(--code-scale, 1)); line-height: 1.7;
 }
 .ie-bar { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
 .ie-bar span { flex: 1; min-width: 12em; }
@@ -283,6 +283,15 @@ kbd { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel)
 .zoom-label { font-size: 12px; color: var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 5px 9px; display: flex; gap: 8px; align-items: center; }
 .zoom-label span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .zoom-label button { font-size: 11.5px; padding: 2px 8px; }
+.paper { zoom: var(--paper-scale, 1); }
+.paper .inline-edit { zoom: calc(1 / var(--paper-scale, 1)); }
+.scalebar { display: flex; align-items: center; gap: 3px; font-size: 12px; color: var(--muted); }
+.scalebar span { margin-right: 4px; }
+.scalebar button { font-size: 12px; padding: 1px 8px; line-height: 1.5; }
+.scalebar .scale-val { min-width: 4.2em; font-variant-numeric: tabular-nums; }
+.pane-out > .scalebar { max-width: 760px; margin: 0 auto 8px; justify-content: flex-end; }
+.pane-in-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pane-in-head label { flex: 1; }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent-soft); } }
 
@@ -327,7 +336,8 @@ kbd { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel)
   </header>
   <main id="main" data-view="out">
     <section class="pane-in">
-      <label for="src">Workflowyから貼り付け</label>
+      <div class="pane-in-head"><label for="src">Workflowyから貼り付け</label>
+        <div class="scalebar"><span>コードの大きさ</span><button type="button" data-scale="code" data-d="-1" aria-label="コードを小さく">−</button><button type="button" class="scale-val" data-scale="code" data-d="0" id="code-scale-val" title="100%に戻す">100%</button><button type="button" data-scale="code" data-d="1" aria-label="コードを大きく">＋</button></div></div>
       <p class="hint">Workflowyで箇条書きを選んでコピーし、ここに貼り付けます。太字・斜体・リンクも、Workflowyが書式付きで渡してくれる場合は保たれます。ここで直接書き直しても構いません（行頭の「- 」とインデントが階層です）。仕様書のショートカット（⌘+Opt+Shift+R など）もここで使えます。</p>
       <div class="zoom-label" id="zoom-label" hidden></div>
       <textarea id="src" spellcheck="false" autocomplete="off"></textarea>
@@ -336,6 +346,7 @@ kbd { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel)
       <ul class="warns" id="warns"></ul>
     </section>
     <section class="pane-out" id="pane-out">
+      <div class="scalebar"><span>表示の大きさ</span><button type="button" data-scale="paper" data-d="-1" aria-label="表示を小さく">−</button><button type="button" class="scale-val" data-scale="paper" data-d="0" id="paper-scale-val" title="100%に戻す">100%</button><button type="button" data-scale="paper" data-d="1" aria-label="表示を大きく">＋</button></div>
       <nav class="crumbs" id="crumbs" aria-label="ズームの位置" hidden></nav>
       <p class="out-hint">段落・例文・見出しをダブルクリック（スマホはダブルタップ）すると、その部分が箇条書きの編集欄になります（いくつでも開けます）。スマホでは、文字を選んでからダブルタップすると選んだ範囲をまとめて開きます。文字を選んで ⌘+Opt+E でもまとめて開けます。例文番号をクリックすると参照が入り、本文の参照をクリックするとその例文へ飛びます。</p>
       <article class="paper" id="paper"></article>
@@ -373,7 +384,7 @@ kbd { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel)
     <div class="kp-head"><b>ショートカット（Mac）</b><button type="button" id="kp-close">閉じる</button></div>
     <div class="kp-body">
       <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>Shift+Enter</kbd></td><td>ノートの行を足す</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>複製</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
-      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr></table>
+      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr></table>
     </div>
   </div>
   <div class="clip-dock" id="clip-dock">
@@ -2687,6 +2698,46 @@ zsrc.addEventListener("input", () => {
   syncZoomEdit();
   clearTimeout(timer); timer = setTimeout(render, 120);
 });
+
+/* ---------- 画面の拡大・縮小（表示とコードを別々に） ---------- */
+const SCALE_STEPS = [0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5];
+let scales = { paper: 1, code: 1 };
+try { scales = Object.assign(scales, JSON.parse(store.get("thync.scale") || "{}")); } catch (e) {}
+function applyScales() {
+  const rs = document.documentElement.style;
+  rs.setProperty("--paper-scale", scales.paper);
+  rs.setProperty("--code-scale", scales.code);
+  $("paper-scale-val").textContent = Math.round(scales.paper * 100) + "%";
+  $("code-scale-val").textContent = Math.round(scales.code * 100) + "%";
+  store.set("thync.scale", JSON.stringify(scales));
+  if (src._paint) src._paint();
+  if (zsrc._paint) zsrc._paint();
+  editors.forEach(ed => { fit(ed); if (ed.ta._paint) ed.ta._paint(); });
+}
+function stepScale(which, d) {
+  if (d === 0) { scales[which] = 1; applyScales(); return; }
+  const cur = scales[which];
+  let i = SCALE_STEPS.findIndex(s => s >= cur - 1e-6);
+  if (i < 0) i = SCALE_STEPS.length - 1;
+  if (d > 0) i = SCALE_STEPS[i] > cur + 1e-6 ? i : i + 1; else i = i - 1;
+  scales[which] = SCALE_STEPS[Math.max(0, Math.min(SCALE_STEPS.length - 1, i))];
+  applyScales();
+  toast(`${which === "paper" ? "表示" : "コード"}を ${Math.round(scales[which] * 100)}% にしました`);
+}
+document.addEventListener("mousedown", e => { if (e.target.closest("[data-scale]")) e.preventDefault(); });
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-scale]");
+  if (b) stepScale(b.dataset.scale, +b.dataset.d);
+});
+// ⌥+⌘+＝ ／ ⌥+⌘+− ／ ⌥+⌘+0：書いている欄にいればコードを、そうでなければ表示を拡大・縮小
+window.addEventListener("keydown", e => {
+  if (!CMD(e) || !e.altKey) return;
+  const which = document.activeElement && document.activeElement.tagName === "TEXTAREA" ? "code" : "paper";
+  if (e.code === "Equal" || e.code === "NumpadAdd" || e.code === "Semicolon") { e.preventDefault(); stepScale(which, 1); }
+  else if (e.code === "Minus" || e.code === "NumpadSubtract") { e.preventDefault(); stepScale(which, -1); }
+  else if (e.code === "Digit0" || e.code === "Numpad0") { e.preventDefault(); stepScale(which, 0); }
+}, true);
+applyScales();
 
 src.value = store.get("thync.src") || SAMPLE;
 { const zl = store.get("thync.zoom"); if (zl) { const L = srcLines(), k = +zl; if (isBullet(L[k] || "")) zoom = { line: k, max: blockEndLine(L, k), text: L[k].trim() }; } }
