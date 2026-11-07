@@ -256,6 +256,16 @@ kbd { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel)
 .wf-acts .primary { background: var(--accent); color: var(--paper); border-color: var(--accent); }
 .wf-status { margin: 0; font-size: 12.5px; line-height: 1.6; min-height: 1.6em; }
 .wf-status.ok { color: var(--accent); } .wf-status.ng { color: var(--bad); }
+.wf-pop { max-height: calc(100vh - 80px); overflow: auto; }
+.dialog-back { position: fixed; inset: 0; z-index: 20; background: rgba(15,20,30,.35); display: grid; place-items: center; padding: 16px; }
+.dialog-back[hidden] { display: none; }
+.dialog { background: var(--paper); color: var(--ink); border-radius: 10px; padding: 18px 20px; width: min(460px, 100%); display: grid; gap: 10px; box-shadow: 0 18px 50px rgba(15,20,30,.3); }
+.dialog h3 { margin: 0; font-size: 15px; }
+.dialog ul { margin: 0; padding-left: 1.2em; font-size: 13px; line-height: 1.7; }
+.dialog .warnline { color: var(--bad); font-size: 12.5px; }
+.chk-line { font-size: 12.5px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.wf-acts.end { justify-content: flex-end; }
+#wf-chip.dirty { background: var(--warn-soft); color: var(--warn); }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent-soft); } }
 
@@ -295,6 +305,7 @@ kbd { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel)
     <button id="btn-clear" type="button">入力を消す</button>
     <button id="close-all" class="chip" type="button" hidden>編集欄 0 ・ すべて閉じる</button>
     <button id="remote-chip" class="chip has" type="button" hidden>別のウィンドウで変更あり ・ 反映する</button>
+    <button id="wf-chip" class="chip" type="button" hidden>Workflowy</button>
     <button id="warn-chip" class="chip" type="button">警告 0</button>
   </header>
   <main id="main" data-view="out">
@@ -318,12 +329,25 @@ kbd { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel)
     <div class="wf-acts"><button type="button" id="wf-save">この端末に保存</button><button type="button" id="wf-test" class="primary">接続テスト</button><button type="button" id="wf-forget">キーを消す</button></div>
     <p class="hint">キーはこのブラウザの中だけに保存します。中継を使う場合、キーは中継を通ってWorkflowyに届きますが、中継には保存されません。共用のパソコンでは保存しないでください。</p>
     <p class="wf-status" id="wf-status" role="status"></p>
+    <label for="wf-url">原稿のURL</label>
+    <input type="text" id="wf-url" autocomplete="off" spellcheck="false" placeholder="原稿のいちばん上のbulletのURL（またはID）">
+    <div class="wf-acts"><button type="button" id="wf-load" class="primary">読み込む</button><button type="button" id="wf-sync">Workflowyへ保存</button><button type="button" id="wf-unlink">つなぐのをやめる</button></div>
+    <p class="hint">保存は ⌘+S でもできます。消した行はWorkflowyから消さず、「thyncSource 削除済み」というbulletの下へ移します。</p>
+    <p class="wf-status" id="wf-doc-status" role="status"></p>
   </div>
   <div class="pop" id="font-pop" hidden>
     <label for="f-latin">欧文</label><select id="f-latin"></select>
     <label for="f-ja">和文</label><select id="f-ja"></select>
     <label for="f-size">大きさ</label><select id="f-size"></select>
     <p class="hint">欧文の文字は欧文の書体で、日本語の文字は和文の書体で表示します。お使いの機器に入っていない書体は、似た書体で代わりに表示します。</p>
+  </div>
+  <div class="dialog-back" id="sync-dlg" hidden>
+    <div class="dialog" role="dialog" aria-labelledby="sync-dlg-title">
+      <h3 id="sync-dlg-title">Workflowyへ保存します</h3>
+      <div id="sync-dlg-body"></div>
+      <label class="chk-line"><input type="checkbox" id="sync-dlg-skip"> 次からは確認しない</label>
+      <div class="wf-acts"><button type="button" id="sync-dlg-cancel">やめる</button><button type="button" id="sync-dlg-ok" class="primary">保存する</button></div>
+    </div>
   </div>
   <div class="keys-pop" id="keys-pop" hidden role="dialog" aria-label="ショートカット一覧">
     <div class="kp-head"><b>ショートカット（Mac）</b><button type="button" id="kp-close">閉じる</button></div>
@@ -527,6 +551,7 @@ function compile(tree, opts) {
       find(c);
     }
   })(tree);
+  if (!docNode && opts.rootAsDoc && tree.children.length === 1) docNode = tree.children[0];
   const container = docNode || tree;
   const title = docNode ? info(docNode).text : "";
   if (!docNode && tree.count) warn("#doc の付いたノードがないので、貼り付けた全体を1本の文書として表示しています。", "info");
@@ -784,6 +809,8 @@ function compile(tree, opts) {
             i += m[0].length;
             continue;
           }
+          const tagLike = rest.match(/^<\/?[a-zA-Z][^<>]*>/);
+          if (tagLike) { i += tagLike[0].length; continue; } // Workflowyの色やハイライトなど：表示では外す
           out += "&lt;"; i++; continue;
         }
         if (ch === ">") { out += "&gt;"; i++; continue; }
@@ -938,7 +965,7 @@ function renderInner() {
   const active = editors.find(ed => ed.ta === document.activeElement);
   const sS = active ? active.ta.selectionStart : 0, sE = active ? active.ta.selectionEnd : 0;
   const tree = parseSource(src.value);
-  const res = compile(tree, { hideCompleted: $("hide-done").checked });
+  const res = compile(tree, { hideCompleted: $("hide-done").checked, rootAsDoc: !!(typeof wf !== "undefined" && wf) });
   lastRanges = res.ranges;
   currentTitle = res.title || "（無題）";
   paper.innerHTML = res.html;
@@ -949,6 +976,7 @@ function renderInner() {
   const n = res.warnings.filter(w => w.kind === "warn").length;
   chip.textContent = `警告 ${n}`;
   chip.classList.toggle("has", n > 0);
+  if (typeof updateWfChip === "function" && typeof wf !== "undefined") updateWfChip();
   stats.textContent = `ノード ${res.stats.nodes} ・ 例文 ${res.stats.examples} ・ 脚注 ${res.stats.footnotes}`;
   const ca = $("close-all");
   ca.hidden = !editors.length;
@@ -1679,7 +1707,9 @@ window.addEventListener("keydown", e => {
   }
   if (CMD(e) && !e.altKey && !e.shiftKey && e.code === "KeyS") {
     e.preventDefault();
-    toast(recordHistory("⌘+S") ? "履歴に記録しました" : "前の記録から変わっていません");
+    const rec = recordHistory("⌘+S");
+    if (typeof wf !== "undefined" && wf) syncToWorkflowy();
+    else toast(rec ? "履歴に記録しました" : "前の記録から変わっていません");
   }
 }, true);
 
@@ -1720,6 +1750,363 @@ $("wf-test").addEventListener("click", async () => {
       : "Workflowyに届きませんでした。Workflowyはブラウザからの直接の呼び出しを許していないようです。中継のURLを入れてもう一度試してください。", "ng");
   }
 });
+
+
+/* ---------- Workflowy：読み込みと書き戻し ---------- */
+// wf = { rootId, base: [{id, ind, text, note, done}] 前回読み込み／保存したときの状態, nodes: {id: {name, note, completed}} }
+let wf = null;
+try { wf = JSON.parse(store.get("thync.wf") || "null"); } catch (e) { wf = null; }
+const saveWf = () => store.set("thync.wf", JSON.stringify(wf));
+const wfKey = () => ($("wf-key").value || "").trim();
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const docStatus = (msg, kind) => { const s = $("wf-doc-status"); s.textContent = msg; s.className = "wf-status" + (kind ? " " + kind : ""); };
+
+async function wfFetch(path, opts = {}) {
+  const key = wfKey();
+  if (!key) throw new Error("APIキーが入っていません。");
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const r = await fetch(wfBase() + path, {
+      method: opts.method || "GET",
+      headers: { Authorization: "Bearer " + key, ...(opts.body ? { "Content-Type": "application/json" } : {}) },
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    if (r.status === 429 && !opts.noRetry) { await sleep(1500 * (attempt + 1)); continue; }
+    if (!r.ok) {
+      let msg = ""; try { const j = await r.json(); msg = j.message || j.code || ""; } catch (e) {}
+      const err = new Error(`Workflowyがエラーを返しました（${r.status}${msg ? "：" + msg : ""}）`); err.status = r.status; throw err;
+    }
+    return r.json();
+  }
+  const err = new Error("Workflowyが混み合っています。少し待ってからもう一度試してください。"); err.status = 429; throw err;
+}
+
+// 名前（HTML）⇔ 入力欄の文字
+const TAG_RE = /<\/?[a-zA-Z][^<>]*>/g;
+function decodeText(s) {
+  return String(s || "").split(/(<\/?[a-zA-Z][^<>]*>)/).map((part, i) => i % 2 ? part :
+    part.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&")).join("");
+}
+function encodeText(s) {
+  return String(s || "").split(/(<\/?[a-zA-Z][^<>]*>)/).map((part, i) => i % 2 ? part :
+    part.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")).join("");
+}
+const escNoteLine = l => (/^\s*[-•](\s|$)/.test(l) ? "\\" + l : l);
+const unescNoteLine = l => l.replace(/^\\(?=\s*[-•])/, "");
+
+function parseRef(s) {
+  s = (s || "").trim();
+  const full = s.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+  if (full) return full[0];
+  const shorts = s.match(/[0-9a-f]{12}(?![0-9a-f])/gi);
+  return shorts ? shorts[shorts.length - 1] : s;
+}
+
+async function loadSubtree(rootId, progress) {
+  // まず全体の書き出し（1分に1回まで）を試し、だめなら子を順に取る
+  try {
+    const all = await wfFetch("/nodes-export", { noRetry: true });
+    const byParent = new Map();
+    for (const n of all.nodes || []) { const k = n.parent_id || "None"; if (!byParent.has(k)) byParent.set(k, []); byParent.get(k).push(n); }
+    return { byParent, via: "export" };
+  } catch (e) {
+    if (e.status && e.status !== 429) throw e;
+  }
+  const byParent = new Map();
+  let queue = [rootId], done = 0;
+  while (queue.length) {
+    const batch = queue.splice(0, 4);
+    const res = await Promise.all(batch.map(id => wfFetch("/nodes?parent_id=" + encodeURIComponent(id))));
+    res.forEach((r, i) => {
+      const kids = r.nodes || [];
+      byParent.set(batch[i], kids);
+      for (const k of kids) queue.push(k.id);
+    });
+    done += batch.length;
+    progress && progress(done);
+  }
+  return { byParent, via: "list" };
+}
+
+function treeToBase(root, byParent) {
+  const base = [], nodes = {};
+  (function walk(n, ind) {
+    const name = decodeText(n.name);
+    const note = n.note ? decodeText(n.note) : "";
+    base.push({ id: n.id, ind, text: name, note, done: !!n.completed });
+    nodes[n.id] = { name: n.name || "", note: n.note || "", completed: !!n.completed };
+    const kids = (byParent.get(n.id) || []).slice().sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+    for (const k of kids) walk(k, ind + 2);
+  })(root, 0);
+  return { base, nodes };
+}
+function baseToSource(base) {
+  const out = [];
+  for (const b of base) {
+    out.push(" ".repeat(b.ind) + "- " + (b.done ? "[x] " : "") + b.text);
+    if (b.note) for (const l of b.note.split("\n")) if (l.trim()) out.push(" ".repeat(b.ind + 2) + escNoteLine(l));
+  }
+  return out.join("\n");
+}
+
+// 入力欄の文字 → bulletの並び（字下げ・本文・ノート・完了）
+function sourceToItems(text) {
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
+  const items = [];
+  for (const raw of lines) {
+    if (!raw.trim()) continue;
+    const ind = indentOf(raw);
+    const m = raw.match(/^\s*[-•](?:\s(.*)|$)/);
+    if (m) {
+      let t = m[1] || "", done = false;
+      t = t.replace(/^\[(?:x|COMPLETE|COMPLETED)\]\s*/i, () => { done = true; return ""; });
+      items.push({ ind, text: t, note: "", done });
+    } else if (items.length) {
+      const it = items[items.length - 1];
+      it.note += (it.note ? "\n" : "") + unescNoteLine(raw.trim());
+    }
+  }
+  return items;
+}
+
+// 前回の並びと今の並びを対応付ける
+// 1) 順番を保ったまま同じ文のものを結ぶ　2) 場所が変わっても同じ文なら同じbullet（移動）
+// 3) 残りは、前後の結び目の間で順に「書き換え」とみなす
+function matchItems(base, items) {
+  const n = base.length, m = items.length;
+  const dp = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
+    dp[i][j] = base[i].text === items[j].text ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+  const ids = new Array(m).fill(null), usedB = new Array(n).fill(false), anchorOfNew = new Array(m).fill(-1);
+  let i = 0, j = 0;
+  while (i < n && j < m) {
+    if (base[i].text === items[j].text) { ids[j] = base[i].id; usedB[i] = true; anchorOfNew[j] = i; i++; j++; }
+    else if (dp[i + 1][j] >= dp[i][j + 1]) i++;
+    else j++;
+  }
+  const byText = new Map();
+  base.forEach((b, k) => { if (!usedB[k]) { if (!byText.has(b.text)) byText.set(b.text, []); byText.get(b.text).push(k); } });
+  items.forEach((it, k) => {
+    if (ids[k]) return;
+    const q = byText.get(it.text);
+    if (q && q.length) { const bi = q.shift(); ids[k] = base[bi].id; usedB[bi] = true; }
+  });
+  let lastB = -1, gapNew = [];
+  const flush = nextB => {
+    const gapOld = [];
+    for (let k = lastB + 1; k < nextB; k++) if (!usedB[k]) gapOld.push(k);
+    const c = Math.min(gapOld.length, gapNew.length);
+    for (let t = 0; t < c; t++) { ids[gapNew[t]] = base[gapOld[t]].id; usedB[gapOld[t]] = true; }
+    gapNew = [];
+  };
+  for (let k = 0; k < m; k++) {
+    if (anchorOfNew[k] >= 0) { flush(anchorOfNew[k]); lastB = anchorOfNew[k]; }
+    else if (!ids[k]) gapNew.push(k);
+  }
+  flush(n);
+  return ids;
+}
+
+function planSync() {
+  const items = sourceToItems(src.value);
+  if (!items.length) throw new Error("原稿が空です。");
+  if (items[0].ind !== 0 || items.slice(1).some(x => x.ind === 0)) throw new Error("いちばん上の字下げのない行は1行だけにしてください（原稿のルートです）。");
+  const ids = matchItems(wf.base, items);
+  ids[0] = wf.rootId;
+  // 親を決める
+  const parent = new Array(items.length).fill(null), stack = [];
+  items.forEach((it, k) => {
+    while (stack.length && items[stack[stack.length - 1]].ind >= it.ind) stack.pop();
+    parent[k] = stack.length ? stack[stack.length - 1] : null;
+    stack.push(k);
+  });
+  const baseIdx = new Map(wf.base.map((b, k) => [b.id, k]));
+  const baseParent = new Map(), baseKids = new Map();
+  { const st = []; wf.base.forEach(b => { while (st.length && st[st.length - 1].ind >= b.ind) st.pop(); const p = st.length ? st[st.length - 1].id : null; baseParent.set(b.id, p); if (p) { if (!baseKids.has(p)) baseKids.set(p, []); baseKids.get(p).push(b.id); } st.push(b); }); }
+  const used = new Set(ids.filter(Boolean));
+  const ops = { update: [], create: [], move: [], trash: [], reorder: [] };
+  items.forEach((it, k) => {
+    const id = ids[k];
+    if (!id) { ops.create.push(k); return; }
+    const old = wf.base[baseIdx.get(id)];
+    if (old && (old.text !== it.text || (old.note || "").trim() !== (it.note || "").trim() || old.done !== it.done)) ops.update.push(k);
+    if (k > 0) { const np = ids[parent[k]]; if (baseParent.get(id) !== np || !np) ops.move.push(k); }
+  });
+  // 消えたbullet：親も消えているものは親ごと動くので、いちばん上のものだけ
+  for (const b of wf.base) {
+    if (used.has(b.id)) continue;
+    const p = baseParent.get(b.id);
+    if (p && !used.has(p)) continue;
+    ops.trash.push(b.id);
+  }
+  // 並び順が変わった親
+  const kidsNew = new Map();
+  items.forEach((it, k) => { if (k === 0) return; const p = parent[k]; if (!kidsNew.has(p)) kidsNew.set(p, []); kidsNew.get(p).push(k); });
+  // 保存の手順どおりに進めたときの子の並び（残る子は元の順、作るものと移すものは末尾へ）を考え、望む並びと違えば並べ替える
+  const moveSet = new Set(ops.move);
+  const oldPos = new Map(wf.base.map((b, k) => [b.id, k]));
+  for (const [p, ks] of kidsNew) {
+    const stay = ks.filter(k => ids[k] && !moveSet.has(k)).sort((x, y) => oldPos.get(ids[x]) - oldPos.get(ids[y]));
+    const created = ks.filter(k => !ids[k]);
+    const moved = ks.filter(k => ids[k] && moveSet.has(k));
+    const simulated = [...stay, ...created, ...moved];
+    if (simulated.join() !== ks.join()) ops.reorder.push(p);
+  }
+  return { items, ids, parent, ops };
+}
+
+function describePlan(plan) {
+  const o = plan.ops;
+  const parts = [];
+  if (o.update.length) parts.push(`<li>書き換え ${o.update.length} 件</li>`);
+  if (o.create.length) parts.push(`<li>新しいbullet ${o.create.length} 件</li>`);
+  if (o.move.length) parts.push(`<li>場所の移動 ${o.move.length} 件</li>`);
+  if (o.reorder.length) parts.push(`<li>並べ替え ${o.reorder.length} か所</li>`);
+  if (o.trash.length) parts.push(`<li>削除（「thyncSource 削除済み」へ移動）${o.trash.length} 件</li>`);
+  return parts.join("");
+}
+
+async function ensureTrash() {
+  let id = store.get("thync.wftrash");
+  if (id) { try { await wfFetch("/nodes/" + id); return id; } catch (e) { id = null; } }
+  const top = await wfFetch("/nodes?parent_id=None");
+  const found = (top.nodes || []).find(n => decodeText(n.name).trim() === "thyncSource 削除済み");
+  if (found) id = found.id;
+  else id = (await wfFetch("/nodes", { method: "POST", body: { parent_id: "None", name: "thyncSource 削除済み", position: "bottom" } })).item_id;
+  store.set("thync.wftrash", id);
+  return id;
+}
+
+let syncing = false;
+async function runSync(plan) {
+  syncing = true;
+  const { items, ids, parent, ops } = plan;
+  const total = ops.update.length + ops.create.length + ops.move.length + ops.trash.length + ops.reorder.length;
+  let doneN = 0;
+  const tick = () => { doneN++; docStatus(`保存しています… ${doneN}/${total}`); };
+  try {
+    const nodeName = it => encodeText(it.text);
+    // 1. 新しいbullet（親から順に）。名前は作ったあとにHTMLで入れ直す（作成時はマークダウンとして解釈されるため）
+    for (const k of ops.create) {
+      const pid = ids[parent[k]];
+      const r = await wfFetch("/nodes", { method: "POST", body: { parent_id: pid, name: "…", position: "bottom" } });
+      ids[k] = r.item_id;
+      await wfFetch("/nodes/" + ids[k], { method: "POST", body: { name: nodeName(items[k]), note: items[k].note ? encodeText(items[k].note) : "" } });
+      if (items[k].done) await wfFetch("/nodes/" + ids[k] + "/complete", { method: "POST" });
+      tick();
+    }
+    // 2. 書き換え
+    for (const k of ops.update) {
+      const id = ids[k], old = wf.base.find(b => b.id === id), it = items[k];
+      const body = {};
+      if (old.text !== it.text) body.name = nodeName(it);
+      if ((old.note || "").trim() !== (it.note || "").trim()) body.note = it.note ? encodeText(it.note) : "";
+      if (Object.keys(body).length) await wfFetch("/nodes/" + id, { method: "POST", body });
+      if (old.done !== it.done) await wfFetch("/nodes/" + id + (it.done ? "/complete" : "/uncomplete"), { method: "POST" });
+      tick();
+    }
+    // 3. 場所の移動
+    for (const k of ops.move) { await wfFetch("/nodes/" + ids[k] + "/move", { method: "POST", body: { parent_id: ids[parent[k]], position: "bottom" } }); tick(); }
+    // 4. 削除はゴミ箱へ移動
+    if (ops.trash.length) {
+      const trash = await ensureTrash();
+      for (const id of ops.trash) { await wfFetch("/nodes/" + id + "/move", { method: "POST", body: { parent_id: trash, position: "top" } }); tick(); }
+    }
+    // 5. 並べ替え：その親の子を、望む順に1つずつ末尾へ送る
+    for (const p of ops.reorder) {
+      const ks = items.map((_, k) => k).filter(k => k > 0 && parent[k] === p);
+      for (const k of ks) await wfFetch("/nodes/" + ids[k] + "/move", { method: "POST", body: { parent_id: ids[p], position: "bottom" } });
+      tick();
+    }
+    // 保存後の状態を「前回の状態」にする
+    wf.base = items.map((it, k) => ({ id: ids[k], ind: it.ind, text: it.text, note: it.note, done: it.done }));
+    wf.savedAt = new Date().toISOString();
+    saveWf();
+    docStatus(`保存しました（${stamp(wf.savedAt)}）`, "ok");
+    updateWfChip();
+    return true;
+  } catch (e) {
+    docStatus(`途中で止まりました：${e.message}　いったん「読み込む」でWorkflowyの今の状態を読み直してから、もう一度直してください。`, "ng");
+    toast("Workflowyへの保存が途中で止まりました");
+    return false;
+  } finally { syncing = false; }
+}
+
+async function syncToWorkflowy() {
+  if (!wf) { toast("まだWorkflowyの原稿を読み込んでいません"); return; }
+  if (syncing) return;
+  if (editors.length) { /* 編集欄の内容はすでに全体に反映済み */ }
+  let plan;
+  try { plan = planSync(); } catch (e) { docStatus(e.message, "ng"); toast(e.message); return; }
+  const desc = describePlan(plan);
+  if (!desc) { docStatus("Workflowyと同じ内容です。保存するものはありません。", "ok"); updateWfChip(); return; }
+  if (store.get("thync.wfnoconfirm") === "1") { await runSync(plan); return; }
+  $("sync-dlg-body").innerHTML = `<ul>${desc}</ul>` + (plan.ops.trash.length ? `<p class="warnline">消した行は、Workflowyでは「thyncSource 削除済み」の下に移ります。</p>` : "");
+  $("sync-dlg-skip").checked = false;
+  $("sync-dlg").hidden = false;
+  $("sync-dlg-ok").focus();
+  const ok = await new Promise(res => {
+    const done = v => { $("sync-dlg").hidden = true; $("sync-dlg-ok").onclick = $("sync-dlg-cancel").onclick = null; res(v); };
+    $("sync-dlg-ok").onclick = () => done(true);
+    $("sync-dlg-cancel").onclick = () => done(false);
+  });
+  if (!ok) return;
+  if ($("sync-dlg-skip").checked) store.set("thync.wfnoconfirm", "1");
+  await runSync(plan);
+}
+
+function wfDirty() {
+  if (!wf) return false;
+  return baseToSource(wf.base) !== src.value.replace(/\r\n?/g, "\n").split("\n").filter(l => l.trim()).join("\n");
+}
+function updateWfChip() {
+  const c = $("wf-chip");
+  if (!wf) { c.hidden = true; return; }
+  c.hidden = false;
+  const dirty = wfDirty();
+  c.classList.toggle("dirty", dirty);
+  c.textContent = dirty ? "Workflowy・未保存の変更あり" : "Workflowy・保存済み";
+}
+$("wf-chip").addEventListener("click", () => { if (wfDirty()) syncToWorkflowy(); else { $("wf-pop").hidden = false; } });
+
+async function loadFromWorkflowy() {
+  const ref = parseRef($("wf-url").value);
+  if (!ref) { docStatus("原稿のURLかIDを入れてください。", "ng"); return; }
+  if (wf && wfDirty()) {
+    $("sync-dlg-body").innerHTML = `<p>まだWorkflowyへ保存していない変更があります。読み込み直すと、その変更は失われます（履歴には残ります）。</p>`;
+    $("sync-dlg-title").textContent = "読み込み直します";
+    $("sync-dlg-ok").textContent = "読み込む";
+    $("sync-dlg").hidden = false;
+    const ok = await new Promise(res => {
+      const done = v => { $("sync-dlg").hidden = true; $("sync-dlg-ok").onclick = $("sync-dlg-cancel").onclick = null; res(v); };
+      $("sync-dlg-ok").onclick = () => done(true); $("sync-dlg-cancel").onclick = () => done(false);
+    });
+    $("sync-dlg-title").textContent = "Workflowyへ保存します"; $("sync-dlg-ok").textContent = "保存する";
+    if (!ok) return;
+    recordHistory("読み込み直す前の状態");
+  }
+  docStatus("読み込んでいます…");
+  try {
+    const rootRes = await wfFetch("/nodes/" + encodeURIComponent(ref));
+    const root = rootRes.node;
+    const { byParent, via } = await loadSubtree(root.id, n => docStatus(`読み込んでいます… ${n} 件`));
+    const { base, nodes } = treeToBase(root, byParent);
+    wf = { rootId: root.id, ref, base, loadedAt: new Date().toISOString(), via };
+    saveWf();
+    store.set("thync.wfurl", $("wf-url").value.trim());
+    editors = [];
+    src.value = baseToSource(base);
+    keepScroll(render);
+    recordHistory("Workflowyから読み込んだ");
+    docStatus(`読み込みました：${base.length} 件のbullet`, "ok");
+    updateWfChip();
+  } catch (e) {
+    docStatus(`読み込めませんでした：${e.message}`, "ng");
+  }
+}
+$("wf-url").value = store.get("thync.wfurl") || "";
+$("wf-load").addEventListener("click", loadFromWorkflowy);
+$("wf-sync").addEventListener("click", syncToWorkflowy);
+$("wf-unlink").addEventListener("click", () => { wf = null; try { localStorage.removeItem("thync.wf"); } catch (e) {} updateWfChip(); docStatus("Workflowyとのつながりを外しました。入力欄の内容はそのまま残っています。"); });
 
 /* ---------- ショートカット一覧（⌘+/） ---------- */
 const toggleKeys = force => { const k = $("keys-pop"); k.hidden = force === undefined ? !k.hidden : !force; };
