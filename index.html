@@ -313,8 +313,10 @@ kbd { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel)
   <div class="pop wf-pop" id="wf-pop" hidden>
     <label for="wf-key">APIキー</label>
     <input type="password" id="wf-key" autocomplete="off" spellcheck="false" placeholder="workflowy.com/api-key で発行">
+    <label for="wf-relay">中継のURL</label>
+    <input type="url" id="wf-relay" autocomplete="off" spellcheck="false" placeholder="https://thyncsource-relay.○○.workers.dev">
     <div class="wf-acts"><button type="button" id="wf-save">この端末に保存</button><button type="button" id="wf-test" class="primary">接続テスト</button><button type="button" id="wf-forget">キーを消す</button></div>
-    <p class="hint">キーはこのブラウザの中だけに保存し、Workflowy以外には送りません。共用のパソコンでは保存しないでください。</p>
+    <p class="hint">キーはこのブラウザの中だけに保存します。中継を使う場合、キーは中継を通ってWorkflowyに届きますが、中継には保存されません。共用のパソコンでは保存しないでください。</p>
     <p class="wf-status" id="wf-status" role="status"></p>
   </div>
   <div class="pop" id="font-pop" hidden>
@@ -1682,9 +1684,13 @@ window.addEventListener("keydown", e => {
 }, true);
 
 /* ---------- Workflowy接続（まずは接続テストだけ） ---------- */
-const WF_API = "https://workflowy.com/api/v1";
+const wfBase = () => {
+  const r = ($("wf-relay").value || "").trim().replace(/\/+$/, "");
+  return (r || "https://workflowy.com") + "/api/v1";
+};
 const wfStatus = (msg, kind) => { const s = $("wf-status"); s.textContent = msg; s.className = "wf-status" + (kind ? " " + kind : ""); };
 $("wf-key").value = store.get("thync.wfkey") || "";
+$("wf-relay").value = store.get("thync.wfrelay") || "";
 $("btn-wf").addEventListener("click", e => {
   e.stopPropagation();
   const pop = $("wf-pop"); pop.hidden = !pop.hidden;
@@ -1694,21 +1700,24 @@ document.addEventListener("click", e => {
   const pop = $("wf-pop");
   if (!pop.hidden && !pop.contains(e.target) && e.target !== $("btn-wf")) { pop.hidden = true; $("btn-wf").setAttribute("aria-expanded", "false"); }
 });
-$("wf-save").addEventListener("click", () => { store.set("thync.wfkey", $("wf-key").value.trim()); wfStatus("この端末に保存しました。"); });
+$("wf-save").addEventListener("click", () => { store.set("thync.wfkey", $("wf-key").value.trim()); store.set("thync.wfrelay", $("wf-relay").value.trim()); wfStatus("この端末に保存しました。"); });
 $("wf-forget").addEventListener("click", () => { try { localStorage.removeItem("thync.wfkey"); } catch (e) {} $("wf-key").value = ""; wfStatus("キーを消しました。"); });
 $("wf-test").addEventListener("click", async () => {
   const key = $("wf-key").value.trim();
   if (!key) { wfStatus("APIキーを入れてください。", "ng"); return; }
   wfStatus("確かめています…");
   try {
-    const r = await fetch(WF_API + "/targets", { headers: { Authorization: "Bearer " + key } });
+    const r = await fetch(wfBase() + "/targets", { headers: { Authorization: "Bearer " + key } });
     if (r.status === 401 || r.status === 403) { wfStatus(`Workflowyにはつながりましたが、キーが受け付けられませんでした（${r.status}）。キーを確かめてください。`, "ng"); return; }
     if (!r.ok) { wfStatus(`Workflowyにはつながりましたが、エラーが返りました（${r.status}）。`, "ng"); return; }
     let n = "";
     try { const j = await r.json(); const arr = Array.isArray(j) ? j : (j.targets || j.data || []); n = `（ショートカットなど ${arr.length} 件を読めました）`; } catch (e) {}
     wfStatus(`つながりました。このブラウザから直接Workflowyを読み書きできます${n}。`, "ok");
   } catch (e) {
-    wfStatus("Workflowyに届きませんでした。このページの置き場所からは外部へ通信できないか、Workflowyがブラウザからの直接の呼び出しを許していません。GitHub Pagesに置いたあとも同じなら、中継役を用意します。", "ng");
+    const relay = ($("wf-relay").value || "").trim();
+    wfStatus(relay
+      ? "中継に届きませんでした。中継のURLが正しいか、中継のコードを保存（Deploy）したかを確かめてください。"
+      : "Workflowyに届きませんでした。Workflowyはブラウザからの直接の呼び出しを許していないようです。中継のURLを入れてもう一度試してください。", "ng");
   }
 });
 
