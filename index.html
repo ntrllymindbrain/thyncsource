@@ -199,6 +199,7 @@ textarea {
 .colorize [data-c="8"] { background: var(--c8); } .colorize [data-c="9"] { background: var(--c9); }
 #btn-color[aria-pressed="true"] { background: var(--accent); color: var(--paper); border-color: var(--accent); }
 .ta-wrap { position: relative; display: flex; }
+.ta-wrap[hidden] { display: none; }
 .pane-in .ta-wrap { flex: 1; min-height: 200px; }
 .ta-wrap textarea { position: relative; z-index: 1; background: transparent !important; flex: 1; }
 .ta-wrap textarea { color: transparent !important; caret-color: var(--ink); }
@@ -274,6 +275,14 @@ kbd { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel)
 .hl-tag { color: var(--hl-tag); } .hl-tag2 { color: var(--hl-tag2); } .hl-cmd { color: var(--hl-cmd); }
 .hl-ref { color: var(--hl-ref); } .hl-lbl { color: var(--hl-lbl); } .hl-html { color: var(--hl-html); }
 .hl-j { color: var(--hl-j); } .hl-bul, .hl-done, .hl-br { color: var(--hl-mut); } .hl-note { color: var(--hl-mut); font-style: italic; }
+.crumbs { max-width: 760px; margin: 0 auto 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: 12.5px; color: var(--muted); }
+.crumbs[hidden], .zoom-label[hidden] { display: none; }
+.crumbs button { font-size: 12.5px; padding: 2px 8px; border-radius: 999px; max-width: 18em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crumbs .here { color: var(--ink); font-weight: 500; }
+.crumbs .sep { color: var(--rule); }
+.zoom-label { font-size: 12px; color: var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 5px 9px; display: flex; gap: 8px; align-items: center; }
+.zoom-label span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zoom-label button { font-size: 11.5px; padding: 2px 8px; }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent-soft); } }
 
@@ -320,11 +329,14 @@ kbd { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel)
     <section class="pane-in">
       <label for="src">Workflowyから貼り付け</label>
       <p class="hint">Workflowyで箇条書きを選んでコピーし、ここに貼り付けます。太字・斜体・リンクも、Workflowyが書式付きで渡してくれる場合は保たれます。ここで直接書き直しても構いません（行頭の「- 」とインデントが階層です）。仕様書のショートカット（⌘+Opt+Shift+R など）もここで使えます。</p>
+      <div class="zoom-label" id="zoom-label" hidden></div>
       <textarea id="src" spellcheck="false" autocomplete="off"></textarea>
+      <textarea id="zsrc" spellcheck="false" autocomplete="off" aria-label="ズーム中の部分"></textarea>
       <div class="stats" id="stats"></div>
       <ul class="warns" id="warns"></ul>
     </section>
     <section class="pane-out" id="pane-out">
+      <nav class="crumbs" id="crumbs" aria-label="ズームの位置" hidden></nav>
       <p class="out-hint">段落・例文・見出しをダブルクリック（スマホはダブルタップ）すると、その部分が箇条書きの編集欄になります（いくつでも開けます）。スマホでは、文字を選んでからダブルタップすると選んだ範囲をまとめて開きます。文字を選んで ⌘+Opt+E でもまとめて開けます。例文番号をクリックすると参照が入り、本文の参照をクリックするとその例文へ飛びます。</p>
       <article class="paper" id="paper"></article>
     </section>
@@ -360,8 +372,8 @@ kbd { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel)
   <div class="keys-pop" id="keys-pop" hidden role="dialog" aria-label="ショートカット一覧">
     <div class="kp-head"><b>ショートカット（Mac）</b><button type="button" id="kp-close">閉じる</button></div>
     <div class="kp-body">
-      <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>Shift+Enter</kbd></td><td>ノートの行を足す</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>複製</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
-      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr></table>
+      <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>Shift+Enter</kbd></td><td>ノートの行を足す</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>複製</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
+      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr></table>
     </div>
   </div>
   <div class="clip-dock" id="clip-dock">
@@ -431,7 +443,7 @@ const SAMPLE = `- 日本語受動文における動作主の標示 #doc
       - #ex {lbl:indirect}
         - 太郎が雨に降られた。
         - ?? 太郎が雨によって降られた。
-        - {#}太郎が雨に喜ばれた。
+        - {#} 太郎が雨に喜ばれた。
       - {ref:indirect.a~indirect.b}の差は、直接受動の{ref:basic.a,basic.b}には見られない。
   - まとめ #sec
     - ここで{ref:basic}を再掲する。
@@ -977,8 +989,10 @@ function renderInner() {
   lastRanges = res.ranges;
   currentTitle = res.title || "（無題）";
   paper.innerHTML = res.html;
+  applyZoomView();
   mountEditors();
   if (src._paint) src._paint();
+  if (zoom && document.activeElement !== zsrc) { zsrc.value = zoomSegment().text; if (zsrc._paint) zsrc._paint(); }
   if (active && editors.includes(active)) { active.ta.focus({ preventScroll: true }); active.ta.setSelectionRange(sS, sE); }
   warnsEl.innerHTML = res.warnings.map(w => `<li class="${w.kind}">${esc(w.msg)}</li>`).join("");
   const n = res.warnings.filter(w => w.kind === "warn").length;
@@ -1239,6 +1253,7 @@ function wrapSel(ta, open, close) {
 }
 function absLine(ta, line) {
   if (ta === src) return line;
+  if (ta.id === "zsrc") return (zoom ? zoom.line : 0) + line;
   const ed = editors.find(x => x.ta === ta);
   return ed ? ed.min + line : line;
 }
@@ -1270,6 +1285,8 @@ function attachKeys(ta) {
     if (cmd && e.shiftKey && !e.altKey && k === "Backspace") { e.preventDefault(); deleteBlock(ta); return; }
     if (cmd && e.shiftKey && !e.altKey && e.code === "KeyD") { e.preventDefault(); duplicateBlock(ta); return; }
     if (cmd && e.shiftKey && !e.altKey && e.code === "KeyM") { e.preventDefault(); makeMirror(ta); return; }
+    if (cmd && !e.shiftKey && !e.altKey && e.key === ".") { e.preventDefault(); const L = linesOf(ta); zoomTo(absLine(ta, ownerLine(L, caretLC(ta).line))); return; }
+    if (cmd && !e.shiftKey && !e.altKey && e.key === ",") { e.preventDefault(); zoomOut(); return; }
     if (cmd && !e.shiftKey && !e.altKey && k === "Enter") { e.preventDefault(); toggleComplete(ta); return; }
     const bare = !e.metaKey && !e.ctrlKey && !e.altKey;
     if (k === "Enter" && e.shiftKey && bare) { e.preventDefault(); addNote(ta); return; }
@@ -1337,6 +1354,7 @@ function syncEditor(ed) {
   const delta = newLines.length - oldLen;
   ed.max = ed.min + newLines.length - 1;
   for (const o of editors) if (o !== ed && o.min > oldMax) { o.min += delta; o.max += delta; }
+  if (zoom) { if (ed.min >= zoom.line && oldMax <= zoom.max) zoom.max += delta; else if (zoom.line > oldMax) { zoom.line += delta; zoom.max += delta; } }
   src.value = all.join("\n");
   store.set("thync.src", src.value);
   if (colorOn && src._paint) src._paint();
@@ -2556,7 +2574,123 @@ $("clip-list").addEventListener("click", async e => {
 });
 renderClips();
 
+/* ---------- ズーム（Workflowyと同じく、1つのbulletとその下だけを見る） ---------- */
+let zoom = null; // { line, max } … 入力全体の何行目から何行目か
+const zsrc = $("zsrc");
+function crumbText(l) {
+  return decodeText(String(l || "").replace(/^\s*[-•]\s?/, "").replace(/^\[(?:x|COMPLETE|COMPLETED)\]\s*/i, "")
+    .replace(/(^|\s)#[\p{L}\p{N}_-]+/gu, "$1").replace(/\{lbl:[^}]*\}/g, "").replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim() || "（無題）";
+}
+function ancestorsOf(L, line) {
+  const out = []; let ind = indentOf(L[line]);
+  for (let k = line - 1; k >= 0 && ind > 0; k--) {
+    if (!L[k].trim() || !isBullet(L[k])) continue;
+    const d = indentOf(L[k]);
+    if (d < ind) { out.unshift(k); ind = d; }
+  }
+  return out;
+}
+function zoomTo(line) {
+  const L = srcLines();
+  if (line === null || line === undefined || !isBullet(L[line] || "")) { zoom = null; }
+  else zoom = { line, max: blockEndLine(L, line), text: L[line].trim() };
+  editors = [];
+  store.set("thync.zoom", zoom ? String(zoom.line) : "");
+  showZoomPane();
+  pane.scrollTop = 0;
+  render();
+}
+function zoomOut() {
+  if (!zoom) return;
+  const anc = ancestorsOf(srcLines(), zoom.line);
+  zoomTo(anc.length ? anc[anc.length - 1] : null);
+}
+function zoomSegment() {
+  const L = srcLines();
+  const seg = L.slice(zoom.line, zoom.max + 1);
+  const base = indentOf(L[zoom.line]);
+  return { text: dedent(seg, base).join("\n"), base };
+}
+function showZoomPane() {
+  const srcWrap = src.closest(".ta-wrap"), zWrap = zsrc.closest(".ta-wrap");
+  if (srcWrap) srcWrap.hidden = !!zoom;
+  if (zWrap) zWrap.hidden = !zoom;
+  $("zoom-label").hidden = !zoom;
+  if (zoom) {
+    $("zoom-label").innerHTML = `<span>ズーム中：${esc(crumbText(srcLines()[zoom.line]))}</span><button type="button" data-z="out">ひとつ上へ</button><button type="button" data-z="all">全体に戻る</button>`;
+    zsrc.value = zoomSegment().text;
+    if (zsrc._paint) zsrc._paint();
+  }
+}
+function syncZoomEdit() {
+  const L = srcLines();
+  const base = indentOf(L[zoom.line]);
+  const pad = " ".repeat(base);
+  const newLines = zsrc.value.replace(/\r\n?/g, "\n").split("\n").map(l => (l.trim() ? pad + l : l));
+  L.splice(zoom.line, zoom.max - zoom.line + 1, ...newLines);
+  zoom.max = zoom.line + newLines.length - 1;
+  src.value = L.join("\n");
+  store.set("thync.src", src.value);
+}
+function applyZoomView() {
+  const cr = $("crumbs");
+  if (!zoom) { cr.hidden = true; return; }
+  const L = srcLines();
+  // 取り込みなどで行がずれていたら、同じ文の行を探し直す
+  if ((L[zoom.line] || "").trim() !== zoom.text) {
+    const k = L.findIndex(l => l.trim() === zoom.text);
+    if (k < 0) { zoom = null; showZoomPane(); cr.hidden = true; return; }
+    zoom.line = k; zoom.max = blockEndLine(L, k);
+  }
+  zoom.text = L[zoom.line].trim();
+  const lo = zoom.line, hi = zoom.max;
+  const inR = (a, z) => z >= lo && a <= hi;
+  for (const el of [...paper.children]) {
+    const r = el.dataset.b !== undefined ? lastRanges[+el.dataset.b] : null;
+    if (el.classList.contains("fns")) continue;
+    if (!r || !inR(r.min, r.max)) el.remove();
+  }
+  for (const el of paper.querySelectorAll(".bk[data-ln], .ex-item[data-ln], li[data-ln]")) {
+    const a = +el.dataset.ln, z = +el.dataset.le;
+    if (!inR(a, z)) el.remove();
+  }
+  const fns = paper.querySelector(".fns");
+  if (fns && !fns.querySelector("li")) fns.remove();
+  if (!paper.children.length) paper.innerHTML = `<div class="empty">この部分には、表示する本文がありません（左の欄では見えます）。</div>`;
+  const anc = ancestorsOf(L, zoom.line);
+  cr.hidden = false;
+  cr.innerHTML = `<button type="button" data-z="all">全体</button>` +
+    anc.map(k => `<span class="sep">›</span><button type="button" data-zl="${k}">${esc(crumbText(L[k]))}</button>`).join("") +
+    `<span class="sep">›</span><span class="here">${esc(crumbText(L[zoom.line]))}</span>`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-z],[data-zl]");
+  if (!b) return;
+  if (b.dataset.z === "all") zoomTo(null);
+  else if (b.dataset.z === "out") zoomOut();
+  else zoomTo(+b.dataset.zl);
+});
+// 表示の上で ⌥+クリックすると、その文のbulletにズーム
+paper.addEventListener("click", e => {
+  if (!e.altKey || e.target.closest(".inline-edit")) return;
+  const el = e.target.closest("[data-ln]");
+  if (!el) return;
+  e.preventDefault(); e.stopPropagation();
+  zoomTo(+el.dataset.ln);
+}, true);
+attachPaste(zsrc);
+attachKeys(zsrc);
+attachBackdrop(zsrc, () => (zoom ? zoom.line : 0));
+zsrc.addEventListener("input", () => {
+  if (!zoom) return;
+  if (editors.length) editors = [];
+  syncZoomEdit();
+  clearTimeout(timer); timer = setTimeout(render, 120);
+});
+
 src.value = store.get("thync.src") || SAMPLE;
+{ const zl = store.get("thync.zoom"); if (zl) { const L = srcLines(), k = +zl; if (isBullet(L[k] || "")) zoom = { line: k, max: blockEndLine(L, k), text: L[k].trim() }; } }
+showZoomPane();
 render();
 applyColor();
 recordHistory("開いたときの状態");
