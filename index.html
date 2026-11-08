@@ -358,7 +358,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 #pages .pagedjs_page { background: #fff; color: #111; box-shadow: 0 1px 3px rgba(20,30,50,.14), 0 8px 26px rgba(20,30,50,.10); }
 .paper.paged { max-width: none; margin: 0; padding: 0; box-shadow: none; background: transparent; border-radius: 0; zoom: 1; color: #111; }
 #pages .xref { color: inherit; }
-#pages [data-c] { background: none !important; }
+@media print { [data-c] { background: none !important; } }
 #pages [data-b]:hover { box-shadow: none; }
 #pages .pagedjs_margin-content { font-family: var(--font-paper); font-size: 9pt; color: #444; }
 @media print {
@@ -669,10 +669,13 @@ function compile(tree, opts) {
     if (cache.has(node)) return cache.get(node);
     const tags = new Set(), labels = [];
     let t = node.name || "";
+    // 仮説などの通し番号：#H（そのまま）・#HB（[ ]）・#HP（( )）、後ろに「J-」などの接頭辞
+    const hm = t.match(/(?:^|\s)#H([BP]?)((?:[A-Za-z0-9]+-)?)(?=\s|$)/);
+    const hyp = hm ? { style: hm[1] || "", prefix: hm[2] || "" } : null;
     t = t.replace(/(^|\s)#([\p{L}\p{N}_-]+)/gu, (m, pre, tag) => { tags.add(tag.toLowerCase()); return pre; });
     t = t.replace(/\{lbl:([^}]*)\}/g, (m, l) => { if (l.trim()) labels.push(l.trim()); return ""; });
     t = t.replace(/[ \t　]{2,}/g, " ").trim();
-    const r = { tags, labels, text: t };
+    const r = { tags, labels, text: t, hyp };
     cache.set(node, r);
     return r;
   }
@@ -680,6 +683,20 @@ function compile(tree, opts) {
   // ミラー用：ラベル → ノード
   const labelNode = new Map();
   (function scan(n) { for (const k of n.children) { for (const l of info(k).labels) if (!labelNode.has(l)) labelNode.set(l, k); scan(k); } })(tree);
+  // 仮説などの通し番号（接頭辞ごとに 1, 2, 3…）
+  const hypCount = new Map(), hypShow = new Map();
+  function hypify(node, inf, text, ex) {
+    if (!inf.hyp) return text;
+    const { style, prefix } = inf.hyp;
+    const n = (hypCount.get(prefix) || 0) + 1; hypCount.set(prefix, n);
+    const bare = prefix + n;
+    const shown = style === "B" ? `[${bare}]` : style === "P" ? `(${bare})` : bare;
+    const key = "h" + hypShow.size;
+    const id = uid();
+    hypShow.set(key, { shown, id });
+    inf.labels.forEach(l => defLabel(l, { kind: "hyp", shown, bare, id, ex }));
+    return `{hyp:${key}} ` + text;
+  }
 
   // 文書ルート
   let docNode = null;
@@ -773,7 +790,7 @@ function compile(tree, opts) {
 
   function buildItem(k, num, path, id) {
     const ki = info(k);
-    ki.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: path, id }));
+    if (!ki.hyp) ki.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: path, id }));
     exPaths.get(id).add(path.join(""));
     const kids = k.children.filter(visible);
     const fnKids = kids.filter(x => info(x).tags.has("fn"));
@@ -784,6 +801,7 @@ function compile(tree, opts) {
     if (ki.tags.has("gl")) item = { letter, gloss: glossFrom(sub, where) };
     else {
       const sj = splitJudg(stripManual(ki.text));
+      sj.text = hypify(k, ki, sj.text, { num, sub: path, id });
       if (sub.length && path.length < 2) item = { letter, judg: sj.judg, text: sj.text, subitems: sub.map((s, j) => buildItem(s, num, [...path, ROMAN[j] || String(j + 1)], id)) };
       else { if (sub.length) warn(`例文${where}の下位例文は2段までです。それより深い行は表示していません。`); item = { letter, judg: sj.judg, text: sj.text }; }
     }
@@ -799,14 +817,24 @@ function compile(tree, opts) {
     const num = settings["ex-scope"] === "section" && chapter ? `${chapter}.${exCount}` : String(exCount);
     const id = uid();
     exPaths.set(id, new Set());
-    inf.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: [], id }));
+    if (!inf.hyp) inf.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: [], id }));
     const kids = c.children.filter(visible);
     const fnKids = kids.filter(x => info(x).tags.has("fn"));
     const content = kids.filter(x => !info(x).tags.has("fn"));
     const ex = { type: "ex", num, id, header: "", items: [], single: null, label: inf.labels[0] || null };
-    if (inf.tags.has("gl")) { ex.header = inf.text; ex.single = { gloss: glossFrom(content, `(${num})`) }; }
-    else if (!content.length) ex.single = splitJudg(inf.text);
-    else { ex.header = inf.text; ex.items = content.map((k, i) => buildItem(k, num, [LETTERS[i] || String(i + 1)], id)); }
+    const exRef = { num, sub: [], id };
+    if (inf.tags.has("gl")) { ex.header = hypify(c, inf, inf.text, exRef); ex.single = { gloss: glossFrom(content, `(${num})`) }; }
+    else if (!content.length) { ex.single = splitJudg(inf.text); ex.single.text = hypify(c, inf, ex.single.text, exRef); }
+    else if (content.length === 1 && inf.text && !info(content[0]).tags.has("gl") && !content[0].children.some(visible)) {
+      // 見出しの下に1行だけ：記号（a.）を付けずに見出しの下へ
+      const k = content[0], ki = info(k);
+      ex.header = hypify(c, inf, inf.text, exRef);
+      if (!ki.hyp) ki.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: [], id }));
+      ex.single = splitJudg(stripManual(ki.text));
+      ex.single.text = hypify(k, ki, ex.single.text, exRef);
+      ex.single.line = k.line;
+    }
+    else { ex.header = hypify(c, inf, inf.text, exRef); ex.items = content.map((k, i) => buildItem(k, num, [LETTERS[i] || String(i + 1)], id)); }
     ex.fns = fnKids.map(addFn);
     byId.set(id, ex);
     return ex;
@@ -869,6 +897,7 @@ function compile(tree, opts) {
       if (text === "//" || /\s\/\/$/.test(text)) { end = true; text = text.replace(/\s*\/\/$/, ""); }
       const fnNodes = c.children.filter(k => visible(k) && info(k).tags.has("fn"));
       const fns = fnNodes.map(addFn);
+      if (text) text = hypify(c, inf, text, null);
       if (text) { addSentence(text, fns, c.line); if (c.completed) para.parts[para.parts.length - 1].done = true; }
       else if (fns.length && para && para.parts.length) para.parts[para.parts.length - 1].fns.push(...fns);
       if (para) { touch(para, c.line, c.lastLine); fnNodes.forEach(k => touch(para, k.line, subEnd(k))); }
@@ -898,6 +927,7 @@ function compile(tree, opts) {
   const link = (r, inner) => `<a class="xref" data-target="${r.sub && r.sub.length ? r.id + "-" + r.sub.join("") : r.id}">${inner}</a>`;
   const label = (r, bare, extra = "") => {
     if (r.kind === "sec") return esc(r.display);
+    if (r.kind === "hyp") return esc(bare ? r.bare : r.shown);
     const n = r.num + r.sub.join("") + extra;
     return esc(bare ? n : fmt(n));
   };
@@ -920,7 +950,7 @@ function compile(tree, opts) {
   }
 
   /* --- 文中の記法 --- */
-  const RAW = new Set(["ref", "refn", "rep", "lbl", "j", "cite", "mirror"]);
+  const RAW = new Set(["ref", "refn", "rep", "lbl", "j", "cite", "mirror", "hyp", "exref"]);
   function R(s) {
     let i = 0;
     function parse(inBrace) {
@@ -1000,6 +1030,12 @@ function compile(tree, opts) {
         case "j": return esc(arg);
         case "cite": return `<span class="cite">[${esc(arg)}]</span>`;
         case "mirror": return `<span class="mir" title="ミラー：${esc(arg)}">◇</span>`;
+        case "hyp": { const hs = hypShow.get(arg); return hs ? `<span class="hyp" id="${hs.id}">${esc(hs.shown)}</span>` : ""; }
+        case "exref": {
+          const r = labels.get(arg.trim());
+          if (r && r.kind === "hyp") { if (!r.ex) { warn(`「${arg.trim()}」は例文の中にありません。`); return bad(arg); } return link({ id: r.ex.id, sub: r.ex.sub }, esc(fmt(r.ex.num + r.ex.sub.join("")))); }
+          return refHTML(arg, false);
+        }
       }
       return "";
     }
@@ -1010,7 +1046,16 @@ function compile(tree, opts) {
   const lastOf = new Map();
   (function mark(n) { for (const k of n.children) { lastOf.set(k.line, k.lastLine); mark(k); } })(tree);
   const lnAttr = line => (line === undefined ? "" : ` data-ln="${line}" data-le="${lastOf.get(line) ?? line}"`);
-  const cAttr = line => (line === undefined ? "" : ` data-c="${line % 10}"` + lnAttr(line));
+  // 編集画面で閉じたbulletの下は、閉じたbulletの色でまとめて塗る
+  const colorLine = new Map();
+  (function mark(n, inherit) {
+    for (const k of n.children) {
+      colorLine.set(k.line, inherit ?? k.line);
+      const closed = inherit ?? (opts.collapsed && k.children.length && opts.collapsed.has((k.name || "").trim()) ? k.line : null);
+      mark(k, closed);
+    }
+  })(tree, null);
+  const cAttr = line => (line === undefined ? "" : ` data-c="${(colorLine.get(line) ?? line) % 10}"` + lnAttr(line));
   const fnHTML = fns => (fns || []).map(n => `<sup class="fnref"><a data-fn="${n}">${n}</a></sup>`).join("");
   const isCJK = s => /[぀-ヿ㐀-鿿]/.test(s);
   function glossHTML(g) {
@@ -1036,7 +1081,7 @@ function compile(tree, opts) {
     if (x.gloss) { judg = x.gloss.judg || ""; content = glossHTML(x.gloss); }
     else if (x.subitems) { judg = x.judg; content = (x.text ? `<div class="ex-subhead">${R(x.text)}</div>` : "") + x.subitems.map(it => lineHTML(it, it.letter, ctx)).join(""); }
     else { judg = x.judg; content = R(x.text); }
-    return `<div class="${cls}"${idAttr}${x.gloss ? "" : cAttr(isItem ? x.line : ctx.line)}>${L}<span class="judg">${esc(judg)}</span><div class="ex-text">${content}${fnHTML(x.fns)}</div></div>`;
+    return `<div class="${cls}"${idAttr}${x.gloss ? "" : cAttr(isItem ? x.line : (x.line ?? ctx.line))}>${L}<span class="judg">${esc(judg)}</span><div class="ex-text">${content}${fnHTML(x.fns)}</div></div>`;
   }
   function exHTML(b, isRep, attr) {
     const ctx = { id: b.id, rep: isRep, label: b.label, line: b.min };
@@ -1128,7 +1173,7 @@ function renderInner() {
   const active = editors.find(ed => ed.box.contains(ae));
   const sS = ae && ae.selectionStart !== undefined ? ae.selectionStart : 0, sE = ae && ae.selectionEnd !== undefined ? ae.selectionEnd : 0;
   const tree = parseSource(src.value);
-  const res = compile(tree, { hideCompleted: $("hide-done").checked, rootAsDoc: !!(typeof wf !== "undefined" && wf) });
+  const res = compile(tree, { hideCompleted: $("hide-done").checked, collapsed: typeof collapsedKeys !== "undefined" ? collapsedKeys : null, rootAsDoc: !!(typeof wf !== "undefined" && wf) });
   lastRanges = res.ranges;
   currentTitle = res.title || "（無題）";
   paper.innerHTML = res.html;
@@ -1849,6 +1894,7 @@ class OutlineView {
       if (collapsedKeys.has(key)) collapsedKeys.delete(key); else collapsedKeys.add(key);
       saveCollapsed();
       const a = this.active; this.render(); if (a >= 0 && this.visible()[a]) this.edit(a);
+      if (this.opts.onCollapse) this.opts.onCollapse();
       return;
     }
     if (e.target.closest(".ov-bul")) {
@@ -2051,7 +2097,8 @@ function createEditor(min, max) {
     baseLine: () => ed.min,
     onChange: () => syncEditor(ed),
     onZoom: line => zoomTo(line),
-    onEsc: () => closeEditor(ed)
+    onEsc: () => closeEditor(ed),
+    onCollapse: () => setTimeout(() => keepScroll(render), 0)
   });
   reload(ed);
   box.addEventListener("focusin", () => { lastFocused = ed; });
@@ -2937,12 +2984,12 @@ renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
 const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "settings"]);
-const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))#[\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
+const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))#[\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 function hlRest(s) {
   let out = "", last = 0;
   s.replace(HL_RE, (m, lbl, ref, cmd, tag, html, br, off) => {
     out += esc(s.slice(last, off));
-    const cls = lbl ? "hl-lbl" : ref ? "hl-ref" : cmd ? "hl-cmd" : tag ? (KNOWN_TAG.has(tag.slice(1).toLowerCase()) ? "hl-tag" : "hl-tag2") : html ? "hl-html" : "hl-br";
+    const cls = lbl ? "hl-lbl" : ref ? "hl-ref" : cmd ? "hl-cmd" : tag ? (KNOWN_TAG.has(tag.slice(1).toLowerCase()) || /^#H[BP]?([A-Za-z0-9]+-)?$/.test(tag) ? "hl-tag" : "hl-tag2") : html ? "hl-html" : "hl-br";
     out += `<span class="${cls}">${esc(m)}</span>`;
     last = off + m.length;
     return m;
@@ -3368,7 +3415,8 @@ let lpLo = 0, lpHi = null, lpTimer = null;
 const lpOv = new OutlineView($("lp-ov"), {
   baseLine: () => lpLo,
   onChange: () => lpChanged(),
-  onZoom: line => zoomTo(line)
+  onZoom: line => zoomTo(line),
+  onCollapse: () => keepScroll(render)
 });
 function lpRange() { const L = srcLines(); return zoom ? [zoom.line, zoom.max] : [0, L.length - 1]; }
 function lpRefresh(force) {
