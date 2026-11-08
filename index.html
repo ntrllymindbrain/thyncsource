@@ -92,10 +92,10 @@ textarea {
   box-shadow: 0 1px 2px rgba(20,30,50,.08), 0 6px 24px rgba(20,30,50,.06); border-radius: 2px;
   font-family: var(--font-paper); font-size: var(--paper-size); line-height: 1.95;
 }
-.paper h1 { font-size: 21px; font-weight: 600; text-align: center; line-height: 1.6; margin: 0 0 1.6em; text-wrap: balance; }
-.paper h2 { font-size: 17px; font-weight: 600; margin: 2em 0 .6em; }
-.paper h3 { font-size: 16px; font-weight: 600; margin: 1.6em 0 .4em; }
-.paper h4 { font-size: 15px; font-weight: 600; margin: 1.4em 0 .3em; }
+.paper h1 { font-size: 1.3125em; font-weight: 600; text-align: center; line-height: 1.6; margin: 0 0 1.6em; text-wrap: balance; }
+.paper h2 { font-size: 1.0625em; font-weight: 600; margin: 2em 0 .6em; }
+.paper h3 { font-size: 1em; font-weight: 600; margin: 1.6em 0 .4em; }
+.paper h4 { font-size: .9375em; font-weight: 600; margin: 1.4em 0 .3em; }
 .secnum { margin-right: .8em; font-variant-numeric: tabular-nums; }
 .paper p { margin: 0 0 .3em; text-indent: 1em; text-align: justify; }
 .paper ol.list, .paper ul.list { margin: .4em 0 .8em; padding-left: 2.2em; }
@@ -125,7 +125,7 @@ textarea {
 .xref.bad { color: var(--bad); font-weight: 600; cursor: help; }
 .cite { color: var(--muted); }
 .fnref a { color: var(--accent); cursor: pointer; text-decoration: none; font-size: .75em; }
-.fns { margin: 2.4em 0 0; padding: 1em 0 0 1.6em; border-top: 1px solid var(--rule); font-size: 13.5px; line-height: 1.8; }
+.fns { margin: 2.4em 0 0; padding: 1em 0 0 1.6em; border-top: 1px solid var(--rule); font-size: .84em; line-height: 1.8; }
 .flash { animation: flash 1.4s ease-out; }
 .paper { touch-action: manipulation; }
 .paper [data-b] { border-radius: 3px; transition: box-shadow .15s; }
@@ -338,6 +338,37 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .toc-i { display: block; padding-left: calc(var(--tl) * 1.5em); color: var(--ink); }
 .toc-i:hover { color: var(--accent); }
 .toc-i .secnum { color: var(--muted); }
+.viewbar { max-width: 760px; margin: 0 auto 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.viewbar > button { font-size: 12px; padding: 2px 9px; }
+.viewbar .vb-space { flex: 1; }
+.pane-out .viewbar .scalebar { margin: 0; }
+.page-count { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.page-pop { width: min(380px, calc(100vw - 24px)); grid-template-columns: 5em minmax(0, 1fr); }
+.page-pop input[type="number"] { width: 4.5em; font: inherit; font-size: 13px; padding: 3px 5px; border: 1px solid var(--rule); border-radius: 5px; background: var(--paper); color: var(--ink); }
+.pg-lab { font-size: 12.5px; color: var(--muted); }
+.pg-preset-row { display: flex; gap: 6px; } .pg-preset-row select { flex: 1; min-width: 0; }
+.pg-preset-row button { font-size: 12px; padding: 2px 8px; }
+.pg-margins { display: grid; grid-template-columns: repeat(2, auto); justify-content: start; gap: 4px 8px; font-size: 12px; color: var(--muted); }
+.pg-margins label { display: flex; gap: 3px; align-items: center; }
+.pg-checks { display: grid; gap: 4px; font-size: 12.5px; }
+.pg-checks label { display: flex; gap: 6px; align-items: center; }
+#pages[hidden] { display: none; }
+#pages { zoom: var(--paper-scale, 1); --ink: #1c2230; --muted: #5d6676; --rule: #d3d8df; --accent: #2d4f86; --accent-soft: #e3eaf5; --paper: #fff; color-scheme: light; }
+#pages .pagedjs_pages { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 4px 0 48px; }
+#pages .pagedjs_page { background: #fff; color: #111; box-shadow: 0 1px 3px rgba(20,30,50,.14), 0 8px 26px rgba(20,30,50,.10); }
+.paper.paged { max-width: none; margin: 0; padding: 0; box-shadow: none; background: transparent; border-radius: 0; zoom: 1; color: #111; }
+#pages .xref { color: inherit; }
+#pages [data-c] { background: none !important; }
+#pages [data-b]:hover { box-shadow: none; }
+#pages .pagedjs_margin-content { font-family: var(--font-paper); font-size: 9pt; color: #444; }
+@media print {
+  header.bar, .pane-in, .viewbar, .out-hint, .crumbs, .clip-dock, .toast, .back-btn, .drawer, .pop, .find-pop, .keys-pop, .dialog-back, #paper, .sel-edit, .mpick { display: none !important; }
+  html, body, .app, main { display: block !important; height: auto !important; overflow: visible !important; background: #fff !important; }
+  .pane-out { padding: 0 !important; overflow: visible !important; }
+  #pages { zoom: 1 !important; }
+  #pages .pagedjs_pages { display: block !important; padding: 0 !important; gap: 0 !important; }
+  #pages .pagedjs_page { box-shadow: none !important; margin: 0 !important; }
+}
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent-soft); } }
 
@@ -394,10 +425,18 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
       <ul class="warns" id="warns"></ul>
     </section>
     <section class="pane-out" id="pane-out">
+      <div class="viewbar">
+        <div class="seg" role="group" aria-label="表示の形"><button type="button" data-view="web">Web</button><button type="button" data-view="page">ページ</button></div>
+        <button type="button" id="btn-pageset" aria-expanded="false">ページ設定</button>
+        <button type="button" id="btn-pdf">PDFに書き出す</button>
+        <span class="page-count" id="page-count"></span>
+        <span class="vb-space"></span>
       <div class="scalebar"><span>表示の大きさ</span><button type="button" data-scale="paper" data-d="-1" aria-label="表示を小さく">−</button><button type="button" class="scale-val" data-scale="paper" data-d="0" id="paper-scale-val" title="100%に戻す">100%</button><button type="button" data-scale="paper" data-d="1" aria-label="表示を大きく">＋</button></div>
+      </div>
       <nav class="crumbs" id="crumbs" aria-label="ズームの位置" hidden></nav>
       <p class="out-hint">段落・例文・見出しをダブルクリック（スマホはダブルタップ）すると、その部分が箇条書きの編集欄になります（いくつでも開けます）。スマホでは、文字を選んでからダブルタップすると選んだ範囲をまとめて開きます。文字を選んで ⌘+Opt+E でもまとめて開けます。例文番号をクリックすると参照が入り、本文の参照をクリックするとその例文へ飛びます。</p>
       <article class="paper" id="paper"></article>
+      <div id="pages" hidden></div>
     </section>
   </main>
   <div class="pop wf-pop" id="wf-pop" hidden>
@@ -413,6 +452,19 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <div class="wf-acts"><button type="button" id="wf-load" class="primary">読み込む</button><button type="button" id="wf-sync">Workflowyへ保存</button><button type="button" id="wf-pull">Workflowyから取り込む</button><button type="button" id="wf-unlink">つなぐのをやめる</button></div>
     <p class="hint">保存は ⌘+S でもできます。消した行はWorkflowyから消さず、「thyncSource 削除済み」というbulletの下へ移します。Workflowy側で直した分は、こちらに未保存の変更がなければ1分ごとに自動で取り込みます。未保存の変更があるときは、保存したあとに取り込みます。</p>
     <p class="wf-status" id="wf-doc-status" role="status"></p>
+  </div>
+  <div class="pop page-pop" id="page-pop" hidden>
+    <label for="pg-preset">型</label>
+    <div class="pg-preset-row"><select id="pg-preset"></select><button type="button" id="pg-save" title="今の設定に名前を付けて残す">保存</button><button type="button" id="pg-del">削除</button></div>
+    <label for="pg-size">用紙</label>
+    <select id="pg-size"><option value="A4">A4（210×297mm）</option><option value="B5">B5（182×257mm）</option><option value="A5">A5（148×210mm）</option><option value="Letter">US Letter</option></select>
+    <span class="pg-lab">余白（mm）</span>
+    <div class="pg-margins"><label>上<input type="number" id="pg-mt" min="0" max="80" step="0.5"></label><label>下<input type="number" id="pg-mb" min="0" max="80" step="0.5"></label><label>左<input type="number" id="pg-ml" min="0" max="80" step="0.5"></label><label>右<input type="number" id="pg-mr" min="0" max="80" step="0.5"></label></div>
+    <label for="pg-fs">文字（pt）</label><input type="number" id="pg-fs" min="6" max="20" step="0.5">
+    <label for="pg-lh">行間</label><input type="number" id="pg-lh" min="1" max="3" step="0.05">
+    <span class="pg-lab">その他</span>
+    <div class="pg-checks"><label><input type="checkbox" id="pg-indent"> 段落の頭を1字下げる</label><label><input type="checkbox" id="pg-num"> ページ番号を付ける</label></div>
+    <p class="hint" id="pg-note">文書の #settings に page-size（A4 など）・margin（例：20 25）・font-size（pt）・line-height を書くと、その文書ではそちらが優先されます。PDFは「PDFに書き出す」→ 印刷画面の「PDFとして保存」で作れます（claude.ai上の試作では印刷できません）。</p>
   </div>
   <div class="pop" id="font-pop" hidden>
     <label for="f-latin">欧文</label><select id="f-latin"></select>
@@ -667,6 +719,7 @@ function compile(tree, opts) {
   const byId = new Map();
   let para = null;
   const secCounters = [];
+  const secStack = []; // 今いる節：{ level, from, to }
   let exCount = 0, chapter = 0, exTotal = 0;
 
   // 各ブロックが入力のどの行から来たか（ダブルクリック編集で使う）
@@ -774,7 +827,9 @@ function compile(tree, opts) {
         inf.labels.forEach(l => defLabel(l, { kind: "sec", display: num, id: b.id }));
         byId.set(b.id, b);
         blocks.push(b);
+        secStack.push({ level: depth + 1, from: c.line, to: subEnd(c), id: b.id });
         walk(c, depth + 1);
+        secStack.pop();
         flush();
         continue;
       }
@@ -785,15 +840,13 @@ function compile(tree, opts) {
         blocks.push({ type: "list", ordered: inf.tags.has("olist"), lead: inf.text, items, min: c.line, max: subEnd(c) });
         continue;
       }
-      if (/^\{(?:tableofcontent|toc)\}$/i.test(inf.text)) {
+      const tm = inf.text.match(/^\{toc(?:-(n|[1-5]))?\}$/i);
+      if (tm) {
         flush();
-        // そのbulletの下に節があればその範囲、なければそのbulletが置かれている範囲の節を並べる
-        const secUnder = n => n.children.some(k => info(k).tags.has("sec") || secUnder(k));
-        let from, to;
-        if (secUnder(c)) { from = c.line; to = subEnd(c); }
-        else if (node.line !== undefined) { from = node.line; to = subEnd(node); }
-        else { const ks = node.children; from = ks.length ? ks[0].line : 0; to = ks.length ? subEnd(ks[ks.length - 1]) : Infinity; }
-        blocks.push({ type: "toc", from, to, min: c.line, max: c.lastLine });
+        // {toc}：文書全体。{toc-n}：置かれた節より下の見出しすべて。{toc-1}〜{toc-5}：置かれた節より下の、その階層まで
+        const sec = secStack.length ? secStack[secStack.length - 1] : null;
+        const mode = tm[1] ? tm[1].toLowerCase() : "all";
+        blocks.push({ type: "toc", mode, sec: mode === "all" ? null : sec, min: c.line, max: c.lastLine });
         continue;
       }
       const mm = inf.text.match(/^\{mirror:([^}]+)\}$/);
@@ -926,7 +979,7 @@ function compile(tree, opts) {
         case "lb": return "{";
         case "rb": return "}";
         case "//": return "//";
-        case "tableofcontent": case "toc": warn("目次 {tableofcontent} は、1つのbulletに単独で書いてください。"); return "";
+        case "toc": warn("目次 {toc} は、1つのbulletに単独で書いてください。"); return "";
         default: warn(`知らない記法 {${name}} があります。`); return esc(`{${name}}`);
       }
     }
@@ -1024,7 +1077,11 @@ function compile(tree, opts) {
       }
       else { warn(`再掲 {rep:${b.label}} の例文が見つかりません。`); html += `<p${at}>${bad(b.label)}</p>`; }
     } else if (b.type === "toc") {
-      const hs = blocks.filter(x => x.type === "h" && x.min >= b.from && x.min <= b.to);
+      let hs = blocks.filter(x => x.type === "h");
+      if (b.mode !== "all") {
+        const lv0 = b.sec ? b.sec.level : 0;
+        hs = hs.filter(x => (!b.sec || (x.min > b.sec.from && x.min <= b.sec.to)) && x.level > lv0 && (b.mode === "n" || x.level <= lv0 + Number(b.mode)));
+      }
       const base = hs.length ? Math.min(...hs.map(x => x.level)) : 1;
       html += `<nav class="toc"${at}${lnAttr(b.min)} aria-label="目次"><div class="toc-title">目次</div>` +
         (hs.length ? hs.map(x => `<a class="xref toc-i" data-target="${x.id}" style="--tl:${x.level - base}"><span class="secnum">${esc(x.num)}</span>${R(x.text)}</a>`).join("") : `<p class="empty-note">この範囲には #sec の節がありません。</p>`) +
@@ -1038,7 +1095,7 @@ function compile(tree, opts) {
   if (footnotes.length) html += `<ol class="fns">` + footnotes.map((f, i) => `<li id="fn-${i + 1}"${cAttr(f.line)}>${R(f.text)}</li>`).join("") + `</ol>`;
   if (!blocks.length && !title) html = `<div class="empty">左の欄にWorkflowyの箇条書きを貼り付けると、ここに論文の形で表示されます。</div>`;
 
-  return { html, warnings, ranges, title: title.replace(/<[^>]+>|\{[^}]*\}/g, ""), stats: { nodes: tree.count || 0, examples: exTotal, footnotes: footnotes.length } };
+  return { html, warnings, ranges, settings, title: title.replace(/<[^>]+>|\{[^}]*\}/g, ""), stats: { nodes: tree.count || 0, examples: exTotal, footnotes: footnotes.length } };
 }
 
 function needSpace(a, b) {
@@ -1076,11 +1133,14 @@ function renderInner() {
   currentTitle = res.title || "（無題）";
   paper.innerHTML = res.html;
   applyZoomView();
+  lastPaperHTML = paper.innerHTML;
+  lastDocSettings = res.settings || {};
   mountEditors();
   if (src._paint) src._paint();
   if (zoom && document.activeElement !== zsrc) { zsrc.value = zoomSegment().text; if (zsrc._paint) zsrc._paint(); }
   if (active && editors.includes(active) && ae && ae.isConnected && active.box.contains(ae)) { ae.focus({ preventScroll: true }); if (ae.setSelectionRange) ae.setSelectionRange(sS, sE); }
   lpRefresh();
+  if (typeof viewMode !== "undefined" && viewMode === "page") schedulePages();
   warnsEl.innerHTML = res.warnings.map(w => `<li class="${w.kind}">${esc(w.msg)}</li>`).join("");
   const n = res.warnings.filter(w => w.kind === "warn").length;
   chip.textContent = `警告 ${n}`;
@@ -2877,7 +2937,7 @@ renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
 const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "settings"]);
-const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror):[^}]*\})|([_^]\{|\{[a-z]+:|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))#[\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
+const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))#[\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 function hlRest(s) {
   let out = "", last = 0;
   s.replace(HL_RE, (m, lbl, ref, cmd, tag, html, br, off) => {
@@ -3511,10 +3571,185 @@ window.addEventListener("keydown", e => {
   if (!fpPop.hidden && CMD(e) && !e.altKey && e.code === "KeyG") { e.preventDefault(); fpMove(e.shiftKey ? -1 : 1); }
 }, true);
 
+/* ---------- ページ表示（用紙・余白・行間を決めてページに割り付ける。PDFへ） ---------- */
+const PAGED_URL = "https://cdn.jsdelivr.net/npm/pagedjs@0.4.3/dist/paged.min.js";
+const PAPER_SIZES = { A4: "210mm 297mm", B5: "182mm 257mm", A5: "148mm 210mm", Letter: "8.5in 11in" };
+const DEFAULT_PAGE = { size: "A4", mt: 25, mb: 25, ml: 25, mr: 25, fs: 10.5, lh: 1.7, indent: true, num: true };
+const BUILTIN_PRESETS = [
+  { name: "標準（A4・余白25mm）", cfg: { ...DEFAULT_PAGE } },
+  { name: "抄録向け（行間を詰める）", cfg: { ...DEFAULT_PAGE, fs: 10, lh: 1.3, mt: 20, mb: 20, ml: 20, mr: 20 } },
+  { name: "US Letter（余白1インチ）", cfg: { ...DEFAULT_PAGE, size: "Letter", mt: 25.4, mb: 25.4, ml: 25.4, mr: 25.4 } }
+];
+let viewMode = store.get("thync.view") || "web";
+let pageCfg = { ...DEFAULT_PAGE };
+try { pageCfg = Object.assign(pageCfg, JSON.parse(store.get("thync.page") || "{}")); } catch (e) {}
+let userPresets = [];
+try { userPresets = JSON.parse(store.get("thync.pagepresets") || "[]"); } catch (e) {}
+var lastPaperHTML = "", lastDocSettings = {};
+
+function docPageOverrides(s) {
+  const o = {};
+  if (s["page-size"]) { const k = Object.keys(PAPER_SIZES).find(x => x.toLowerCase() === String(s["page-size"]).toLowerCase().replace(/^jis-/, "")); if (k) o.size = k; }
+  if (s["margin"]) { const v = String(s["margin"]).split(/[\s,]+/).map(parseFloat).filter(x => !isNaN(x)); if (v.length) { const [t, r = t, b = t, l = r] = v; Object.assign(o, { mt: t, mr: r, mb: b, ml: l }); } }
+  for (const [k, f] of [["margin-top", "mt"], ["margin-bottom", "mb"], ["margin-left", "ml"], ["margin-right", "mr"]]) if (s[k] && !isNaN(parseFloat(s[k]))) o[f] = parseFloat(s[k]);
+  if (s["font-size"] && !isNaN(parseFloat(s["font-size"]))) o.fs = parseFloat(s["font-size"]);
+  if (s["line-height"] && !isNaN(parseFloat(s["line-height"]))) o.lh = parseFloat(s["line-height"]);
+  return o;
+}
+const effectivePage = () => ({ ...pageCfg, ...docPageOverrides(lastDocSettings) });
+function pageCSS(c) {
+  return `@page { size: ${PAPER_SIZES[c.size] || PAPER_SIZES.A4}; margin: ${c.mt}mm ${c.mr}mm ${c.mb}mm ${c.ml}mm;` +
+    (c.num ? ` @bottom-center { content: counter(page); }` : "") + ` }
+.paper.paged { font-size: ${c.fs}pt; line-height: ${c.lh}; }
+.paper.paged .ex { margin: ${(c.lh * 0.45).toFixed(2)}em 0 ${(c.lh * 0.5).toFixed(2)}em; }
+${c.indent ? "" : ".paper.paged p { text-indent: 0; }"}
+.paper.paged h1, .paper.paged h2, .paper.paged h3, .paper.paged h4 { break-after: avoid; }
+.paper.paged .ex, .paper.paged .toc-i { break-inside: avoid; }`;
+}
+
+let pagedLoading = null, lastPreviewer = null, pagesToken = 0, pagesTimer = null;
+function loadPaged() {
+  if (window.PagedModule) return Promise.resolve();
+  if (pagedLoading) return pagedLoading;
+  pagedLoading = new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = PAGED_URL; s.onload = res;
+    s.onerror = () => { pagedLoading = null; rej(new Error("load")); };
+    document.head.appendChild(s);
+  });
+  return pagedLoading;
+}
+function schedulePages(ms = 450) { clearTimeout(pagesTimer); pagesTimer = setTimeout(renderPages, ms); }
+async function renderPages() {
+  if (viewMode !== "page") return;
+  const token = ++pagesToken, host = $("pages");
+  $("page-count").textContent = "ページに割り付けています…";
+  try { await loadPaged(); }
+  catch (e) { host.innerHTML = `<div class="empty">ページ表示の部品を読み込めませんでした。インターネットにつながっているか確かめてください。</div>`; $("page-count").textContent = ""; return; }
+  if (token !== pagesToken) return;
+  const work = document.createElement("div");
+  work.className = "paper paged";
+  work.innerHTML = lastPaperHTML;
+  work.querySelectorAll(".inline-edit, .empty").forEach(x => x.remove());
+  const frag = document.createDocumentFragment(); frag.appendChild(work);
+  const ratio = pane.scrollHeight ? pane.scrollTop / pane.scrollHeight : 0;
+  if (lastPreviewer) { try { lastPreviewer.polisher.destroy(); } catch (e) {} }
+  host.innerHTML = "";
+  host.style.zoom = "1"; // 割り付けの計測中は拡大しない
+  const pv = new PagedModule.Previewer();
+  lastPreviewer = pv;
+  try {
+    const flow = await pv.preview(frag, [{ "thyncsource-page.css": pageCSS(effectivePage()) }], host);
+    if (token !== pagesToken) return;
+    $("page-count").textContent = `全 ${flow.total || (flow.pages && flow.pages.length) || host.querySelectorAll(".pagedjs_page").length} ページ`;
+  } catch (e) {
+    $("page-count").textContent = "";
+    host.innerHTML = `<div class="empty">ページに割り付けられませんでした（${esc(e.message || String(e))}）。</div>`;
+  } finally {
+    host.style.zoom = "";
+    if (ratio) pane.scrollTop = ratio * pane.scrollHeight;
+  }
+}
+function applyViewMode() {
+  for (const b of document.querySelectorAll("[data-view]")) b.setAttribute("aria-pressed", String(b.dataset.view === viewMode));
+  const page = viewMode === "page";
+  paper.hidden = page;
+  $("pages").hidden = !page;
+  $("page-count").textContent = "";
+  if (page) { editors = []; renderPages(); }
+  else { pagesToken++; }
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-view]"); if (!b) return;
+  viewMode = b.dataset.view; store.set("thync.view", viewMode);
+  applyViewMode();
+  if (viewMode === "web") keepScroll(render);
+});
+// ページ表示の上でも、参照・例文番号・ミラー印は使える。ダブルクリックでWeb表示に戻ってその部分を開く
+$("pages").addEventListener("mousedown", e => { if (e.target.closest("[data-exline],[data-target],[data-fn],.mir-mark")) e.preventDefault(); });
+$("pages").addEventListener("click", e => {
+  const num = e.target.closest("[data-exline]");
+  if (num) { refFromNumber(num); return; }
+  const a = e.target.closest("[data-target],[data-fn],.mir-mark"); if (!a) return;
+  let el = null;
+  if (a.dataset.target) el = $("pages").querySelector(`[id="${a.dataset.target}"]`) || $("pages").querySelector(`[id="${a.dataset.target.split("-")[0]}"]`);
+  else if (a.dataset.fn) el = $("pages").querySelector(`[id="fn-${a.dataset.fn}"]`);
+  else el = [...$("pages").querySelectorAll(`[data-ln="${a.dataset.mirrorSrc}"]`)].find(x => !x.closest(".mir-ex") && !x.classList.contains("mir"));
+  if (el) jumpTo(el);
+});
+$("pages").addEventListener("dblclick", e => {
+  const el = e.target.closest("[data-b]"); if (!el) return;
+  const r = lastRanges[+el.dataset.b]; if (!r) return;
+  const ln = e.target.closest("[data-ln]");
+  viewMode = "web"; store.set("thync.view", viewMode); applyViewMode();
+  openRange(r.min, r.max, ln ? +ln.dataset.ln : undefined);
+});
+
+// ページ設定の画面
+function presetList() { return [...BUILTIN_PRESETS.map(p => ({ ...p, builtin: true })), ...userPresets]; }
+function fillPagePop() {
+  const c = effectivePage(), o = docPageOverrides(lastDocSettings);
+  $("pg-preset").innerHTML = `<option value="">（型を選ぶ）</option>` + presetList().map((p, i) => `<option value="${i}">${esc(p.name)}</option>`).join("");
+  $("pg-size").value = c.size; $("pg-mt").value = c.mt; $("pg-mb").value = c.mb; $("pg-ml").value = c.ml; $("pg-mr").value = c.mr;
+  $("pg-fs").value = c.fs; $("pg-lh").value = c.lh; $("pg-indent").checked = !!c.indent; $("pg-num").checked = !!c.num;
+  const ov = Object.keys(o);
+  for (const [k, id] of [["size", "pg-size"], ["mt", "pg-mt"], ["mb", "pg-mb"], ["ml", "pg-ml"], ["mr", "pg-mr"], ["fs", "pg-fs"], ["lh", "pg-lh"]]) { $(id).disabled = ov.includes(k); $(id).title = ov.includes(k) ? "この文書の #settings で決まっています" : ""; }
+}
+function readPagePop() {
+  pageCfg = { size: $("pg-size").value, mt: +$("pg-mt").value || 0, mb: +$("pg-mb").value || 0, ml: +$("pg-ml").value || 0, mr: +$("pg-mr").value || 0,
+    fs: +$("pg-fs").value || 10.5, lh: +$("pg-lh").value || 1.7, indent: $("pg-indent").checked, num: $("pg-num").checked };
+  store.set("thync.page", JSON.stringify(pageCfg));
+  schedulePages(250);
+}
+for (const id of ["pg-size", "pg-mt", "pg-mb", "pg-ml", "pg-mr", "pg-fs", "pg-lh", "pg-indent", "pg-num"]) $(id).addEventListener("change", readPagePop);
+$("pg-preset").addEventListener("change", e => {
+  const p = presetList()[+e.target.value]; if (!p) return;
+  pageCfg = { ...DEFAULT_PAGE, ...p.cfg }; store.set("thync.page", JSON.stringify(pageCfg));
+  fillPagePop(); $("pg-preset").value = e.target.value; schedulePages(100);
+});
+// 名前の入力：ページの中の小さな入力欄で受ける
+$("pg-save").addEventListener("click", () => {
+  const row = $("pg-save").parentNode;
+  if (row.querySelector("input")) return;
+  const inp = document.createElement("input"); inp.type = "text"; inp.placeholder = "型の名前（例：○○学会 予稿）"; inp.className = "pg-name";
+  row.replaceChildren(inp); inp.focus();
+  const restore = () => { fillPagePop(); row.replaceChildren($("pg-preset"), $("pg-save"), $("pg-del")); };
+  inp.addEventListener("keydown", ev => {
+    if (ev.isComposing) return;
+    if (ev.key === "Enter") { const name = inp.value.trim(); if (name) { userPresets = userPresets.filter(x => x.name !== name); userPresets.push({ name, cfg: { ...pageCfg } }); store.set("thync.pagepresets", JSON.stringify(userPresets)); toast(`型「${name}」を保存しました`); } restore(); }
+    else if (ev.key === "Escape") { ev.stopPropagation(); restore(); }
+  });
+  inp.addEventListener("blur", () => setTimeout(() => { if (inp.isConnected) restore(); }, 150));
+});
+$("pg-del").addEventListener("click", () => {
+  const i = +$("pg-preset").value, p = presetList()[i];
+  if (!p || p.builtin) { toast("自分で保存した型だけ削除できます"); return; }
+  userPresets = userPresets.filter(x => x.name !== p.name); store.set("thync.pagepresets", JSON.stringify(userPresets)); fillPagePop();
+});
+$("btn-pageset").addEventListener("click", e => {
+  e.stopPropagation();
+  const pop = $("page-pop"); pop.hidden = !pop.hidden;
+  $("btn-pageset").setAttribute("aria-expanded", String(!pop.hidden));
+  if (!pop.hidden) fillPagePop();
+  if (!pop.hidden && viewMode !== "page") { viewMode = "page"; store.set("thync.view", viewMode); applyViewMode(); }
+});
+document.addEventListener("click", e => {
+  const pop = $("page-pop");
+  if (!pop.hidden && !pop.contains(e.target) && e.target !== $("btn-pageset")) { pop.hidden = true; $("btn-pageset").setAttribute("aria-expanded", "false"); }
+});
+$("btn-pdf").addEventListener("click", async () => {
+  if (viewMode !== "page") { viewMode = "page"; store.set("thync.view", viewMode); applyViewMode(); }
+  clearTimeout(pagesTimer);
+  await renderPages();
+  toast("印刷の画面で「PDFとして保存」を選んでください");
+  setTimeout(() => { try { window.print(); } catch (e) { toast("このページからは印刷できません"); } }, 300);
+});
+
 src.value = store.get("thync.src") || SAMPLE;
 { const zl = store.get("thync.zoom"); if (zl) { const L = srcLines(), k = +zl; if (isBullet(L[k] || "")) zoom = { line: k, max: blockEndLine(L, k), text: L[k].trim() }; } }
 applyLpMode();
 render();
+applyViewMode();
 applyColor();
 recordHistory("開いたときの状態");
 </script>
