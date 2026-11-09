@@ -421,6 +421,30 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .pg-serial { position: absolute; right: 6px; bottom: 4px; font-family: var(--font-ui); font-size: 10px; color: #9aa3b2; opacity: .8; pointer-events: none; font-variant-numeric: tabular-nums; }
 #pages .pagedjs_page.pn-none .pagedjs_margin-bottom-center { visibility: hidden; }
 @media print { .pg-serial { display: none !important; } }
+.ph { font-weight: 600; margin: 1.4em 0 .6em; line-height: 1.5; }
+.ph-title { font-size: 1.3125em; text-align: center; margin: 0 0 1.4em; text-wrap: balance; }
+.ph-h1 { font-size: 1.25em; } .ph-h2 { font-size: 1.1em; } .ph-h3 { font-size: 1em; }
+.envhead { font-weight: 600; margin: 1.6em 0 .5em; }
+.envhead-abstract { text-align: center; font-size: .95em; }
+[data-env="abstract"]:not(.envhead) { margin-left: 2.5em; margin-right: 2.5em; font-size: .92em; }
+.paper p[data-env="abstract"] { text-indent: 1em; }
+.ref-entry { text-indent: -2em !important; padding-left: 2em; margin: 0 0 .35em; text-align: left; }
+.fns li.fn-star { list-style: none; }
+.fns li.fn-star::before { content: "* "; margin-left: -1em; }
+.hpop { position: fixed; z-index: 60; max-height: 60vh; overflow: auto; background: #fffdf8; border: 1px solid #b9b2a3; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.18); font-size: 13px; line-height: 1.5; }
+.hpop .hp-head { position: sticky; top: 0; background: #f3efe6; padding: 6px 10px; font-size: 11.5px; color: #555; border-bottom: 1px solid #ddd5c5; }
+.hpop ol { list-style: none; margin: 0; padding: 4px; }
+.hpop li { padding: 6px 8px; border-radius: 6px; border: 1px solid transparent; }
+.hpop li.on { background: #e8f0fb; border-color: #8fb1e3; }
+.hpop .hp-when { font-size: 11px; color: #888; }
+.hpop .hp-text { white-space: pre-wrap; word-break: break-word; }
+.hpop .hp-diff { background: #fde7a7; }
+.hpop .hp-cut { color: #c0392b; font-weight: bold; }
+.hpop .hp-empty { color: #aaa; }
+.ov-mirtxt { border-bottom: 1px dashed #9a8fbf; }
+.ov-mirkids { color: #9a8fbf; font-size: .85em; margin-left: .4em; }
+.ov-ta-mir { background: #f4f1fb !important; }
+.docsep { margin: 3em 0; border-top: 3px double var(--rule); }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent-soft); } }
 
@@ -567,7 +591,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
   <div class="keys-pop" id="keys-pop" hidden role="dialog" aria-label="ショートカット一覧">
     <div class="kp-head"><b>ショートカット（Mac）</b><button type="button" id="kp-close">閉じる</button></div>
     <div class="kp-body">
-      <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌥+Enter</kbd></td><td>ノートの行を足す（Workflowyでは Shift+Enter）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>複製</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
+      <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌥+Enter</kbd></td><td>ノートの行を足す（Workflowyでは Shift+Enter）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>複製</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>Backspace（行頭）</kbd></td><td>前の行につなぐ（子は前の行の子になる）</td></tr><tr><td><kbd>⇧+⌥+⌘+↑ ／ ↓</kbd></td><td>このbulletの変更履歴を選ぶ（キーを離すと差し替え・Escでやめる）</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
       <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>段落の区切り「 //」を付けて次のbulletへ（文の途中なら付け外し）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr></table>
     </div>
   </div>
@@ -733,13 +757,36 @@ const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(
 const LETTERS = "abcdefghijklmnopqrstuvwxyz";
 const ROMAN = ["i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii"];
 
+// 文書が複数（#doc がいくつも並ぶ）なら、文書ごとに番号・ラベル・脚注を分けて続けて表示する
+function findDocs(tree) {
+  const out = [];
+  (function f(n) { for (const k of n.children) { if (/(^|\s)#doc(\s|$)/i.test(k.name || "")) out.push(k); else f(k); } })(tree);
+  return out;
+}
 function compile(tree, opts) {
+  const docs = findDocs(tree);
+  if (docs.length <= 1) return compileOne(tree, opts);
+  const ranges = [];
+  let html = "", warnings = [], heads = [], first = null, ex = 0, fn = 0;
+  docs.forEach((d, k) => {
+    const r = compileOne({ children: [d], count: tree.count }, { ...opts, prefix: `d${k}-`, ranges });
+    if (!first) first = r;
+    if (k) html += `<div class="docsep" aria-hidden="true"></div>`;
+    html += r.html;
+    warnings = warnings.concat(r.warnings.map(w => ({ ...w, msg: `［${r.title || "文書" + (k + 1)}］` + w.msg })));
+    heads = heads.concat(r.heads);
+    ex += r.stats.examples; fn += r.stats.footnotes;
+  });
+  return { ...first, html, warnings, ranges, heads, stats: { nodes: tree.count || 0, examples: ex, footnotes: fn, docs: docs.length } };
+}
+function compileOne(tree, opts) {
+  const P = opts.prefix || "";
   const warnings = [];
   const warnSet = new Set();
   const warn = (msg, kind = "warn") => { if (!warnSet.has(msg)) { warnSet.add(msg); warnings.push({ msg, kind }); } };
   const cache = new WeakMap();
   let uidN = 0;
-  const uid = () => "b" + (++uidN);
+  const uid = () => P + "b" + (++uidN);
 
   function info(node) {
     if (cache.has(node)) return cache.get(node);
@@ -809,6 +856,7 @@ function compile(tree, opts) {
 
   const blocks = [];
   const footnotes = [];
+  let ackFn = null;
   const byId = new Map();
   let para = null;
   const secCounters = [];
@@ -924,6 +972,33 @@ function compile(tree, opts) {
       // 改ページ・ページ番号の始まり（そのbulletの内容の前に置く）
       if (inf.tags.has("clearpage")) { flush(); blocks.push({ type: "pagebreak" }); }
       if (inf.tags.has("startpagenum")) { flush(); blocks.push({ type: "pnstart" }); }
+      // 見出しの大きさだけを指定する（番号なし）
+      const phc = inf.tags.has("title") ? "title" : inf.tags.has("h1") ? "h1" : inf.tags.has("h2") ? "h2" : inf.tags.has("h3") ? "h3" : null;
+      if (phc && !inf.tags.has("sec")) {
+        flush();
+        blocks.push({ type: "ph", cls: phc, text: inf.text, min: c.line, max: c.lastLine });
+        walk(c, depth); flush();
+        continue;
+      }
+      // 要旨・謝辞・参考文献：そのbullet以下をそれぞれの書式で
+      const env = inf.tags.has("abstract") ? "abstract" : inf.tags.has("acknowledgmentsfn") ? "ackfn" : inf.tags.has("acknowledgments") ? "acknowledgments" : inf.tags.has("references") ? "references" : null;
+      if (env === "ackfn") {
+        const kidsText = c.children.filter(visible).map(collectText).filter(Boolean);
+        const parts = kidsText.length ? kidsText : [inf.text];
+        ackFn = { text: smartJoin(parts), line: c.line };
+        continue;
+      }
+      if (env) {
+        flush();
+        const start = blocks.length;
+        const head = inf.text || { abstract: "Abstract", acknowledgments: "Acknowledgments", references: "References" }[env];
+        blocks.push({ type: "envhead", env, text: head, min: c.line, max: c.lastLine });
+        if (env === "references") {
+          for (const k of c.children.filter(visible)) blocks.push({ type: "refentry", text: collectText(k), min: k.line, max: subEnd(k) });
+        } else { walk(c, depth); flush(); }
+        for (let k = start; k < blocks.length; k++) blocks[k].env = env;
+        continue;
+      }
       if (inf.tags.has("sec")) {
         flush();
         secCounters.length = depth + 1;
@@ -1135,7 +1210,7 @@ function compile(tree, opts) {
     }
   })(tree, null);
   const cAttr = line => (line === undefined ? "" : ` data-c="${(colorLine.get(line) ?? line) % 10}"` + lnAttr(line));
-  const fnHTML = fns => (fns || []).map(n => `<sup class="fnref"><a data-fn="${n}">${n}</a></sup>`).join("");
+  const fnHTML = fns => (fns || []).map(n => `<sup class="fnref"><a data-fn="${P}${n}">${n}</a></sup>`).join("");
   const isCJK = s => /[぀-ヿ㐀-鿿]/.test(s);
   function glossHTML(g) {
     if (g.plain) return g.plain.map((l, i) => `<div${cAttr(g.plainLines[i])}>${R(l)}</div>`).join("");
@@ -1173,16 +1248,27 @@ function compile(tree, opts) {
     return `<div class="ex"${isRep ? "" : ` id="${b.id}"`}${attr}>${num}<div class="ex-body">${body}</div></div>`;
   }
 
-  const ranges = [];
+  const ranges = opts.ranges || [];
   const attrOf = b => {
     if (b.min === undefined) return "";
     ranges.push({ min: b.min, max: b.max });
     return ` data-b="${ranges.length - 1}"`;
   };
-  let html = title ? `<h1${attrOf({ min: docNode.line, max: docNode.lastLine })}><span${cAttr(docNode.line)}>${R(title)}</span></h1>` : "";
+  const star = ackFn ? `<sup class="fnref"><a data-fn="${P}ack">*</a></sup>` : "";
+  let starUsed = false;
+  let html = title ? `<h1${attrOf({ min: docNode.line, max: docNode.lastLine })}><span${cAttr(docNode.line)}>${R(title)}</span>${star}</h1>` : "";
+  if (title && star) starUsed = true;
   for (const b of blocks) {
     const at = attrOf(b);
-    if (b.type === "h") {
+    const before = html.length;
+    if (b.type === "ph") {
+      const s = !starUsed && star && b.cls === "title" ? (starUsed = true, star) : "";
+      html += `<div class="ph ph-${b.cls}"${at}><span${cAttr(b.min)}>${R(b.text)}</span>${s}</div>`;
+    } else if (b.type === "envhead") {
+      html += `<div class="envhead envhead-${b.env}"${at}><span${cAttr(b.min)}>${R(b.text)}</span></div>`;
+    } else if (b.type === "refentry") {
+      html += `<p class="ref-entry"${at}><span${cAttr(b.min)}>${R(b.text)}</span></p>`;
+    } else if (b.type === "h") {
       const tag = "h" + Math.min(b.level + 1, 4);
       html += `<${tag} id="${b.id}"${at}><span class="secnum">${esc(b.num)}</span><span${cAttr(b.min)}>${R(b.text)}</span></${tag}>`;
     } else if (b.type === "p") {
@@ -1219,8 +1305,14 @@ function compile(tree, opts) {
       html += `<div class="listblock"${at}>` + (b.lead ? `<p>${R(b.lead)}</p>` : "") +
         `<${t} class="list"${lnAttr(b.min)}>` + b.items.map(x => `<li${cAttr(x.line)}>${R(x.text)}</li>`).join("") + `</${t}></div>`;
     }
+    // 要旨・謝辞・参考文献の中のブロックには印を付ける（書式はCSSで）
+    if (b.env && html.length > before) html = html.slice(0, before) + html.slice(before).replace(/^<([a-z0-9]+)/i, `<$1 data-env="${b.env}"`);
   }
-  if (footnotes.length) html += `<ol class="fns">` + footnotes.map((f, i) => `<li id="fn-${i + 1}"${cAttr(f.line)}>${R(f.text)}</li>`).join("") + `</ol>`;
+  // 謝辞の脚注（*）：タイトルがなければ最初の見出しか段落に付ける
+  if (star && !starUsed) { html = html.replace(/(<(?:h[1-4]|p)\b[^>]*>[\s\S]*?)(<\/(?:h[1-4]|p)>)/, `$1${star}$2`); }
+  if (footnotes.length || ackFn) html += `<ol class="fns">` +
+    (ackFn ? `<li id="fn-${P}ack" class="fn-star" value="0"${cAttr(ackFn.line)}>${R(ackFn.text)}</li>` : "") +
+    footnotes.map((f, i) => `<li id="fn-${P}${i + 1}"${cAttr(f.line)}${ackFn && i === 0 ? ` value="1"` : ""}>${R(f.text)}</li>`).join("") + `</ol>`;
   if (!blocks.length && !title) html = `<div class="empty">左の欄にWorkflowyの箇条書きを貼り付けると、ここに論文の形で表示されます。</div>`;
 
   const heads = blocks.filter(x => x.type === "h").map(x => ({ id: x.id, level: x.level, num: x.num, line: x.min, end: x.end, html: R(x.text), plain: x.text.replace(/<[^>]+>|\{[^}]*\}/g, "").trim() }));
@@ -1698,8 +1790,16 @@ class OutlineView {
   nextVisible(i) { const v = this.visible(); for (let k = i + 1; k < this.items.length; k++) if (v[k]) return k; return -1; }
   inSel(i) { return this.sel && i >= Math.min(this.sel.a, this.sel.z) && i <= Math.max(this.sel.a, this.sel.z); }
   rowEl(i) { return this.host.querySelector(`.ov-row[data-i="${i}"]`); }
+  // {mirror:x} だけの行なら、元のbulletを探す（{li: 入力全体の行, text: 元の文, kids: 子の数}）
+  mirrorOf(i) {
+    const it = this.items[i]; if (!it) return null;
+    const mm = it.text.trim().match(/^\{mirror:([^}]+)\}$/); if (!mm) return null;
+    return mirrorSource(mm[1].trim());
+  }
   textHTML(i) {
     const it = this.items[i];
+    const ms = this.mirrorOf(i);
+    if (ms) return `<span class="ov-mirtxt" title="ミラー（元：${esc(ms.label)}）。ここで直すと元のbulletも変わります">${hlBody(ms.text) || "​"}</span>` + (ms.kids ? `<span class="ov-mirkids">（子 ${ms.kids}）</span>` : "");
     const mk = this.mark && this.mark.i === i && !this.mark.note ? this.mark : null;
     if (mk) return hlBody(it.text.slice(0, mk.s)) + `<mark class="fp-hit">${esc(it.text.slice(mk.s, mk.e)) || "​"}</mark>` + hlRest(it.text.slice(mk.e));
     return hlBody(it.text);
@@ -1707,7 +1807,7 @@ class OutlineView {
   rowHTML(i) {
     const it = this.items[i], kids = this.hasKids(i), col = this.isCollapsed(i), abs = this.lineOf(i);
     const mirror = /^\{mirror:[^}]+\}$/.test(it.text.trim());
-    return `<div class="ov-row${it.done ? " done" : ""}${this.inSel(i) ? " sel" : ""}" data-i="${i}" style="--lv:${it.lv}"${colorOn ? ` data-c="${((abs % 10) + 10) % 10}"` : ""}>` +
+    return `<div class="ov-row${mirror ? " mirrow" : ""}${it.done ? " done" : ""}${this.inSel(i) ? " sel" : ""}" data-i="${i}" style="--lv:${it.lv}"${colorOn ? ` data-c="${((abs % 10) + 10) % 10}"` : ""}>` +
       `<button type="button" class="ov-tog${kids ? "" : " none"}" tabindex="-1" aria-label="${col ? "開く" : "閉じる"}">${kids ? (col ? "▸" : "▾") : ""}</button>` +
       `<span class="ov-bul${col ? " col" : ""}${mirror ? " mir" : ""}" draggable="true" title="クリックでズーム・ドラッグで移動・Shift+クリックで範囲を選ぶ"></span>` +
       `<div class="ov-main"><div class="ov-text">${this.textHTML(i) || "​"}</div>` +
@@ -1745,6 +1845,9 @@ class OutlineView {
     const div = row.querySelector(".ov-text");
     const ta = document.createElement("textarea");
     ta.className = "ov-ta"; ta.rows = 1; ta.spellcheck = false; ta.value = this.items[i].text;
+    const ms = this.mirrorOf(i);
+    ta._mir = ms;  // ミラー行：元のbulletの文を直接直す
+    if (ms) { ta.value = ms.text; ta.classList.add("ov-ta-mir"); }
     ta.setAttribute("aria-label", "bulletの文");
     div.replaceWith(ta);
     this.active = i; this.ta = ta; this.lastActive = i;
@@ -1758,7 +1861,15 @@ class OutlineView {
     ta.addEventListener("input", e => {
       if (this.ta !== ta) return;
       if (ta.value.includes("\n")) { const p = ta.selectionStart; ta.value = ta.value.replace(/\n/g, " "); ta.setSelectionRange(p, p); }
+      if (ta._mir) {
+        const ms = mirrorSource(ta._mir.label);
+        if (ms) { setSrcLine(ms.li, ms.prefix + ta.value); ta._mir = ms; ta._mir.text = ta.value; }
+        this.fit(); this.changed(); this.refreshMirrors(this.active);
+        return;
+      }
       this.items[this.active].text = ta.value;
+      // {mirror:…} を貼った・書き終えたら、すぐミラーとして表示する
+      if (/^\{mirror:[^}]+\}$/.test(ta.value.trim()) && this.mirrorOf(this.active)) { this.changed(); const a = this.active; setTimeout(() => { if (this.items[a]) { this.render(); this.edit(a, null); } }, 0); return; }
       this.typed = true;
       this.fit(); this.changed();
       if (e.inputType && /^insert/.test(e.inputType)) {
@@ -1784,6 +1895,16 @@ class OutlineView {
     ta.replaceWith(div);
     const row = div.closest(".ov-row");
     if (row && this.items[i]) row.classList.toggle("done", !!this.items[i].done);
+    if (ta._mir) this.refreshMirrors(-1);
+  }
+  // ミラー行と、その元の行の表示を描き直す（編集中の行は除く）
+  refreshMirrors(skip) {
+    this.host.querySelectorAll(".ov-row").forEach(row => {
+      const k = +row.dataset.i; if (k === skip || k === this.active) return;
+      const it = this.items[k]; if (!it) return;
+      if (!row.classList.contains("mirrow") && !/\{lbl:/.test(it.text)) return;
+      const t = row.querySelector(".ov-text"); if (t) t.innerHTML = this.textHTML(k) || "​";
+    });
   }
   editNote(i) {
     this.deactivate();
@@ -1949,16 +2070,19 @@ class OutlineView {
     if (e.isComposing || e.keyCode === 229) return;
     const cmd = CMD(e), k = e.key, i = this.active, it = this.items[i];
     if (i < 0) return;
+    if (k === "Escape" && this.hp) { e.preventDefault(); this.histClose(false); return; }
     if (k === "Escape") { if (this.opts.onEsc) { e.preventDefault(); this.opts.onEsc(); } else { e.preventDefault(); ta.blur(); } return; }
     if (cmd && e.altKey && e.shiftKey && e.code === "KeyM") { e.preventDefault(); this.memo(i); return; }
     if (handleInlineKeys(e, ta)) return;
     if (cmd && !e.shiftKey && !e.altKey && e.code === "KeyZ" && !this.typed && this.undo.length) { e.preventDefault(); this.restoreUndo(); return; }
     const bare = !e.metaKey && !e.ctrlKey && !e.altKey;
+    if (k === "Enter" && bare && !e.shiftKey && ta._mir) { e.preventDefault(); const at = this.end(i) + 1; this.structural(() => { this.items.splice(at, 0, { lv: it.lv, text: "", note: "", done: false }); }, { i: at, c: 0 }); return; }
     if (k === "Enter" && bare && !e.shiftKey) { e.preventDefault(); this.split(ta.selectionStart, ta.selectionEnd); return; }
     if (k === "Enter" && bare && e.shiftKey) { e.preventDefault(); this.paraBreak(ta); return; }
     if (k === "Enter" && e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); this.editNote(i); return; }
     if (k === "Enter" && cmd && !e.shiftKey && !e.altKey) { e.preventDefault(); const c = ta.selectionStart; this.structural(() => { it.done = !it.done; }, { i, c }); return; }
     if (k === "Tab" && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); e.shiftKey ? this.outdent(i) : this.indent(i); return; }
+    if (cmd && e.shiftKey && e.altKey && (k === "ArrowUp" || k === "ArrowDown")) { e.preventDefault(); this.histStep(k === "ArrowUp" ? -1 : 1); return; }
     if (cmd && e.shiftKey && !e.altKey && (k === "ArrowUp" || k === "ArrowDown")) { e.preventDefault(); this.move(i, k === "ArrowUp" ? -1 : 1); return; }
     if (cmd && e.altKey && !e.shiftKey && (k === "ArrowUp" || k === "ArrowDown")) { e.preventDefault(); this.focusSibling(i, k === "ArrowUp" ? -1 : 1); return; }
     if (cmd && e.shiftKey && !e.altKey && e.code === "KeyD") { e.preventDefault(); this.dup(i); return; }
@@ -1969,7 +2093,21 @@ class OutlineView {
     if (k === "Backspace" && bare && !e.shiftKey && ta.selectionStart === 0 && ta.selectionEnd === 0) {
       const prev = this.prevVisible(i);
       if (!it.text && !this.hasKids(i)) { e.preventDefault(); this.structural(() => { this.items.splice(i, 1); if (!this.items.length) this.items.push({ lv: 0, text: "", note: "", done: false }); }); this.edit(Math.max(0, prev)); return; }
-      if (prev >= 0 && !this.hasKids(i) && !it.note) { e.preventDefault(); const p = this.items[prev], L = p.text.length; this.structural(() => { p.text += it.text; this.items.splice(i, 1); }, { i: prev, c: L }); return; }
+      if (ta._mir) { if (prev >= 0) { e.preventDefault(); this.edit(prev, null); } return; }
+      if (prev < 0) return;
+      const p = this.items[prev];
+      if (this.mirrorOf(prev)) { if (!it.text && !this.hasKids(i)) return; e.preventDefault(); this.edit(prev, null); return; }
+      // Workflowyと同じく：前の行に文をつなぎ、この行の子は前の行の子として残す
+      e.preventDefault();
+      const L = p.text.length;
+      this.structural(() => {
+        const z = this.end(i), d = p.lv - it.lv;
+        for (let k = i + 1; k <= z; k++) this.items[k].lv = Math.max(0, this.items[k].lv + d);
+        p.text += it.text;
+        if (it.note) p.note = p.note ? p.note + "\n" + it.note : it.note;
+        this.items.splice(i, 1);
+        if (this.hasKids(prev)) collapsedKeys.delete(this.key(prev));
+      }, { i: prev, c: L });
       return;
     }
     if (bare && !e.shiftKey && (k === "ArrowUp" || k === "ArrowDown")) {
@@ -1981,6 +2119,55 @@ class OutlineView {
     }
     if (bare && !e.shiftKey && k === "ArrowLeft" && ta.selectionStart === 0 && ta.selectionEnd === 0) { const n = this.prevVisible(i); if (n >= 0) { e.preventDefault(); this.edit(n, null); } return; }
     if (bare && !e.shiftKey && k === "ArrowRight" && ta.selectionStart === ta.value.length) { const n = this.nextVisible(i); if (n >= 0) { e.preventDefault(); this.edit(n, 0); } return; }
+  }
+  // ---- ⇧⌥⌘↑↓：このbulletの変更履歴から選ぶ（キーを離したら確定）----
+  histStep(dir) {
+    if (!this.hp) {
+      const i = this.active, ms = this.mirrorOf(i);
+      const li = ms ? ms.li : this.lineOf(i);
+      const vers = bulletVersions(li);
+      if (vers.length < 2) { toast("このbulletの履歴はまだありません（⌘S や編集欄を閉じたときに記録されます）"); return; }
+      this.hp = { i, li, mir: ms, vers, sel: vers.length - 1, box: null };
+      this.hpUp = e => { if (!this.hp) return; if (e.key === "Meta" || e.key === "Alt" || e.key === "Shift" || e.key === "Control" || !e.shiftKey || !e.altKey || !CMD(e)) this.histClose(true); };
+      document.addEventListener("keyup", this.hpUp, true);
+    }
+    const hp = this.hp;
+    hp.sel = Math.max(0, Math.min(hp.vers.length - 1, hp.sel + dir));
+    this.histDraw();
+  }
+  histDraw() {
+    const hp = this.hp; if (!hp) return;
+    if (!hp.box) { hp.box = document.createElement("div"); hp.box.className = "hpop"; document.body.appendChild(hp.box); }
+    const fmt = at => { const d = new Date(at); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+    const rows = hp.vers.map((v, k) => {
+      const newer = hp.vers[k + 1];
+      const body = newer ? diffMark(v.text, newer.text) : esc(v.text);
+      return `<li class="${k === hp.sel ? "on" : ""}" data-k="${k}"><div class="hp-when">${k === hp.vers.length - 1 ? "いまの文" : `${fmt(v.at)}　${esc(v.reason || "")}`}</div><div class="hp-text">${body || "<span class=\"hp-empty\">（空）</span>"}</div></li>`;
+    }).join("");
+    hp.box.innerHTML = `<div class="hp-head">このbulletの履歴（${hp.vers.length - 1}版）　⇧⌥⌘ を押したまま ↑↓ で選び、離すと差し替え・Esc でやめる</div><ol>${rows}</ol>`;
+    const row = this.rowEl(hp.i), r = (row || this.host).getBoundingClientRect();
+    const w = Math.min(560, window.innerWidth - 16);
+    hp.box.style.width = w + "px";
+    hp.box.style.left = Math.max(8, Math.min(r.left + 24, window.innerWidth - w - 8)) + "px";
+    const bh = Math.min(hp.box.scrollHeight, window.innerHeight * 0.6);
+    hp.box.style.top = (r.top - bh - 6 > 8 ? r.top - bh - 6 : Math.min(r.bottom + 6, window.innerHeight - bh - 8)) + "px";
+    const on = hp.box.querySelector("li.on"); if (on) on.scrollIntoView({ block: "nearest" });
+  }
+  histClose(commit) {
+    const hp = this.hp; if (!hp) return;
+    this.hp = null;
+    document.removeEventListener("keyup", this.hpUp, true);
+    if (hp.box) hp.box.remove();
+    if (!commit || hp.sel === hp.vers.length - 1) return;
+    const text = hp.vers[hp.sel].text;
+    if (hp.mir) {
+      const ms = mirrorSource(hp.mir.label); if (!ms) return;
+      setSrcLine(ms.li, ms.prefix + text); this.changed();
+      this.edit(hp.i, null); this.refreshMirrors(hp.i);
+    } else {
+      this.structural(() => { this.items[hp.i].text = text; }, { i: hp.i, c: text.length });
+    }
+    toast("履歴の文に差し替えました（⌘Z で戻せます）");
   }
   onPaste(e, ta) {
     const cd = e.clipboardData; if (!cd) return;
@@ -3103,7 +3290,7 @@ renderMemos();
 renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
-const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum"]);
+const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references"]);
 const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))#[\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 function hlRest(s) {
   let out = "", last = 0;
@@ -3197,6 +3384,82 @@ function setSrcLine(li, nl) {
   src.setRangeText(nl, s, s + L[li].length, "preserve");
   store.set("thync.src", src.value);
   if (src._paint) src._paint();
+}
+// {lbl:x} を持つ行（ミラーの元）を探す
+function mirrorSource(label) {
+  const L = srcLines(), tag = `{lbl:${label}}`;
+  for (let li = 0; li < L.length; li++) {
+    if (!L[li].includes(tag)) continue;
+    const m = L[li].match(/^(\s*[-•]\s?(?:\[(?:x|COMPLETE|COMPLETED)\]\s*)?)(.*)$/i);
+    if (!m) continue;
+    const ind = indentOf(L[li]); let kids = 0;
+    for (let k = li + 1; k < L.length; k++) { if (!L[k].trim()) continue; const ik = indentOf(L[k]); if (ik <= ind) break; if (/^\s*[-•](\s|$)/.test(L[k])) kids++; }
+    return { label, li, prefix: m[1], text: m[2], kids };
+  }
+  return null;
+}
+function bulletItemsWithLines(text) {
+  const out = [];
+  text.replace(/\r\n?/g, "\n").split("\n").forEach((raw, li) => {
+    const m = raw.match(/^\s*[-•](?:\s(.*)|$)/);
+    if (m) out.push({ li, text: (m[1] || "").replace(/^\[(?:x|COMPLETE|COMPLETED)\]\s*/i, "") });
+  });
+  return out;
+}
+function mapItemIndex(A, a, B) {
+  const n = A.length, m = B.length;
+  let p = 0; while (p < n && p < m && A[p].text === B[p].text) p++;
+  if (a < p) return a;
+  let s = 0; while (s < n - p && s < m - p && A[n - 1 - s].text === B[m - 1 - s].text) s++;
+  if (a >= n - s) return a - n + m;
+  const base = B.slice(p, m - s).map((x, k) => ({ text: x.text, id: k + 1 }));
+  const items = A.slice(p, n - s);
+  if (base.length * items.length > 4e6) return -1;
+  const ids = matchItems(base, items);
+  const id = ids[a - p], me = items[a - p].text;
+  if (id && base[id - 1].text === me) return p + id - 1;
+  // 書き換えられた行：同じ文で結ばれなかった行のうち、いちばん似ているものを選ぶ
+  const taken = new Set(); ids.forEach((x, k) => { if (x && base[x - 1].text === items[k].text) taken.add(x - 1); });
+  let best = -1, bs = 0.2;
+  base.forEach((x, k) => { if (taken.has(k)) return; const sc = textSim(me, x.text) + (id === k + 1 ? 0.05 : 0); if (sc > bs) { bs = sc; best = k; } });
+  if (best >= 0) return p + best;
+  // まったく書き換えた行は、前後がほとんど同じときだけ同じbulletとみなす
+  return id && base.length <= 3 && items.length <= 3 ? p + id - 1 : -1;
+}
+function textSim(a, b) {
+  if (!a || !b) return a === b ? 1 : 0;
+  const bg = s => { const m = new Map(); for (let i = 0; i < Math.max(1, s.length - 1); i++) { const g = s.slice(i, i + 2); m.set(g, (m.get(g) || 0) + 1); } return m; };
+  const A = bg(a), B = bg(b); let x = 0, na = 0, nb = 0;
+  A.forEach((v, g) => { na += v; x += Math.min(v, B.get(g) || 0); }); B.forEach(v => nb += v);
+  const big = 2 * x / (na + nb);
+  const ca = new Map(); for (const ch of a) ca.set(ch, (ca.get(ch) || 0) + 1);
+  let u = 0; for (const ch of b) { const v = ca.get(ch); if (v) { u++; ca.set(ch, v - 1); } }
+  return 0.6 * (2 * u / (a.length + b.length)) + 0.4 * big;
+}
+// 入力全体の li 行目のbulletが、履歴の中でどう変わってきたか（古い順・最後がいま）
+function bulletVersions(li) {
+  let A = bulletItemsWithLines(src.value);
+  let a = A.findIndex(x => x.li === li);
+  if (a < 0) return [];
+  const vers = [{ text: A[a].text, at: null, reason: "いま" }];
+  for (const h of hist.slice(0, 60)) {
+    if (vers.length > 30) break;
+    const B = bulletItemsWithLines(h.text);
+    const b = mapItemIndex(A, a, B);
+    if (b < 0) break;
+    if (B[b].text !== vers[vers.length - 1].text) vers.push({ text: B[b].text, at: h.at, reason: h.reason });
+    A = B; a = b;
+  }
+  const seen = new Set(), out = [];
+  for (const v of vers) { if (seen.has(v.text)) continue; seen.add(v.text); out.push(v); }
+  return out.reverse();
+}
+// a（古い）を、b（新しい）と比べて変わった部分に印をつける
+function diffMark(a, b) {
+  let p = 0; while (p < a.length && p < b.length && a[p] === b[p]) p++;
+  let s = 0; while (s < a.length - p && s < b.length - p && a[a.length - 1 - s] === b[b.length - 1 - s]) s++;
+  const mid = a.slice(p, a.length - s);
+  return esc(a.slice(0, p)) + (mid ? `<mark class="hp-diff">${esc(mid)}</mark>` : (a.length < b.length ? `<span class="hp-cut" title="ここに後で書き足された">｜</span>` : "")) + esc(a.slice(a.length - s));
 }
 function ensureLabel(li) {
   const line = srcLines()[li];
@@ -3964,8 +4227,8 @@ function pageCSS(c) {
   return `@page { size: ${PAPER_SIZES[c.size] || PAPER_SIZES.A4}; margin: ${c.mt}mm ${c.mr}mm ${c.mb}mm ${c.ml}mm;` +
     (c.num ? ` @bottom-center { content: counter(page); }` : "") + ` @footnote { border-top: 0.5pt solid #999; padding-top: 3pt; margin-top: 8pt; } }
 .paper.paged .pfn { float: footnote; font-size: 0.82em; line-height: 1.45; text-indent: 0; text-align: left; }
-.paper.paged .pfn::footnote-call { content: counter(footnote); font-size: 0.65em; vertical-align: super; line-height: 0; }
-.paper.paged .pfn::footnote-marker { content: counter(footnote) ". "; }
+.paper.paged .pfn::footnote-call { content: none; }
+.paper.paged .pfn::footnote-marker { content: none; }
 .paper.paged { font-size: ${c.fs}pt; line-height: ${c.lh}; }
 .paper.paged .ex { margin: ${(c.lh * 0.45).toFixed(2)}em 0 ${(c.lh * 0.5).toFixed(2)}em; }
 ${c.indent ? "" : ".paper.paged p { text-indent: 0; }"}
@@ -3973,7 +4236,11 @@ ${c.indent ? "" : ".paper.paged p { text-indent: 0; }"}
 .paper.paged .ex, .paper.paged .toc-i { break-inside: avoid; }
 .paper.paged .pagebreak { break-before: page; height: 0; margin: 0; border: 0; }
 .paper.paged .pagebreak span, .paper.paged .pnstart span { display: none; }
-.paper.paged .pnstart { height: 0; margin: 0; }`;
+.paper.paged .pnstart { height: 0; margin: 0; }
+.paper.paged .docsep { break-before: page; height: 0; margin: 0; border: 0; }
+[data-footnote-call]::after { content: none !important; }
+[data-footnote-marker]::marker { content: none !important; }
+.pagedjs_footnote_area [data-footnote-marker] { list-style: none; }`;
 }
 
 let pagedLoading = null, lastPreviewer = null, pagesToken = 0, pagesTimer = null;
@@ -4011,15 +4278,18 @@ async function renderPagesNow(token, force) {
   work.innerHTML = lastPaperHTML;
   work.querySelectorAll(".inline-edit, .empty").forEach(x => x.remove());
   // 脚注は、そのページの下に置く（本文の参照位置に脚注の中身を入れ、割り付けで下へ送る）
-  const fnList = work.querySelector(".fns");
-  if (fnList) {
+  const fnLists = [...work.querySelectorAll(".fns")];
+  if (fnLists.length) {
     for (const sup of work.querySelectorAll("sup.fnref")) {
-      const a = sup.querySelector("[data-fn]"); const li = a && fnList.querySelector(`[id="fn-${a.dataset.fn}"]`);
+      const a = sup.querySelector("[data-fn]"); const li = a && work.querySelector(`.fns [id="fn-${a.dataset.fn}"]`);
       if (!li) continue;
-      const span = document.createElement("span"); span.className = "pfn"; span.innerHTML = li.innerHTML;
-      sup.replaceWith(span);
+      // 番号はこちらで振る（文書ごと・* の謝辞注に合わせるため）。本文の上付き番号はそのまま残す
+      const mark = a.textContent.trim();
+      const span = document.createElement("span"); span.className = "pfn";
+      span.innerHTML = `<span class="pfn-m">${esc(mark)}${mark === "*" ? "" : "."}</span> ` + li.innerHTML;
+      sup.after(span);
     }
-    fnList.remove();
+    fnLists.forEach(x => x.remove());
   }
   const frag = document.createDocumentFragment(); frag.appendChild(work);
   const ratio = pane.scrollHeight ? pane.scrollTop / pane.scrollHeight : 0;
