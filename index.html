@@ -715,7 +715,7 @@ function compile(tree, opts) {
     cache.set(node, r);
     return r;
   }
-  const visible = n => !(opts.hideCompleted && n.completed) && !info(n).tags.has("draft");
+  const visible = n => !(opts.hideCompleted && n.completed) && !info(n).tags.has("draft") && !info(n).tags.has("d");
   // ミラー用：ラベル → ノード
   const labelNode = new Map();
   (function scan(n) { for (const k of n.children) { for (const l of info(k).labels) if (!labelNode.has(l)) labelNode.set(l, k); scan(k); } })(tree);
@@ -3024,7 +3024,7 @@ renderMemos();
 renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
-const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "settings"]);
+const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings"]);
 const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))#[\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 function hlRest(s) {
   let out = "", last = 0;
@@ -3883,7 +3883,10 @@ function docPageOverrides(s) {
 const effectivePage = () => ({ ...pageCfg, ...docPageOverrides(lastDocSettings) });
 function pageCSS(c) {
   return `@page { size: ${PAPER_SIZES[c.size] || PAPER_SIZES.A4}; margin: ${c.mt}mm ${c.mr}mm ${c.mb}mm ${c.ml}mm;` +
-    (c.num ? ` @bottom-center { content: counter(page); }` : "") + ` }
+    (c.num ? ` @bottom-center { content: counter(page); }` : "") + ` @footnote { border-top: 0.5pt solid #999; padding-top: 3pt; margin-top: 8pt; } }
+.paper.paged .pfn { float: footnote; font-size: 0.82em; line-height: 1.45; text-indent: 0; text-align: left; }
+.paper.paged .pfn::footnote-call { content: counter(footnote); font-size: 0.65em; vertical-align: super; line-height: 0; }
+.paper.paged .pfn::footnote-marker { content: counter(footnote) ". "; }
 .paper.paged { font-size: ${c.fs}pt; line-height: ${c.lh}; }
 .paper.paged .ex { margin: ${(c.lh * 0.45).toFixed(2)}em 0 ${(c.lh * 0.5).toFixed(2)}em; }
 ${c.indent ? "" : ".paper.paged p { text-indent: 0; }"}
@@ -3915,6 +3918,17 @@ async function renderPages() {
   work.className = "paper paged";
   work.innerHTML = lastPaperHTML;
   work.querySelectorAll(".inline-edit, .empty").forEach(x => x.remove());
+  // 脚注は、そのページの下に置く（本文の参照位置に脚注の中身を入れ、割り付けで下へ送る）
+  const fnList = work.querySelector(".fns");
+  if (fnList) {
+    for (const sup of work.querySelectorAll("sup.fnref")) {
+      const a = sup.querySelector("[data-fn]"); const li = a && fnList.querySelector(`[id="fn-${a.dataset.fn}"]`);
+      if (!li) continue;
+      const span = document.createElement("span"); span.className = "pfn"; span.innerHTML = li.innerHTML;
+      sup.replaceWith(span);
+    }
+    fnList.remove();
+  }
   const frag = document.createDocumentFragment(); frag.appendChild(work);
   const ratio = pane.scrollHeight ? pane.scrollTop / pane.scrollHeight : 0;
   if (lastPreviewer) { try { lastPreviewer.polisher.destroy(); } catch (e) {} }
