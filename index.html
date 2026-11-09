@@ -72,7 +72,24 @@ button:focus-visible, textarea:focus-visible, .chk:focus-within { outline: 2px s
 .tabs { display: none; gap: 4px; }
 .tabs button[aria-selected="true"] { background: var(--accent); color: var(--paper); border-color: var(--accent); }
 
-main { min-height: 0; display: grid; grid-template-columns: minmax(320px, 40%) 1fr; }
+main { min-height: 0; display: flex; flex-direction: column; }
+.row-top { flex: 1 1 auto; min-height: 120px; display: grid; grid-template-columns: minmax(320px, 40%) 1fr; }
+main.split .row-top { flex: 0 0 var(--top-h, 62%); }
+.hsplit { flex: 0 0 8px; cursor: row-resize; background: var(--panel); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); position: relative; touch-action: none; }
+.hsplit::after { content: ""; position: absolute; left: 50%; top: 2px; width: 44px; height: 2px; margin-left: -22px; border-radius: 1px; background: var(--muted); opacity: .5; }
+.hsplit:hover, .hsplit:focus-visible, .hsplit.drag { background: var(--accent-soft); }
+.hsplit[hidden], .row-bottom[hidden], .side-in[hidden] { display: none; }
+.row-bottom { flex: 1 1 0; min-height: 80px; display: grid; grid-template-columns: 1fr 1fr; }
+.side-pane, .side-in { min-height: 0; display: flex; flex-direction: column; background: var(--desk); }
+.side-pane + .side-pane { border-left: 1px solid var(--rule); }
+.side-in { flex: 1; border: 1px solid var(--rule); border-radius: 6px; }
+.sv-head { display: flex; gap: 6px; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--rule); background: var(--panel); font-size: 12px; color: var(--muted); }
+.sv-head select { flex: 1; min-width: 0; font: inherit; font-size: 12.5px; padding: 2px 6px; border: 1px solid var(--rule); border-radius: 5px; background: var(--paper); color: var(--ink); }
+.sv-body { flex: 1; min-height: 0; overflow: auto; padding: 10px; }
+.sv-body .paper { max-width: none; padding: 22px 26px 30px; }
+.sv-body .paper h1 { margin-bottom: 1em; }
+a.xref[draggable="true"], .toc-i[draggable="true"] { -webkit-user-drag: element; }
+.drop-ok { outline: 2px dashed var(--accent); outline-offset: -4px; }
 .pane-in { min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; background: var(--panel); border-right: 1px solid var(--rule); }
 .pane-in label { font-weight: 500; font-size: 13px; }
 .hint { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 0; }
@@ -363,6 +380,8 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 #pages .pagedjs_margin-content { font-family: var(--font-paper); font-size: 9pt; color: #444; }
 @media print {
   header.bar, .pane-in, .viewbar, .out-hint, .crumbs, .clip-dock, .toast, .back-btn, .drawer, .pop, .find-pop, .keys-pop, .dialog-back, #paper, .sel-edit, .mpick { display: none !important; }
+  .row-bottom, .hsplit { display: none !important; }
+  .row-top { display: block !important; }
   html, body, .app, main { display: block !important; height: auto !important; overflow: visible !important; background: #fff !important; }
   .pane-out { padding: 0 !important; overflow: visible !important; }
   #pages { zoom: 1 !important; }
@@ -373,7 +392,8 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent-soft); } }
 
 @media (max-width: 820px) {
-  main { grid-template-columns: 1fr; }
+  .row-top { grid-template-columns: 1fr; }
+  #btn-split, .hsplit, .row-bottom { display: none !important; }
   .tabs { display: flex; }
   main[data-view="in"] .pane-out, main[data-view="out"] .pane-in { display: none; }
   .pane-in { border-right: none; }
@@ -393,6 +413,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <div class="mark">thync<span>Source</span></div>
     <div class="ver">プレビュー試作 v0.1</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
+    <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <div class="tabs" role="tablist">
       <button id="tab-in" role="tab" aria-selected="false">入力</button>
       <button id="tab-out" role="tab" aria-selected="true">表示</button>
@@ -412,19 +433,21 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <button id="warn-chip" class="chip" type="button">警告 0</button>
   </header>
   <main id="main" data-view="out">
-    <section class="pane-in">
+   <div class="row-top" id="row-top">
+    <section class="pane-in" data-pane="edit">
       <div class="pane-in-head"><label for="src">原稿</label>
-        <div class="seg" role="group" aria-label="左の欄の見せ方"><button type="button" data-lp="outline">箇条書き</button><button type="button" data-lp="text">テキスト</button></div>
+        <div class="seg" role="group" aria-label="左の欄の見せ方"><button type="button" data-lp="outline">箇条書き</button><button type="button" data-lp="text">テキスト</button><button type="button" data-lp="view">表示</button></div>
         <div class="scalebar"><span>コードの大きさ</span><button type="button" data-scale="code" data-d="-1" aria-label="コードを小さく">−</button><button type="button" class="scale-val" data-scale="code" data-d="0" id="code-scale-val" title="100%に戻す">100%</button><button type="button" data-scale="code" data-d="1" aria-label="コードを大きく">＋</button></div></div>
       <p class="hint">黒丸をクリックするとズーム、ドラッグで移動、左の▾で開閉します。「テキスト」にすると、全体をそのまま書き換えたり、Workflowyからコピーしたものを貼り付けたりできます。太字・斜体・リンクも、Workflowyが書式付きで渡してくれる場合は保たれます。ここで直接書き直しても構いません（行頭の「- 」とインデントが階層です）。仕様書のショートカット（⌘+Opt+Shift+R など）もここで使えます。</p>
       <div class="zoom-label" id="zoom-label" hidden></div>
       <textarea id="src" spellcheck="false" autocomplete="off"></textarea>
       <textarea id="zsrc" spellcheck="false" autocomplete="off" aria-label="ズーム中の部分"></textarea>
       <div id="lp-ov" aria-label="原稿の箇条書き"></div>
+      <div id="lview" class="side-in" data-pane="lview" hidden></div>
       <div class="stats" id="stats"></div>
       <ul class="warns" id="warns"></ul>
     </section>
-    <section class="pane-out" id="pane-out">
+    <section class="pane-out" id="pane-out" data-pane="main">
       <div class="viewbar">
         <div class="seg" role="group" aria-label="表示の形"><button type="button" data-view="web">Web</button><button type="button" data-view="page">ページ</button></div>
         <button type="button" id="btn-pageset" aria-expanded="false">ページ設定</button>
@@ -438,7 +461,20 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
       <article class="paper" id="paper"></article>
       <div id="pages" hidden></div>
     </section>
+   </div>
+   <div class="hsplit" id="hsplit" role="separator" aria-orientation="horizontal" aria-label="上下の境目（ドラッグで動かす）" tabindex="0" hidden></div>
+   <div class="row-bottom" id="row-bottom" hidden>
+     <section class="side-pane" id="sv1" data-pane="s1"></section>
+     <section class="side-pane" id="sv2" data-pane="s2"></section>
+   </div>
   </main>
+  <div class="dialog-back" id="link-dlg" hidden>
+    <div class="dialog" role="dialog" aria-labelledby="link-dlg-title">
+      <h3 id="link-dlg-title">リンク先に移動しますか？</h3>
+      <p id="link-dlg-body" class="hint"></p>
+      <div class="wf-acts end"><button type="button" id="link-dlg-cancel">やめる</button><button type="button" id="link-dlg-no">文字として貼る</button><button type="button" id="link-dlg-yes" class="primary">移動する</button></div>
+    </div>
+  </div>
   <div class="pop wf-pop" id="wf-pop" hidden>
     <label for="wf-key">APIキー</label>
     <input type="password" id="wf-key" autocomplete="off" spellcheck="false" placeholder="workflowy.com/api-key で発行">
@@ -851,7 +887,7 @@ function compile(tree, opts) {
         secCounters[depth] = (secCounters[depth] || 0) + 1;
         if (depth === 0) { chapter = secCounters[0]; if (settings["ex-scope"] === "section") exCount = 0; }
         const num = secCounters.slice(0, depth + 1).join(".");
-        const b = { type: "h", level: depth + 1, num, text: inf.text, id: uid(), min: c.line, max: c.lastLine };
+        const b = { type: "h", level: depth + 1, num, text: inf.text, id: uid(), min: c.line, max: c.lastLine, end: subEnd(c) };
         inf.labels.forEach(l => defLabel(l, { kind: "sec", display: num, id: b.id }));
         byId.set(b.id, b);
         blocks.push(b);
@@ -1024,8 +1060,8 @@ function compile(tree, opts) {
     }
     function raw(name, arg) {
       switch (name) {
-        case "ref": case "rep": return refHTML(arg, false);
-        case "refn": return refHTML(arg, true);
+        case "ref": case "rep": return refHTML(arg, false).replace(/<a class="xref"/g, `<a class="xref" draggable="true" data-code="${esc("{ref:" + arg + "}")}"`);
+        case "refn": return refHTML(arg, true).replace(/<a class="xref"/g, `<a class="xref" draggable="true" data-code="${esc("{refn:" + arg + "}")}"`);
         case "lbl": return "";
         case "j": return esc(arg);
         case "cite": return `<span class="cite">[${esc(arg)}]</span>`;
@@ -1129,7 +1165,7 @@ function compile(tree, opts) {
       }
       const base = hs.length ? Math.min(...hs.map(x => x.level)) : 1;
       html += `<nav class="toc"${at}${lnAttr(b.min)} aria-label="目次"><div class="toc-title">目次</div>` +
-        (hs.length ? hs.map(x => `<a class="xref toc-i" data-target="${x.id}" style="--tl:${x.level - base}"><span class="secnum">${esc(x.num)}</span>${R(x.text)}</a>`).join("") : `<p class="empty-note">この範囲には #sec の節がありません。</p>`) +
+        (hs.length ? hs.map(x => `<a class="xref toc-i" draggable="true" data-target="${x.id}" data-hline="${x.min}" style="--tl:${x.level - base}"><span class="secnum">${esc(x.num)}</span>${R(x.text)}</a>`).join("") : `<p class="empty-note">この範囲には #sec の節がありません。</p>`) +
         `</nav>`;
     } else if (b.type === "list") {
       const t = b.ordered ? "ol" : "ul";
@@ -1140,7 +1176,8 @@ function compile(tree, opts) {
   if (footnotes.length) html += `<ol class="fns">` + footnotes.map((f, i) => `<li id="fn-${i + 1}"${cAttr(f.line)}>${R(f.text)}</li>`).join("") + `</ol>`;
   if (!blocks.length && !title) html = `<div class="empty">左の欄にWorkflowyの箇条書きを貼り付けると、ここに論文の形で表示されます。</div>`;
 
-  return { html, warnings, ranges, settings, title: title.replace(/<[^>]+>|\{[^}]*\}/g, ""), stats: { nodes: tree.count || 0, examples: exTotal, footnotes: footnotes.length } };
+  const heads = blocks.filter(x => x.type === "h").map(x => ({ id: x.id, level: x.level, num: x.num, line: x.min, end: x.end, html: R(x.text), plain: x.text.replace(/<[^>]+>|\{[^}]*\}/g, "").trim() }));
+  return { html, warnings, ranges, settings, heads, title: title.replace(/<[^>]+>|\{[^}]*\}/g, ""), stats: { nodes: tree.count || 0, examples: exTotal, footnotes: footnotes.length } };
 }
 
 function needSpace(a, b) {
@@ -1177,6 +1214,7 @@ function renderInner() {
   lastRanges = res.ranges;
   currentTitle = res.title || "（無題）";
   paper.innerHTML = res.html;
+  lastFullHTML = res.html; lastHeads = res.heads || [];
   applyZoomView();
   lastPaperHTML = paper.innerHTML;
   lastDocSettings = res.settings || {};
@@ -1186,6 +1224,7 @@ function renderInner() {
   if (active && editors.includes(active) && ae && ae.isConnected && active.box.contains(ae)) { ae.focus({ preventScroll: true }); if (ae.setSelectionRange) ae.setSelectionRange(sS, sE); }
   lpRefresh();
   if (typeof viewMode !== "undefined" && viewMode === "page") schedulePages();
+  if (typeof sideViews !== "undefined") sideViews.forEach(v => v.render());
   warnsEl.innerHTML = res.warnings.map(w => `<li class="${w.kind}">${esc(w.msg)}</li>`).join("");
   const n = res.warnings.filter(w => w.kind === "warn").length;
   chip.textContent = `警告 ${n}`;
@@ -1555,6 +1594,7 @@ class OutlineView {
     this.items = []; this.base = 0; this.active = -1; this.ta = null; this.sel = null; this.undo = []; this.typed = false;
     host.classList.add("ov");
     host.tabIndex = -1;
+    host._ov = this;
     host.addEventListener("mousedown", e => this.onMouseDown(e));
     host.addEventListener("click", e => this.onClick(e));
     host.addEventListener("dragstart", e => this.onDragStart(e));
@@ -2175,7 +2215,7 @@ function extendEditor(ed, r) {
 paper.addEventListener("mousedown", e => {
   if (e.target.closest(".inline-edit")) return;
   // 例文番号を押しても編集欄からカーソルが外れないようにする
-  if (e.target.closest("[data-exline],[data-target],[data-fn],.mir-mark") && editors.length) { e.preventDefault(); return; }
+  if (e.target.closest("[data-exline],[data-fn],.mir-mark") && editors.length) { e.preventDefault(); return; }
   if (e.shiftKey && editors.length && e.target.closest("[data-b]")) e.preventDefault();
 });
 paper.addEventListener("dblclick", e => {
@@ -2225,9 +2265,10 @@ paper.addEventListener("click", e => {
   const a = e.target.closest("[data-target],[data-fn]");
   if (!a) return;
   let el = null;
-  if (a.dataset.target) el = document.getElementById(a.dataset.target) || document.getElementById(a.dataset.target.split("-")[0]);
-  else el = document.getElementById("fn-" + a.dataset.fn);
+  if (a.dataset.target) el = paper.querySelector(`[id="${a.dataset.target}"]`) || paper.querySelector(`[id="${a.dataset.target.split("-")[0]}"]`);
+  else el = paper.querySelector(`[id="fn-${a.dataset.fn}"]`);
   if (el) jumpTo(el);
+  else if (zoom) { zoomTo(null); const el2 = a.dataset.target ? paper.querySelector(`[id="${a.dataset.target}"]`) : null; if (el2) jumpTo(el2); }
   else toast("参照先は、いま開いている編集欄の中にあります。");
 });
 
@@ -3084,7 +3125,7 @@ function ensureLabel(li) {
   const m = line.match(/\{lbl:([^}]+)\}/);
   if (m) return m[1].trim();
   const isEx = /(^|\s)#ex(?=\s|$)/.test(line);
-  const lbl = newLabel(isEx ? "ex" : "m");
+  const lbl = newLabel(isEx ? "ex" : /(^|\s)#sec(\s|$)/.test(line) ? "sec" : "m");
   const nl = isEx ? line.replace(/(^|\s)#ex(?=\s|$)/, mm => `${mm} {lbl:${lbl}}`) : line.replace(/^(\s*[-•]\s?)/, `$1{lbl:${lbl}} `);
   setSrcLine(li, nl);
   return lbl;
@@ -3332,8 +3373,10 @@ function zoomSegment() {
 function showZoomPane() {
   const srcWrap = src.closest(".ta-wrap"), zWrap = zsrc.closest(".ta-wrap");
   const outline = typeof lpMode !== "undefined" && lpMode === "outline";
-  if (srcWrap) srcWrap.hidden = outline || !!zoom;
-  if (zWrap) zWrap.hidden = outline || !zoom;
+  const lview = typeof lpMode !== "undefined" && lpMode === "view";
+  if (srcWrap) srcWrap.hidden = outline || lview || !!zoom;
+  if (zWrap) zWrap.hidden = outline || lview || !zoom;
+  if ($("lview")) $("lview").hidden = !lview;
   const lpEl = $("lp-ov"); if (lpEl) lpEl.hidden = !outline;
   if (outline && typeof lpOv !== "undefined") lpRefresh(true);
   $("zoom-label").hidden = !zoom;
@@ -3443,12 +3486,205 @@ function lpChanged() {
 function applyLpMode() {
   for (const b of document.querySelectorAll("[data-lp]")) b.setAttribute("aria-pressed", String(b.dataset.lp === lpMode));
   showZoomPane();
+  if (lpMode === "view" && typeof sideViews !== "undefined") sideViews[2].render();
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-lp]"); if (!b) return;
   lpMode = b.dataset.lp; store.set("thync.lpmode", lpMode);
   applyLpMode(); render();
 });
+
+/* ---------- 表示だけの欄（左の「表示」、下の2つ）：目次・参考文献などを並べて見る ---------- */
+var lastFullHTML = "", lastHeads = [];
+class SideView {
+  constructor(el, key, def) {
+    this.el = el; this.key = key;
+    this.sel = store.get("thync.sv." + key) || def;
+    el.innerHTML = `<div class="sv-head"><span>表示</span><select aria-label="この欄に出すもの"></select></div><div class="sv-body"><div class="paper sv-paper"></div></div>`;
+    this.select = el.querySelector("select"); this.body = el.querySelector(".sv-body"); this.paper = el.querySelector(".sv-paper");
+    this.select.addEventListener("change", () => { this.sel = this.select.value; store.set("thync.sv." + this.key, this.sel); this.body.scrollTop = 0; this.render(); });
+    this.body.addEventListener("mousedown", e => { if (e.target.closest("[data-exline],[data-fn],.mir-mark")) e.preventDefault(); });
+    this.body.addEventListener("click", e => this.onClick(e));
+    this.body.addEventListener("dblclick", e => {
+      const el2 = e.target.closest("[data-b]"); if (!el2) return;
+      const r = lastRanges[+el2.dataset.b]; if (!r) return;
+      const ln = e.target.closest("[data-ln]");
+      if (viewMode === "page") { viewMode = "web"; store.set("thync.view", viewMode); applyViewMode(); }
+      if (zoom && (r.min < zoom.line || r.max > zoom.max)) zoomTo(null);
+      openRange(r.min, r.max, ln ? +ln.dataset.ln : undefined);
+    });
+  }
+  options() {
+    return [{ v: "all", t: "全体" }, { v: "toc", t: "目次（全体）" }, ...lastHeads.map(h => ({ v: "sec:" + h.plain, t: "　".repeat(Math.max(0, h.level - 1)) + h.num + " " + h.plain }))];
+  }
+  render() {
+    if (this.el.hidden || (this.el.closest("[hidden]"))) return;
+    const opts = this.options();
+    if (!opts.some(o => o.v === this.sel)) this.sel = "all";
+    this.select.innerHTML = opts.map(o => `<option value="${esc(o.v)}">${esc(o.t)}</option>`).join("");
+    this.select.value = this.sel;
+    const top = this.body.scrollTop;
+    if (this.sel === "toc") {
+      this.paper.innerHTML = `<nav class="toc"><div class="toc-title">目次</div>` +
+        (lastHeads.length ? lastHeads.map(h => `<a class="xref toc-i" draggable="true" data-target="${h.id}" data-hline="${h.line}" style="--tl:${h.level - 1}"><span class="secnum">${esc(h.num)}</span>${h.html}</a>`).join("") : `<p class="empty-note">#sec の節がありません。</p>`) + `</nav>`;
+    } else {
+      this.paper.innerHTML = lastFullHTML;
+      if (this.sel.startsWith("sec:")) {
+        const h = lastHeads.find(x => "sec:" + x.plain === this.sel);
+        if (h) filterToRange(this.paper, h.line, h.end);
+      }
+    }
+    this.body.scrollTop = top;
+  }
+  find(id) { return this.paper.querySelector(`[id="${id}"]`); }
+  goto(p) {
+    let el = p.target ? this.find(p.target) : null;
+    if (!el && this.sel !== "all") { this.sel = "all"; store.set("thync.sv." + this.key, this.sel); this.render(); el = p.target ? this.find(p.target) : null; }
+    if (!el && p.tline !== undefined) el = [...this.paper.querySelectorAll(`[data-ln="${p.tline}"]`)][0];
+    if (el) { el.scrollIntoView({ block: "start", behavior: "smooth" }); el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
+  }
+  onClick(e) {
+    const num = e.target.closest("[data-exline]");
+    if (num) { refFromNumber(num); return; }
+    const a = e.target.closest("[data-target],[data-fn]"); if (!a) return;
+    const id = a.dataset.target || ("fn-" + a.dataset.fn);
+    // 目次の欄からは、同じ欄の中の本文がないので、上の表示へ移る
+    let el = this.find(id);
+    if (!el || this.sel === "toc") { navigatePane("main", { target: a.dataset.target, tline: a.dataset.hline !== undefined ? +a.dataset.hline : undefined }); return; }
+    el.scrollIntoView({ block: "center", behavior: "smooth" }); el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+  }
+}
+// 表示のHTMLを、ある行の範囲だけに絞る（ズームと同じやり方）
+function filterToRange(container, lo, hi) {
+  const inR = (a, z) => z >= lo && a <= hi;
+  for (const el of [...container.children]) {
+    if (el.classList.contains("fns")) continue;
+    const r = el.dataset.b !== undefined ? lastRanges[+el.dataset.b] : null;
+    if (!r || !inR(r.min, r.max)) el.remove();
+  }
+  for (const el of container.querySelectorAll(".bk[data-ln], .ex-item[data-ln], li[data-ln]")) if (!inR(+el.dataset.ln, +el.dataset.le)) el.remove();
+  const fns = container.querySelector(".fns"); if (fns && !fns.querySelector("li")) fns.remove();
+}
+const sideViews = [new SideView($("sv1"), "s1", "toc"), new SideView($("sv2"), "s2", "all"), new SideView($("lview"), "lview", "all")];
+const sideByPane = { s1: sideViews[0], s2: sideViews[1], lview: sideViews[2] };
+
+/* ---------- 上下分割（境目はドラッグで動かす） ---------- */
+let splitOn = store.get("thync.split") === "1";
+let topRatio = parseFloat(store.get("thync.topratio") || "0.62");
+function applySplit() {
+  main.classList.toggle("split", splitOn);
+  $("hsplit").hidden = !splitOn; $("row-bottom").hidden = !splitOn;
+  $("btn-split").setAttribute("aria-pressed", String(splitOn));
+  main.style.setProperty("--top-h", (topRatio * 100).toFixed(1) + "%");
+  if (splitOn) sideViews.forEach(v => v.render());
+}
+$("btn-split").addEventListener("click", () => { splitOn = !splitOn; store.set("thync.split", splitOn ? "1" : "0"); applySplit(); });
+{
+  const hs = $("hsplit");
+  let dragging = false;
+  const setFromY = y => {
+    const r = main.getBoundingClientRect();
+    topRatio = Math.max(0.2, Math.min(0.85, (y - r.top) / r.height));
+    main.style.setProperty("--top-h", (topRatio * 100).toFixed(1) + "%");
+  };
+  hs.addEventListener("pointerdown", e => { dragging = true; hs.classList.add("drag"); hs.setPointerCapture(e.pointerId); e.preventDefault(); });
+  hs.addEventListener("pointermove", e => { if (dragging) setFromY(e.clientY); });
+  const end = () => { if (!dragging) return; dragging = false; hs.classList.remove("drag"); store.set("thync.topratio", String(topRatio)); };
+  hs.addEventListener("pointerup", end); hs.addEventListener("pointercancel", end);
+  hs.addEventListener("keydown", e => {
+    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+    e.preventDefault();
+    topRatio = Math.max(0.2, Math.min(0.85, topRatio + (e.key === "ArrowUp" ? -0.04 : 0.04)));
+    main.style.setProperty("--top-h", (topRatio * 100).toFixed(1) + "%"); store.set("thync.topratio", String(topRatio));
+  });
+}
+
+/* ---------- リンクを別の欄へドラッグ：移動するか、文字として貼るか ---------- */
+const LINK_MIME = "application/x-thync-link";
+let linkDrag = null;
+document.addEventListener("dragstart", e => {
+  const a = e.target.closest && e.target.closest("a.xref[draggable]");
+  if (!a) return;
+  const paneEl = a.closest("[data-pane]");
+  const scope = paneEl || document;
+  let tline;
+  if (a.dataset.hline !== undefined) tline = +a.dataset.hline;
+  else if (a.dataset.target) { const t = scope.querySelector(`[id="${a.dataset.target}"]`) || document.querySelector(`[id="${a.dataset.target}"]`); const ln = t && (t.closest("[data-ln]") || t.querySelector("[data-ln]")); if (ln) tline = +ln.dataset.ln; }
+  linkDrag = { from: paneEl ? paneEl.dataset.pane : "", target: a.dataset.target || "", code: a.dataset.code || "", hline: a.dataset.hline, tline, label: a.textContent.trim() };
+  try { e.dataTransfer.setData(LINK_MIME, JSON.stringify(linkDrag)); e.dataTransfer.setData("text/plain", linkDrag.code || linkDrag.label); } catch (_) {}
+  e.dataTransfer.effectAllowed = "copyMove";
+}, true);
+document.addEventListener("dragend", () => { linkDrag = null; document.querySelectorAll(".drop-ok").forEach(x => x.classList.remove("drop-ok")); }, true);
+document.addEventListener("dragover", e => {
+  if (!linkDrag) return;
+  const paneEl = e.target.closest && e.target.closest("[data-pane]");
+  document.querySelectorAll(".drop-ok").forEach(x => { if (x !== paneEl) x.classList.remove("drop-ok"); });
+  if (!paneEl || paneEl.dataset.pane === linkDrag.from) return;
+  e.preventDefault(); e.stopPropagation();
+  e.dataTransfer.dropEffect = "copy";
+  paneEl.classList.add("drop-ok");
+}, true);
+document.addEventListener("drop", async e => {
+  if (!linkDrag) return;
+  const paneEl = e.target.closest && e.target.closest("[data-pane]");
+  if (!paneEl || paneEl.dataset.pane === linkDrag.from) return;
+  e.preventDefault(); e.stopPropagation();
+  paneEl.classList.remove("drop-ok");
+  const p = linkDrag; linkDrag = null;
+  const ctx = { pane: paneEl.dataset.pane, target: e.target, x: e.clientX, y: e.clientY };
+  $("link-dlg-body").textContent = `「${p.label}」の場所へ、この欄を移動します。「文字として貼る」を選ぶと、${p.code || "参照の記法"} を書き込みます。`;
+  $("link-dlg").hidden = false; $("link-dlg-yes").focus();
+  const ans = await new Promise(res => {
+    const done = v => { $("link-dlg").hidden = true; for (const id of ["link-dlg-yes", "link-dlg-no", "link-dlg-cancel"]) $(id).onclick = null; res(v); };
+    $("link-dlg-yes").onclick = () => done("yes"); $("link-dlg-no").onclick = () => done("no"); $("link-dlg-cancel").onclick = () => done(null);
+  });
+  if (ans === "yes") navigatePane(ctx.pane, p);
+  else if (ans === "no") pasteLinkCode(ctx, p);
+}, true);
+$("link-dlg").addEventListener("keydown", e => { if (e.key === "Escape") $("link-dlg-cancel").click(); });
+
+function navigatePane(pane, p) {
+  if (sideByPane[pane]) { sideByPane[pane].goto(p); return; }
+  if (pane === "main") {
+    const host = viewMode === "page" ? $("pages") : paper;
+    let el = p.target ? host.querySelector(`[id="${p.target}"]`) : null;
+    if (!el && zoom) { zoomTo(null); el = p.target ? paper.querySelector(`[id="${p.target}"]`) : null; }
+    if (!el && p.tline !== undefined) el = host.querySelector(`[data-ln="${p.tline}"]`);
+    if (el) jumpTo(el); else toast("移動先が見つかりませんでした");
+    return;
+  }
+  if (pane === "edit") {
+    if (p.tline === undefined) { toast("移動先の行が分かりませんでした"); return; }
+    if (zoom && (p.tline < zoom.line || p.tline > zoom.max)) zoomTo(null);
+    if (lpMode === "outline") { const row = lpOv.reveal(p.tline, 0, 0); lpOv.mark = null; if (row) { row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash"); } }
+    else if (lpMode === "text") { const L = srcLines(), s = posOf(L, p.tline, 0); src.focus(); src.setSelectionRange(s, s + (L[p.tline] || "").length); }
+  }
+}
+function pasteLinkCode(ctx, p) {
+  // 書き込む場所を先に決めておく（ラベルを付けると画面が描き直されるため）
+  const t = ctx.target;
+  const ta = t.closest && t.closest("textarea");
+  const row = !ta && t.closest && t.closest(".ov-row"), host = row && row.closest(".ov");
+  let ov = null, idx = -1, caret = null;
+  if (row && host && host._ov) {
+    ov = host._ov; idx = +row.dataset.i;
+    const textEl = row.querySelector(".ov-text");
+    const rng = document.caretRangeFromPoint ? document.caretRangeFromPoint(ctx.x, ctx.y) : null;
+    if (textEl && rng && textEl.contains(rng.startContainer)) { const pre = document.createRange(); pre.selectNodeContents(textEl); pre.setEnd(rng.startContainer, rng.startOffset); caret = pre.toString().replace(/\u200b/g, "").length; }
+  }
+  let code = p.code;
+  if (!code && p.hline !== undefined) { const lbl = ensureLabel(+p.hline); if (lbl) code = `{ref:${lbl}}`; }
+  if (!code) code = p.label;
+  if (ta && ta.isConnected) { ta.focus(); insertText(ta, code); toast("書き込みました"); keepScroll(render); return; }
+  if (ov && idx >= 0 && idx < ov.items.length) {
+    ov.edit(idx, caret);
+    if (ov.ta) insertText(ov.ta, code);
+    toast("書き込みました");
+    return;
+  }
+  keepScroll(render);
+  copyText(code).then(ok => toast(ok ? `${code} をコピーしました（書き込む場所がないので）` : code));
+}
 
 /* ---------- 画面の拡大・縮小（表示とコードを別々に） ---------- */
 const SCALE_STEPS = [0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5];
@@ -3714,7 +3950,7 @@ document.addEventListener("click", e => {
   if (viewMode === "web") keepScroll(render);
 });
 // ページ表示の上でも、参照・例文番号・ミラー印は使える。ダブルクリックでWeb表示に戻ってその部分を開く
-$("pages").addEventListener("mousedown", e => { if (e.target.closest("[data-exline],[data-target],[data-fn],.mir-mark")) e.preventDefault(); });
+$("pages").addEventListener("mousedown", e => { if (e.target.closest("[data-exline],[data-fn],.mir-mark")) e.preventDefault(); });
 $("pages").addEventListener("click", e => {
   const num = e.target.closest("[data-exline]");
   if (num) { refFromNumber(num); return; }
@@ -3798,6 +4034,7 @@ src.value = store.get("thync.src") || SAMPLE;
 applyLpMode();
 render();
 applyViewMode();
+applySplit();
 applyColor();
 recordHistory("開いたときの状態");
 </script>
