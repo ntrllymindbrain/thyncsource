@@ -414,6 +414,13 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .pdf-range input.bad { border-color: var(--bad); color: var(--bad); }
 .pdf-range button { font-size: 12px; padding: 2px 9px; border-radius: 0 6px 6px 0; }
 @media print { #pages .pagedjs_page.pdf-skip { display: none !important; } }
+.pagebreak, .pnstart { margin: 1.2em 0; border-top: 1px dashed var(--rule); position: relative; height: 0; }
+.pnstart { border-top-style: dotted; }
+.pagebreak span, .pnstart span { position: absolute; right: 0; top: -.75em; font-family: var(--font-ui); font-size: 10.5px; color: var(--muted); background: var(--paper); padding: 0 6px; }
+#pages .pagedjs_page { position: relative; }
+.pg-serial { position: absolute; right: 6px; bottom: 4px; font-family: var(--font-ui); font-size: 10px; color: #9aa3b2; opacity: .8; pointer-events: none; font-variant-numeric: tabular-nums; }
+#pages .pagedjs_page.pn-none .pagedjs_margin-bottom-center { visibility: hidden; }
+@media print { .pg-serial { display: none !important; } }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent-soft); } }
 
@@ -477,7 +484,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
       <div class="viewbar">
         <div class="seg" role="group" aria-label="表示の形"><button type="button" data-vm="web">Web</button><button type="button" data-vm="page">ページ</button></div>
         <button type="button" id="btn-pageset" aria-expanded="false">ページ設定</button>
-        <span class="pdf-range"><input type="text" id="pdf-pages" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="全体" aria-label="PDFにするページ（例：5-7、2,4-10。空なら全体）" title="例：5-7、2,4-10。空なら全体"><button type="button" id="btn-pdf">をPDF出力</button></span>
+        <span class="pdf-range"><input type="text" id="pdf-pages" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="全体" aria-label="PDFにするページ（各ページ右下の通し番号で。例：5-7、2,4-10。空なら全体）" title="各ページ右下の薄い通し番号で指定（例：5-7、2,4-10）。空なら全体"><button type="button" id="btn-pdf">をPDF出力</button></span>
         <span class="page-count" id="page-count"></span>
         <span class="vb-space"></span>
       <div class="scalebar"><span>表示の大きさ</span><button type="button" data-scale="paper" data-d="-1" aria-label="表示を小さく">−</button><button type="button" class="scale-val" data-scale="paper" data-d="0" id="paper-scale-val" title="100%に戻す">100%</button><button type="button" data-scale="paper" data-d="1" aria-label="表示を大きく">＋</button></div>
@@ -914,6 +921,9 @@ function compile(tree, opts) {
       if (!visible(c)) continue;
       const inf = info(c);
       if (inf.tags.has("settings") || inf.tags.has("doc")) continue;
+      // 改ページ・ページ番号の始まり（そのbulletの内容の前に置く）
+      if (inf.tags.has("clearpage")) { flush(); blocks.push({ type: "pagebreak" }); }
+      if (inf.tags.has("startpagenum")) { flush(); blocks.push({ type: "pnstart" }); }
       if (inf.tags.has("sec")) {
         flush();
         secCounters.length = depth + 1;
@@ -1190,6 +1200,10 @@ function compile(tree, opts) {
         html += x;
       }
       else { warn(`再掲 {rep:${b.label}} の例文が見つかりません。`); html += `<p${at}>${bad(b.label)}</p>`; }
+    } else if (b.type === "pagebreak") {
+      html += `<div class="pagebreak" aria-hidden="true"><span>改ページ</span></div>`;
+    } else if (b.type === "pnstart") {
+      html += `<div class="pnstart" aria-hidden="true"><span>ここからページ番号 1</span></div>`;
     } else if (b.type === "toc") {
       let hs = blocks.filter(x => x.type === "h");
       if (b.mode !== "all") {
@@ -3089,7 +3103,7 @@ renderMemos();
 renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
-const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings"]);
+const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum"]);
 const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))#[\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 function hlRest(s) {
   let out = "", last = 0;
@@ -3956,7 +3970,10 @@ function pageCSS(c) {
 .paper.paged .ex { margin: ${(c.lh * 0.45).toFixed(2)}em 0 ${(c.lh * 0.5).toFixed(2)}em; }
 ${c.indent ? "" : ".paper.paged p { text-indent: 0; }"}
 .paper.paged h1, .paper.paged h2, .paper.paged h3, .paper.paged h4 { break-after: avoid; }
-.paper.paged .ex, .paper.paged .toc-i { break-inside: avoid; }`;
+.paper.paged .ex, .paper.paged .toc-i { break-inside: avoid; }
+.paper.paged .pagebreak { break-before: page; height: 0; margin: 0; border: 0; }
+.paper.paged .pagebreak span, .paper.paged .pnstart span { display: none; }
+.paper.paged .pnstart { height: 0; margin: 0; }`;
 }
 
 let pagedLoading = null, lastPreviewer = null, pagesToken = 0, pagesTimer = null;
@@ -4014,6 +4031,7 @@ async function renderPagesNow(token, force) {
   try {
     const flow = await pv.preview(frag, [{ "thyncsource-page.css": pageCSS(effectivePage()) }], host);
     pagesKey = key;
+    numberPages();
     $("page-count").textContent = `全 ${flow.total || (flow.pages && flow.pages.length) || host.querySelectorAll(".pagedjs_page").length} ページ`;
   } catch (e) {
     $("page-count").textContent = "";
@@ -4022,6 +4040,24 @@ async function renderPagesNow(token, force) {
     host.style.zoom = "";
     if (ratio) pane.scrollTop = ratio * pane.scrollHeight;
   }
+}
+// ページ番号：#startpagenum のあるページから 1 に戻す（最初の印より前のページには番号を付けない）。
+// 画面の右下には、印刷範囲の指定に使う通し番号を薄く出す（印刷には出ない）
+function numberPages() {
+  const pages = [...$("pages").querySelectorAll(".pagedjs_page")];
+  const hasStart = !!$("pages").querySelector(".pnstart");
+  let n = hasStart ? 0 : null;
+  pages.forEach((pg, k) => {
+    if (hasStart && pg.querySelector(".pnstart")) n = 0;
+    let shown;
+    if (n === null) shown = k + 1; else if (hasStart && n === 0 && !pg.querySelector(".pnstart") && !pages.slice(0, k).some(x => x.querySelector(".pnstart"))) shown = null; else shown = ++n;
+    pg.classList.toggle("pn-none", shown === null);
+    pg.style.counterSet = `page ${shown === null ? 0 : shown}`;
+    let s = pg.querySelector(".pg-serial");
+    if (!s) { s = document.createElement("div"); s.className = "pg-serial"; pg.appendChild(s); }
+    s.textContent = String(k + 1);
+    s.title = `通し番号 ${k + 1}（PDF出力のページ指定はこの番号）`;
+  });
 }
 function applyViewMode() {
   for (const b of document.querySelectorAll("[data-vm]")) b.setAttribute("aria-pressed", String(b.dataset.vm === viewMode));
@@ -4139,9 +4175,9 @@ $("btn-pdf").addEventListener("click", async () => {
   try { want = parsePageRange($("pdf-pages").value, pagesEls.length); }
   catch (e) { $("pdf-pages").classList.add("bad"); toast(e.message); return; }
   // 選ばなかったページを外しても、ページ番号は元のまま（5-7 なら 5, 6, 7）
-  pagesEls.forEach((pg, k) => { pg.classList.toggle("pdf-skip", !!want && !want.has(k + 1)); pg.style.counterSet = `page ${k + 1}`; });
+  pagesEls.forEach((pg, k) => pg.classList.toggle("pdf-skip", !!want && !want.has(k + 1)));
   const n = want ? want.size : pagesEls.length;
-  const restore = () => { pagesEls.forEach(pg => { pg.classList.remove("pdf-skip"); pg.style.counterSet = ""; }); window.removeEventListener("afterprint", restore); };
+  const restore = () => { pagesEls.forEach(pg => pg.classList.remove("pdf-skip")); window.removeEventListener("afterprint", restore); };
   window.addEventListener("afterprint", restore);
   toast(`${n} ページを印刷の画面に出します。「PDFとして保存」を選んでください`);
   setTimeout(() => {
