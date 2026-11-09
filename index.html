@@ -388,6 +388,27 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
   #pages .pagedjs_pages { display: block !important; padding: 0 !important; gap: 0 !important; }
   #pages .pagedjs_page { box-shadow: none !important; margin: 0 !important; }
 }
+.ks-btn {
+  position: fixed; z-index: 9; right: 0; top: 50%; transform: translateY(-50%); width: 26px; height: 34px; padding: 0;
+  display: grid; place-items: center; border-radius: 7px 0 0 7px; border-right: none; color: var(--muted); background: var(--panel); opacity: .75;
+}
+.ks-btn:hover, .ks-btn[aria-expanded="true"] { opacity: 1; color: var(--accent); }
+.ks-side {
+  position: fixed; z-index: 9; right: 26px; top: 50%; transform: translateY(-50%); width: 216px; max-height: 70vh; display: flex; flex-direction: column;
+  background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; box-shadow: 0 8px 26px rgba(20,30,50,.14); font-size: 11.5px;
+}
+.ks-side[hidden] { display: none; }
+.ks-head { display: flex; align-items: center; padding: 6px 8px 6px 10px; border-bottom: 1px solid var(--rule); }
+.ks-head b { flex: 1; font-weight: 600; font-size: 12px; }
+.ks-head button { font-size: 12px; padding: 0 6px; border: none; background: none; color: var(--muted); }
+.ks-body { overflow: auto; padding: 6px 8px 8px; display: grid; gap: 3px; }
+.ks-row { display: grid; grid-template-columns: auto 1fr; gap: 6px; align-items: baseline; }
+.ks-row kbd { font-size: 10.5px; padding: 0 4px; }
+.ks-row span { color: var(--ink); overflow-wrap: anywhere; }
+.ks-row code { font-family: var(--font-mono); font-size: 10.5px; color: var(--hl-cmd); }
+.ks-sep { font-size: 10.5px; color: var(--muted); margin-top: 6px; }
+@media (max-width: 820px) { .ks-btn, .ks-side { display: none !important; } }
+@media print { .ks-btn, .ks-side { display: none !important; } }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent-soft); } }
 
@@ -524,11 +545,18 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <div class="fp-row fp-opts"><label><input type="checkbox" id="fp-case"> 大文字・小文字を区別</label><label><input type="checkbox" id="fp-re"> 正規表現</label><label id="fp-zoom-wrap" hidden><input type="checkbox" id="fp-zoom" checked> ズーム中の部分だけ</label></div>
     <p class="fp-msg" id="fp-msg"></p>
   </div>
+  <button type="button" class="ks-btn" id="ks-btn" aria-expanded="false" title="自分で決めたショートカット" aria-label="自分で決めたショートカットを見る">
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 6.5h7v7l-2.4-2.4c-2.2 1.6-3.1 3.6-2.7 6.4H9.5c-.9-3.5.3-6.4 3-8.6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+  </button>
+  <aside class="ks-side" id="ks-side" hidden aria-label="自分で決めたショートカット">
+    <div class="ks-head"><b>ショートカット</b><button type="button" id="ks-close" aria-label="閉じる">×</button></div>
+    <div class="ks-body" id="ks-body"></div>
+  </aside>
   <div class="keys-pop" id="keys-pop" hidden role="dialog" aria-label="ショートカット一覧">
     <div class="kp-head"><b>ショートカット（Mac）</b><button type="button" id="kp-close">閉じる</button></div>
     <div class="kp-body">
-      <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>Shift+Enter</kbd></td><td>ノートの行を足す</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>複製</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
-      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr></table>
+      <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌥+Enter</kbd></td><td>ノートの行を足す（Workflowyでは Shift+Enter）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>複製</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
+      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>段落の区切り「 //」を付けて次のbulletへ（文の途中なら付け外し）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr></table>
     </div>
   </div>
   <div class="clip-dock" id="clip-dock">
@@ -1466,6 +1494,21 @@ function newBullet(ta) {
   const pad = atEnd && hasKids ? ws + "  " : ws;
   replaceRange(ta, p, ta.selectionEnd, "\n" + pad + "- ");
 }
+// Shift+Return：その行の末尾に段落の区切り「 //」を付けて、次のbulletへ
+function paraBreakText(ta) {
+  const v = ta.value, p = ta.selectionStart;
+  const ls = v.lastIndexOf("\n", p - 1) + 1;
+  let le = v.indexOf("\n", p); if (le < 0) le = v.length;
+  const line = v.slice(ls, le);
+  if (!isBullet(line)) { insertText(ta, "\n"); return; }
+  const has = /(^|\s)\/\/\s*$/.test(line);
+  if (p !== le) {
+    const nl = has ? line.replace(/\s*\/\/\s*$/, "") : line.replace(/\s+$/, "") + " //";
+    replaceRange(ta, ls, le, nl); ta.setSelectionRange(Math.min(p, ls + nl.length), Math.min(p, ls + nl.length)); return;
+  }
+  if (!has) { const nl = line.replace(/\s+$/, "") + " //"; replaceRange(ta, ls, le, nl); ta.setSelectionRange(ls + nl.length, ls + nl.length); }
+  newBullet(ta);
+}
 function addNote(ta) {
   const L = linesOf(ta); const cur = caretLC(ta);
   const i = ownerLine(L, cur.line);
@@ -1521,7 +1564,8 @@ function attachKeys(ta) {
     if (cmd && !e.shiftKey && !e.altKey && e.key === ",") { e.preventDefault(); zoomOut(); return; }
     if (cmd && !e.shiftKey && !e.altKey && k === "Enter") { e.preventDefault(); toggleComplete(ta); return; }
     const bare = !e.metaKey && !e.ctrlKey && !e.altKey;
-    if (k === "Enter" && e.shiftKey && bare) { e.preventDefault(); addNote(ta); return; }
+    if (k === "Enter" && e.shiftKey && bare) { e.preventDefault(); paraBreakText(ta); return; }
+    if (k === "Enter" && e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); addNote(ta); return; }
     if (k === "Enter" && !e.shiftKey && bare) { e.preventDefault(); newBullet(ta); return; }
     if (cmd && e.shiftKey && !e.altKey && e.code === "KeyX") { e.preventDefault(); wrapSel(ta, "<s>", "</s>"); return; }
     if (cmd && e.shiftKey && !e.altKey && e.code === "KeyC") { e.preventDefault(); wrapSel(ta, "<code>", "</code>"); return; }
@@ -1736,9 +1780,24 @@ class OutlineView {
     const done = () => { if (!ta.isConnected) return; const d = document.createElement("div"); d.className = "ov-note"; d.textContent = it.note; if (it.note.trim()) ta.replaceWith(d); else ta.remove(); };
     ta.addEventListener("keydown", e => {
       if (e.isComposing) return;
-      if ((e.key === "Escape") || (e.key === "Enter" && e.shiftKey)) { e.preventDefault(); e.stopPropagation(); done(); this.edit(i); }
+      if ((e.key === "Escape") || (e.key === "Enter" && (e.shiftKey || e.altKey))) { e.preventDefault(); e.stopPropagation(); done(); this.edit(i); }
     });
     ta.addEventListener("blur", () => setTimeout(done, 0));
+  }
+  // Shift+Return：末尾に段落の区切り「 //」を付けて次のbulletへ。文の途中なら区切りを付け外しするだけ
+  paraBreak(ta) {
+    const i = this.active, it = this.items[i];
+    const has = /(^|\s)\/\/\s*$/.test(it.text);
+    const atEnd = ta.selectionStart === ta.value.length && ta.selectionEnd === ta.value.length;
+    if (!atEnd) {
+      const p = ta.selectionStart;
+      it.text = has ? it.text.replace(/\s*\/\/\s*$/, "") : it.text.replace(/\s+$/, "") + " //";
+      ta.value = it.text; ta.setSelectionRange(Math.min(p, it.text.length), Math.min(p, it.text.length));
+      this.fit(); this.changed();
+      return;
+    }
+    if (!has) { it.text = it.text.replace(/\s+$/, "") + " //"; ta.value = it.text; this.changed(); }
+    this.split(ta.value.length, ta.value.length);
   }
   // ---- まとまり（項目とその子）の操作 ----
   structural(fn, focus) {
@@ -1877,7 +1936,8 @@ class OutlineView {
     if (cmd && !e.shiftKey && !e.altKey && e.code === "KeyZ" && !this.typed && this.undo.length) { e.preventDefault(); this.restoreUndo(); return; }
     const bare = !e.metaKey && !e.ctrlKey && !e.altKey;
     if (k === "Enter" && bare && !e.shiftKey) { e.preventDefault(); this.split(ta.selectionStart, ta.selectionEnd); return; }
-    if (k === "Enter" && bare && e.shiftKey) { e.preventDefault(); this.editNote(i); return; }
+    if (k === "Enter" && bare && e.shiftKey) { e.preventDefault(); this.paraBreak(ta); return; }
+    if (k === "Enter" && e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); this.editNote(i); return; }
     if (k === "Enter" && cmd && !e.shiftKey && !e.altKey) { e.preventDefault(); const c = ta.selectionStart; this.structural(() => { it.done = !it.done; }, { i, c }); return; }
     if (k === "Tab" && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); e.shiftKey ? this.outdent(i) : this.indent(i); return; }
     if (cmd && e.shiftKey && !e.altKey && (k === "ArrowUp" || k === "ArrowDown")) { e.preventDefault(); this.move(i, k === "ArrowUp" ? -1 : 1); return; }
@@ -4042,6 +4102,27 @@ $("btn-pdf").addEventListener("click", async () => {
   toast("印刷の画面で「PDFとして保存」を選んでください");
   setTimeout(() => { try { window.print(); } catch (e) { toast("このページからは印刷できません"); } }, 300);
 });
+
+/* ---------- 自分で決めたショートカットの小さな一覧（右端のアイコン） ---------- */
+function keyLabel(sc) {
+  const k = sc.code.replace(/^Key/, "").replace(/^Digit/, "");
+  return (sc.mods.includes("c") ? "⌘" : "") + (sc.mods.includes("o") ? "⌥" : "") + (sc.mods.includes("s") ? "⇧" : "") + k;
+}
+function renderKs() {
+  const own = SHORTCUTS.map(sc => `<div class="ks-row"><kbd>${esc(keyLabel(sc))}</kbd><span><code>${esc(sc.text.replace("▮", "").trim())}</code></span></div>`).join("");
+  const more = [["⇧Return", "段落の区切り //"], ["⌘⌥⇧M", "行をメモ集へ"], ["⌘⌥E", "選んだ範囲を編集"], ["⌘⌥F", "検索と置換"], ["⌥Return", "ノート"], ["⌘S", "記録・保存"], ["⌘.", "ズーム"], ["⌘,", "ズームを戻す"], ["⌥⌘＝/−", "拡大・縮小"]]
+    .map(([k, t]) => `<div class="ks-row"><kbd>${esc(k)}</kbd><span>${esc(t)}</span></div>`).join("");
+  $("ks-body").innerHTML = `<div class="ks-sep">記法を入れる</div>` + own + `<div class="ks-sep">thyncSourceの操作</div>` + more + `<div class="ks-sep">すべての一覧は ⌘/</div>`;
+}
+$("ks-btn").addEventListener("mousedown", e => e.preventDefault());
+$("ks-btn").addEventListener("click", () => {
+  const s = $("ks-side"); s.hidden = !s.hidden;
+  $("ks-btn").setAttribute("aria-expanded", String(!s.hidden));
+  store.set("thync.ks", s.hidden ? "0" : "1");
+  if (!s.hidden) renderKs();
+});
+$("ks-close").addEventListener("click", () => { $("ks-side").hidden = true; $("ks-btn").setAttribute("aria-expanded", "false"); store.set("thync.ks", "0"); });
+if (store.get("thync.ks") === "1") { $("ks-side").hidden = false; $("ks-btn").setAttribute("aria-expanded", "true"); renderKs(); }
 
 src.value = store.get("thync.src") || SAMPLE;
 { const zl = store.get("thync.zoom"); if (zl) { const L = srcLines(), k = +zl; if (isBullet(L[k] || "")) zoom = { line: k, max: blockEndLine(L, k), text: L[k].trim() }; } }
