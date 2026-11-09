@@ -442,7 +442,8 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .hpop .hp-cut { color: #c0392b; font-weight: bold; }
 .hpop .hp-empty { color: #aaa; }
 .ov-mirtxt { border-bottom: 1px dashed #9a8fbf; }
-.ov-mirkids { color: #9a8fbf; font-size: .85em; margin-left: .4em; }
+.ov-mirbox { margin-left: calc(var(--lv) * 1.45em + 1.45em - 2px); padding-left: 0; border-left: 2px dotted #c9c0e6; }
+.ov-mirbox.ov { min-height: 0; padding: 0; font-size: inherit; }
 .ov-ta-mir { background: #f4f1fb !important; }
 .docsep { margin: 3em 0; border-top: 3px double var(--rule); }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
@@ -1750,14 +1751,17 @@ class OutlineView {
     host.classList.add("ov");
     host.tabIndex = -1;
     host._ov = this;
-    host.addEventListener("mousedown", e => this.onMouseDown(e));
-    host.addEventListener("click", e => this.onClick(e));
-    host.addEventListener("dragstart", e => this.onDragStart(e));
-    host.addEventListener("dragover", e => this.onDragOver(e));
+    this.subs = [];
+    // 入れ子のミラー欄（.ov）の中の出来事は、その欄にまかせる
+    const own = e => !(e.target.closest && e.target.closest(".ov") !== host);
+    host.addEventListener("mousedown", e => own(e) && this.onMouseDown(e));
+    host.addEventListener("click", e => own(e) && this.onClick(e));
+    host.addEventListener("dragstart", e => own(e) && this.onDragStart(e));
+    host.addEventListener("dragover", e => own(e) && this.onDragOver(e));
     host.addEventListener("dragleave", e => { if (!host.contains(e.relatedTarget)) this.clearDrop(); });
-    host.addEventListener("drop", e => this.onDrop(e));
+    host.addEventListener("drop", e => own(e) && this.onDrop(e));
     host.addEventListener("dragend", () => { this.drag = null; this.clearDrop(); });
-    host.addEventListener("keydown", e => this.onHostKey(e));
+    host.addEventListener("keydown", e => own(e) && this.onHostKey(e));
   }
   baseLine() { return this.opts.baseLine ? this.opts.baseLine() : 0; }
   setText(text) {
@@ -1777,7 +1781,7 @@ class OutlineView {
   end(i) { const lv = this.items[i].lv; let j = i; while (j + 1 < this.items.length && this.items[j + 1].lv > lv) j++; return j; }
   hasKids(i) { return i + 1 < this.items.length && this.items[i + 1].lv > this.items[i].lv; }
   key(i) { return this.items[i].text.trim(); }
-  isCollapsed(i) { return this.hasKids(i) && collapsedKeys.has(this.key(i)); }
+  isCollapsed(i) { return (this.hasKids(i) || (/^\{mirror:/.test(this.key(i)) && this.mirKids(i) > 0)) && collapsedKeys.has(this.key(i)); }
   visible() {
     const v = new Array(this.items.length).fill(true);
     for (let i = 0; i < this.items.length; i++) {
@@ -1789,7 +1793,9 @@ class OutlineView {
   prevVisible(i) { const v = this.visible(); for (let k = i - 1; k >= 0; k--) if (v[k]) return k; return -1; }
   nextVisible(i) { const v = this.visible(); for (let k = i + 1; k < this.items.length; k++) if (v[k]) return k; return -1; }
   inSel(i) { return this.sel && i >= Math.min(this.sel.a, this.sel.z) && i <= Math.max(this.sel.a, this.sel.z); }
-  rowEl(i) { return this.host.querySelector(`.ov-row[data-i="${i}"]`); }
+  rowEl(i) { return this.host.querySelector(`:scope > .ov-row[data-i="${i}"]`); }
+  subOf(i) { return this.subs.find(s => s.mirIndex === i) || null; }
+  mirKids(i) { const ms = this.mirrorOf(i); return ms ? ms.kids : 0; }
   // {mirror:x} だけの行なら、元のbulletを探す（{li: 入力全体の行, text: 元の文, kids: 子の数}）
   mirrorOf(i) {
     const it = this.items[i]; if (!it) return null;
@@ -1799,13 +1805,13 @@ class OutlineView {
   textHTML(i) {
     const it = this.items[i];
     const ms = this.mirrorOf(i);
-    if (ms) return `<span class="ov-mirtxt" title="ミラー（元：${esc(ms.label)}）。ここで直すと元のbulletも変わります">${hlBody(ms.text) || "​"}</span>` + (ms.kids ? `<span class="ov-mirkids">（子 ${ms.kids}）</span>` : "");
+    if (ms) return `<span class="ov-mirtxt" title="ミラー（元：${esc(ms.label)}）。ここで直すと元のbulletも変わります">${hlBody(ms.text) || "​"}</span>` ;
     const mk = this.mark && this.mark.i === i && !this.mark.note ? this.mark : null;
     if (mk) return hlBody(it.text.slice(0, mk.s)) + `<mark class="fp-hit">${esc(it.text.slice(mk.s, mk.e)) || "​"}</mark>` + hlRest(it.text.slice(mk.e));
     return hlBody(it.text);
   }
   rowHTML(i) {
-    const it = this.items[i], kids = this.hasKids(i), col = this.isCollapsed(i), abs = this.lineOf(i);
+    const it = this.items[i], kids = this.hasKids(i) || this.mirKids(i) > 0, col = this.isCollapsed(i), abs = this.lineOf(i);
     const mirror = /^\{mirror:[^}]+\}$/.test(it.text.trim());
     return `<div class="ov-row${mirror ? " mirrow" : ""}${it.done ? " done" : ""}${this.inSel(i) ? " sel" : ""}" data-i="${i}" style="--lv:${it.lv}"${colorOn ? ` data-c="${((abs % 10) + 10) % 10}"` : ""}>` +
       `<button type="button" class="ov-tog${kids ? "" : " none"}" tabindex="-1" aria-label="${col ? "開く" : "閉じる"}">${kids ? (col ? "▸" : "▾") : ""}</button>` +
@@ -1814,11 +1820,84 @@ class OutlineView {
       (it.note ? `<div class="ov-note">${esc(it.note)}</div>` : "") + `</div></div>`;
   }
   render() {
-    const v = this.visible();
+    const v = this.visible(), stack = this.opts.mirStack || [];
     let html = "";
-    for (let i = 0; i < this.items.length; i++) if (v[i]) html += this.rowHTML(i);
+    const boxes = [];
+    for (let i = 0; i < this.items.length; i++) {
+      if (!v[i]) continue;
+      html += this.rowHTML(i);
+      // ミラー：元のbulletの子を、ここにそのまま並べる（本体と同じように直せる）
+      const ms = this.mirrorOf(i);
+      if (ms && ms.kids && !this.isCollapsed(i) && !stack.includes(ms.label) && stack.length < 6) {
+        html += `<div class="ov-mirbox" data-mi="${i}" style="--lv:${this.items[i].lv}"></div>`;
+        boxes.push([i, ms]);
+      }
+    }
     this.host.innerHTML = html;
     this.ta = null; this.active = -1;
+    this.subs = [];
+    for (const [i, ms] of boxes) this.subs.push(this.makeSub(this.host.querySelector(`:scope > .ov-mirbox[data-mi="${i}"]`), i, ms));
+  }
+  makeSub(box, i, ms) {
+    const outer = this, label = ms.label;
+    const sub = new OutlineView(box, {
+      baseLine: () => { const m = mirrorSource(label); return m ? m.kidStart : 0; },
+      range: () => { const m = mirrorSource(label); return m && m.kids ? [m.kidStart, m.kidEnd] : null; },
+      onChange: () => mirrorSubChanged(sub),
+      onZoom: this.opts.onZoom,
+      onCollapse: this.opts.onCollapse,
+      onEsc: this.opts.onEsc,
+      onEdge: dir => {
+        if (dir < 0) { outer.edit(sub.mirIndex, null); return; }
+        const n = outer.nextVisible(sub.mirIndex);
+        if (n >= 0) outer.edit(n, 0); else if (outer.opts.onEdge) outer.opts.onEdge(1);
+      },
+      mirStack: [...(this.opts.mirStack || []), label]
+    });
+    sub.mirLabel = label; sub.mirIndex = i; sub.parentOv = this;
+    sub.setText(ms.kidText);
+    return sub;
+  }
+  // いちばん奥の、カーソルのあるミラー欄までの道筋（描き直したあと同じ場所に戻るため）
+  focusPath() {
+    const ae = document.activeElement; if (!ae || !this.host.contains(ae)) return null;
+    let ov = ae._ov || null; if (!ov) return null;
+    const chain = [];
+    while (ov && ov !== this) { const par = ov.parentOv; if (!par) return null; const same = par.subs.filter(s => s.mirLabel === ov.mirLabel); chain.unshift([ov.mirLabel, same.indexOf(ov)]); ov = par; }
+    if (!ov) return null;
+    return { chain, i: ae._ov.active, c: ae.selectionStart };
+  }
+  restoreFocus(fp) {
+    if (!fp) return;
+    let ov = this;
+    for (const [lbl, k] of fp.chain) { const s = ov.subs.filter(x => x.mirLabel === lbl)[k]; if (!s) return; ov = s; }
+    if (fp.i >= 0) ov.edit(Math.min(fp.i, ov.items.length - 1), fp.c);
+  }
+  // 入力全体が他の場所で変わったとき、この欄（と中のミラー欄）を合わせる
+  resync(except) {
+    if (this === except) return;
+    const r = this.opts.range ? this.opts.range() : null;
+    if (r) {
+      const nu = textToItems(srcLines().slice(r[0], r[1] + 1).join("\n")).items;
+      if (!nu.length) nu.push({ lv: 0, text: "", note: "", done: false });
+      const same = nu.length === this.items.length && nu.every((x, k) => x.lv === this.items[k].lv && x.note === this.items[k].note && !!x.done === !!this.items[k].done);
+      const vis = same ? this.visible() : null;
+      const boxesOk = same && this.items.every((x, k) => { if (!/^\{mirror:/.test(x.text.trim())) return !this.subOf(k); const ms = this.mirrorOf(k); const want = !!(ms && ms.kids && !this.isCollapsed(k) && vis[k]); return want === !!this.subOf(k); });
+      if (!same || !boxesOk) {
+        const fp = this.focusPath(), a = this.active, c = this.ta ? this.ta.selectionStart : 0;
+        this.items = nu; this.render();
+        if (fp && fp.chain.length) this.restoreFocus(fp); else if (fp && a >= 0) this.edit(Math.min(a, this.items.length - 1), c);
+        return;
+      }
+      nu.forEach((x, k) => {
+        if (x.text === this.items[k].text) return;
+        this.items[k].text = x.text;
+        if (k === this.active && this.ta && !this.ta._mir) { const p = this.ta.selectionStart; this.ta.value = x.text; this.ta.setSelectionRange(p, p); this.fit(); }
+        else if (k !== this.active) { const row = this.rowEl(k); const t = row && row.querySelector(":scope > .ov-main > .ov-text"); if (t) t.innerHTML = this.textHTML(k) || "​"; }
+      });
+    }
+    this.refreshMirrors(this.active);
+    for (const s of this.subs) s.resync(except);
   }
   refresh() {
     const a = this.active, c = this.ta ? this.ta.selectionStart : 0, focused = this.ta && document.activeElement === this.ta;
@@ -1865,6 +1944,7 @@ class OutlineView {
         const ms = mirrorSource(ta._mir.label);
         if (ms) { setSrcLine(ms.li, ms.prefix + ta.value); ta._mir = ms; ta._mir.text = ta.value; }
         this.fit(); this.changed(); this.refreshMirrors(this.active);
+        resyncAllSoon();
         return;
       }
       this.items[this.active].text = ta.value;
@@ -1899,7 +1979,7 @@ class OutlineView {
   }
   // ミラー行と、その元の行の表示を描き直す（編集中の行は除く）
   refreshMirrors(skip) {
-    this.host.querySelectorAll(".ov-row").forEach(row => {
+    this.host.querySelectorAll(":scope > .ov-row").forEach(row => {
       const k = +row.dataset.i; if (k === skip || k === this.active) return;
       const it = this.items[k]; if (!it) return;
       if (!row.classList.contains("mirrow") && !/\{lbl:/.test(it.text)) return;
@@ -2076,6 +2156,11 @@ class OutlineView {
     if (handleInlineKeys(e, ta)) return;
     if (cmd && !e.shiftKey && !e.altKey && e.code === "KeyZ" && !this.typed && this.undo.length) { e.preventDefault(); this.restoreUndo(); return; }
     const bare = !e.metaKey && !e.ctrlKey && !e.altKey;
+    if (k === "Enter" && bare && !e.shiftKey && ta._mir && this.subOf(i) && ta.selectionStart === ta.value.length) {
+      e.preventDefault(); const s = this.subOf(i), lv0 = s.items[0].lv;
+      s.structural(() => { s.items.splice(0, 0, { lv: lv0, text: "", note: "", done: false }); }, { i: 0, c: 0 }); return;
+    }
+    if (k === "Tab" && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey && this.mirrorParentFor(i) >= 0) { e.preventDefault(); this.moveIntoMirror(i, this.mirrorParentFor(i)); return; }
     if (k === "Enter" && bare && !e.shiftKey && ta._mir) { e.preventDefault(); const at = this.end(i) + 1; this.structural(() => { this.items.splice(at, 0, { lv: it.lv, text: "", note: "", done: false }); }, { i: at, c: 0 }); return; }
     if (k === "Enter" && bare && !e.shiftKey) { e.preventDefault(); this.split(ta.selectionStart, ta.selectionEnd); return; }
     if (k === "Enter" && bare && e.shiftKey) { e.preventDefault(); this.paraBreak(ta); return; }
@@ -2112,13 +2197,13 @@ class OutlineView {
     }
     if (bare && !e.shiftKey && (k === "ArrowUp" || k === "ArrowDown")) {
       const up = k === "ArrowUp", pos = ta.selectionStart;
-      const go = () => { const n = up ? this.prevVisible(i) : this.nextVisible(i); if (n >= 0) this.edit(n, up ? null : 0); };
+      const go = () => this.step(i, up ? -1 : 1);
       if ((up && pos === 0) || (!up && pos === ta.value.length)) { e.preventDefault(); go(); return; }
       setTimeout(() => { if (this.ta === ta && ta.selectionStart === pos) go(); }, 0);
       return;
     }
-    if (bare && !e.shiftKey && k === "ArrowLeft" && ta.selectionStart === 0 && ta.selectionEnd === 0) { const n = this.prevVisible(i); if (n >= 0) { e.preventDefault(); this.edit(n, null); } return; }
-    if (bare && !e.shiftKey && k === "ArrowRight" && ta.selectionStart === ta.value.length) { const n = this.nextVisible(i); if (n >= 0) { e.preventDefault(); this.edit(n, 0); } return; }
+    if (bare && !e.shiftKey && k === "ArrowLeft" && ta.selectionStart === 0 && ta.selectionEnd === 0) { e.preventDefault(); this.step(i, -1); return; }
+    if (bare && !e.shiftKey && k === "ArrowRight" && ta.selectionStart === ta.value.length) { e.preventDefault(); this.step(i, 1); return; }
   }
   // ---- ⇧⌥⌘↑↓：このbulletの変更履歴から選ぶ（キーを離したら確定）----
   histStep(dir) {
@@ -2169,6 +2254,46 @@ class OutlineView {
     }
     toast("履歴の文に差し替えました（⌘Z で戻せます）");
   }
+  // 上下の行へ。ミラーの中身（入れ子の欄）にも出入りする
+  step(i, d) {
+    if (d > 0) {
+      const s = this.subOf(i);
+      if (s) { s.edit(0, 0); return; }
+      const n = this.nextVisible(i);
+      if (n >= 0) this.edit(n, 0); else if (this.opts.onEdge) this.opts.onEdge(1);
+    } else {
+      const n = this.prevVisible(i);
+      if (n < 0) { if (this.opts.onEdge) this.opts.onEdge(-1); return; }
+      let ov = this, k = n;
+      for (let s = ov.subOf(k); s; s = ov.subOf(k)) { ov = s; const v = s.visible(); k = v.lastIndexOf(true); if (k < 0) break; }
+      ov.edit(k, null);
+    }
+  }
+  // Tab で、すぐ上のミラーの子になろうとしているか（なら元のbulletの子として入れる）
+  mirrorParentFor(i) {
+    const lv = this.items[i].lv;
+    let p = i - 1; while (p >= 0 && this.items[p].lv > lv) p--;
+    if (p < 0 || this.items[p].lv !== lv || this.end(p) !== p || !this.mirrorOf(p)) return -1;
+    return p;
+  }
+  moveIntoMirror(i, p) {
+    const ms0 = this.mirrorOf(p); if (!ms0) return;
+    const j = this.end(i), label = ms0.label;
+    const part = this.items.slice(i, j + 1), mn = Math.min(...part.map(x => x.lv));
+    const c = this.ta ? this.ta.selectionStart : 0;
+    this.structural(() => { this.items.splice(i, j - i + 1); });   // ここから外す（入力全体にも反映される）
+    const ms = mirrorSource(label); if (!ms) return;
+    const ind = " ".repeat(indentOf(srcLines()[ms.li]) + 2);
+    const lines = itemsToLines(part.map(x => ({ ...x, lv: x.lv - mn })), 0).map(l => ind + l);
+    const at = ms.kids ? ms.kidEnd + 1 : ms.kidStart;
+    spliceSrc(at, 0, lines);
+    collapsedKeys.delete(this.items[p] ? this.key(p) : ""); 
+    resyncAll(null);
+    // 行がずれていることがあるので、いちばん近い同じミラーの欄を探す
+    const cand = this.subs.filter(x => x.mirLabel === label).sort((x, y) => Math.abs(x.mirIndex - p) - Math.abs(y.mirIndex - p));
+    const s = cand[0]; if (s) s.edit(Math.max(0, s.items.length - part.length), c);
+    clearTimeout(lpTimer); lpTimer = setTimeout(() => keepScroll(render), 150);
+  }
   onPaste(e, ta) {
     const cd = e.clipboardData; if (!cd) return;
     let text = null;
@@ -2195,7 +2320,7 @@ class OutlineView {
     const row = e.target.closest(".ov-row"); if (!row) return;
     const i = +row.dataset.i;
     if (e.target.closest(".ov-tog")) {
-      if (!this.hasKids(i)) return;
+      if (!this.hasKids(i) && !this.mirKids(i)) return;
       const key = this.key(i);
       if (collapsedKeys.has(key)) collapsedKeys.delete(key); else collapsedKeys.add(key);
       saveCollapsed();
@@ -2262,7 +2387,7 @@ class OutlineView {
     try { e.dataTransfer.setData("text/plain", this.blockSource(i, this.drag.j)); } catch (_) {}
   }
   dropTarget(e) {
-    const rows = [...this.host.querySelectorAll(".ov-row")];
+    const rows = [...this.host.querySelectorAll(":scope > .ov-row")];
     if (!rows.length) return null;
     let row = rows.find(r => { const b = r.getBoundingClientRect(); return e.clientY >= b.top && e.clientY < b.bottom; });
     if (!row) row = e.clientY < rows[0].getBoundingClientRect().top ? rows[0] : rows[rows.length - 1];
@@ -2401,7 +2526,8 @@ function createEditor(min, max) {
   const ed = { min, max, base: 0, box };
   ed.ov = new OutlineView(box.querySelector(".ie-ov"), {
     baseLine: () => ed.min,
-    onChange: () => syncEditor(ed),
+    range: () => [ed.min, ed.max],
+    onChange: () => { syncEditor(ed); resyncAllSoon(); },
     onZoom: line => zoomTo(line),
     onEsc: () => closeEditor(ed),
     onCollapse: () => setTimeout(() => keepScroll(render), 0)
@@ -3392,12 +3518,52 @@ function mirrorSource(label) {
     if (!L[li].includes(tag)) continue;
     const m = L[li].match(/^(\s*[-•]\s?(?:\[(?:x|COMPLETE|COMPLETED)\]\s*)?)(.*)$/i);
     if (!m) continue;
-    const ind = indentOf(L[li]); let kids = 0;
-    for (let k = li + 1; k < L.length; k++) { if (!L[k].trim()) continue; const ik = indentOf(L[k]); if (ik <= ind) break; if (/^\s*[-•](\s|$)/.test(L[k])) kids++; }
-    return { label, li, prefix: m[1], text: m[2], kids };
+    const ind = indentOf(L[li]); let kids = 0, kidStart = -1, kidEnd = li;
+    for (let k = li + 1; k < L.length; k++) {
+      if (!L[k].trim()) { if (kidStart >= 0) kidEnd = k; continue; }
+      if (indentOf(L[k]) <= ind) break;
+      const isB = /^\s*[-•](\s|$)/.test(L[k]);
+      if (isB) { kids++; if (kidStart < 0) kidStart = k; }
+      if (kidStart >= 0) kidEnd = k;
+    }
+    // 子の前にあるのは、このbulletのノートの行
+    if (kidStart < 0) { kidStart = kidEnd + 1; }
+    while (kidEnd > kidStart && !L[kidEnd].trim()) kidEnd--;
+    return { label, li, prefix: m[1], text: m[2], kids, kidStart, kidEnd, kidText: kids ? L.slice(kidStart, kidEnd + 1).join("\n") : "" };
   }
   return null;
 }
+// 入力全体の start 行目から oldLen 行を newLines に置き換え、開いている欄の行範囲をずらす
+function spliceSrc(start, oldLen, newLines) {
+  const all = srcLines();
+  all.splice(start, oldLen, ...newLines);
+  const delta = newLines.length - oldLen, oldMax = start + oldLen - 1;
+  if (delta) {
+    for (const o of editors) { if (o.min > oldMax) { o.min += delta; o.max += delta; } else if (o.max >= Math.max(oldMax, start - 1) && o.min <= start) o.max += delta; }
+    if (zoom) { if (zoom.line > oldMax) { zoom.line += delta; zoom.max += delta; } else if (zoom.max >= Math.max(oldMax, start - 1)) zoom.max += delta; }
+    if (lpHi !== null) { if (lpLo > oldMax) { lpLo += delta; lpHi += delta; } else if (lpHi >= Math.max(oldMax, start - 1)) lpHi += delta; }
+  }
+  src.value = all.join("\n");
+  store.set("thync.src", src.value);
+  if (src._paint) src._paint();
+  return delta;
+}
+// ミラーの中身の欄で直したら、元のbulletの子へ書き戻し、ほかの欄も合わせる
+function mirrorSubChanged(sub) {
+  const ms = mirrorSource(sub.mirLabel); if (!ms || !ms.kids) return;
+  spliceSrc(ms.kidStart, ms.kidEnd - ms.kidStart + 1, sub.getLines());
+  // 行の追加などでは、この欄がカーソルを置き直してから、ほかの欄を合わせる
+  Promise.resolve().then(() => resyncAll(sub));
+  clearTimeout(lpTimer); lpTimer = setTimeout(() => keepScroll(render), 150);
+}
+function topViews() {
+  const out = editors.map(e => e.ov);
+  if (lpMode === "outline" && lpHi !== null) out.push(lpOv);
+  return out;
+}
+function resyncAll(except) { for (const v of topViews()) v.resync(except); }
+let resyncTimer = null;
+function resyncAllSoon() { clearTimeout(resyncTimer); resyncTimer = setTimeout(() => { for (const v of topViews()) for (const s of v.subs) s.resync(null); }, 0); }
 function bulletItemsWithLines(text) {
   const out = [];
   text.replace(/\r\n?/g, "\n").split("\n").forEach((raw, li) => {
@@ -3799,7 +3965,8 @@ let lpMode = store.get("thync.lpmode") || "outline";
 let lpLo = 0, lpHi = null, lpTimer = null;
 const lpOv = new OutlineView($("lp-ov"), {
   baseLine: () => lpLo,
-  onChange: () => lpChanged(),
+  range: () => lpHi === null ? null : [lpLo, lpHi],
+  onChange: () => { lpChanged(); resyncAllSoon(); },
   onZoom: line => zoomTo(line),
   onCollapse: () => keepScroll(render)
 });
