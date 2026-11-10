@@ -1215,7 +1215,7 @@ function compileOne(tree, opts) {
       mark(k, closed);
     }
   })(tree, null);
-  const cAttr = line => (line === undefined ? "" : ` data-c="${(colorLine.get(line) ?? line) % 10}"` + lnAttr(line));
+  const cAttr = line => (line === undefined ? "" : ` data-c="${colorSlot(line)}"` + lnAttr(line));
   const fnHTML = fns => (fns || []).map(n => `<sup class="fnref"><a data-fn="${P}${n}">${n}</a></sup>`).join("");
   const isCJK = s => /[぀-ヿ㐀-鿿]/.test(s);
   function glossHTML(g) {
@@ -1460,6 +1460,33 @@ function attachPaste(ta) {
    中身は入力全体と同じ文字列（<b>…</b> など）で読み書きする。画面では <b> などを本当の太字にして見せ、
    位置（selectionStart など）も入力全体の文字列で数える。 */
 const RT_OF = { b: "b", strong: "b", i: "i", em: "i", u: "u", s: "s", strike: "s" };
+// 色分けの色：箇条書きの欄で上から見えている順に 10 色を回す。閉じたbulletの中は、その閉じたbulletの色。
+// 行番号で決めると、閉じた中身の行数しだいで隣どうしが同じ色になるため
+let colorCache = { key: null, slots: null }, collapsedVer = 0;
+function colorSlot(line) {
+  const v = src.value, key = v.length + ":" + collapsedVer + ":" + collapsedKeys.size;
+  if (colorCache.key !== key || colorCache.v !== v) {
+    const L = v.split("\n"), slots = new Int8Array(L.length + 1);
+    let n = 0, cur = 0;
+    const stack = [];   // {ind, slot, closed}
+    for (let li = 0; li < L.length; li++) {
+      const m = L[li].match(/^(\s*)[-•](?:\s(.*)|$)/);
+      if (!m) { slots[li] = cur; continue; }
+      const ind = m[1].replace(/\t/g, "    ").length;
+      while (stack.length && stack[stack.length - 1].ind >= ind) stack.pop();
+      const hidden = stack.find(s => s.closed);
+      if (hidden) cur = hidden.slot;
+      else { cur = n % 10; n++; }
+      const text = (m[2] || "").replace(/^\[(?:x|COMPLETE|COMPLETED)\]\s*/i, "").trim();
+      stack.push({ ind, slot: cur, closed: !hidden && collapsedKeys.has(text) });
+      slots[li] = cur;
+    }
+    slots[L.length] = cur;
+    colorCache = { key, v, slots };
+  }
+  const s = colorCache.slots;
+  return line >= 0 && line < s.length ? s[line] : ((line % 10) + 10) % 10;
+}
 function isTA(el) { return !!el && (el.tagName === "TEXTAREA" || !!el._rich); }
 function rtOf(n) { return n.nodeType === 1 ? (n.dataset && n.dataset.rt) || RT_OF[n.tagName.toLowerCase()] || "" : ""; }
 function richHTML(v) {
@@ -1905,7 +1932,7 @@ attachKeys(src);
 /* ---------- 箇条書きの編集画面（Workflowyと同じ黒丸・開閉・ぶら下げインデント・ドラッグ） ---------- */
 let collapsedKeys = new Set();
 try { collapsedKeys = new Set(JSON.parse(store.get("thync.collapsed") || "[]")); } catch (e) {}
-const saveCollapsed = () => store.set("thync.collapsed", JSON.stringify([...collapsedKeys].slice(-3000)));
+const saveCollapsed = () => (collapsedVer++, store.set("thync.collapsed", JSON.stringify([...collapsedKeys].slice(-3000))));
 
 // 箇条書きの文字 → 項目の並び（lv は相対の深さ）。base は元の字下げ
 function textToItems(text) {
@@ -2015,7 +2042,7 @@ class OutlineView {
   rowHTML(i) {
     const it = this.items[i], kids = this.hasKids(i) || this.mirKids(i) > 0, col = this.isCollapsed(i), abs = this.lineOf(i);
     const mirror = /^\{mirror:[^}]+\}$/.test(it.text.trim());
-    return `<div class="ov-row${mirror ? " mirrow" : ""}${it.done ? " done" : ""}${this.inSel(i) ? " sel" : ""}" data-i="${i}" style="--lv:${it.lv}"${colorOn ? ` data-c="${((abs % 10) + 10) % 10}"` : ""}>` +
+    return `<div class="ov-row${mirror ? " mirrow" : ""}${it.done ? " done" : ""}${this.inSel(i) ? " sel" : ""}" data-i="${i}" style="--lv:${it.lv}"${colorOn ? ` data-c="${colorSlot(abs)}"` : ""}>` +
       `<button type="button" class="ov-tog${kids ? "" : " none"}" tabindex="-1" aria-label="${col ? "開く" : "閉じる"}">${kids ? (col ? "▸" : "▾") : ""}</button>` +
       `<span class="ov-bul${col ? " col" : ""}${mirror ? " mir" : ""}" draggable="true" title="クリックでズーム・ドラッグで移動・Shift+クリックで範囲を選ぶ"></span>` +
       `<div class="ov-main"><div class="ov-text">${this.textHTML(i) || "​"}</div>` +
@@ -3742,9 +3769,9 @@ function attachBackdrop(ta, offsetFn) {
     back.style.borderStyle = "solid"; back.style.borderColor = "transparent";
     back.style.overflowY = cs.overflowY === "hidden" ? "hidden" : "scroll";
     const off = offsetFn();
-    let cur = ((off % 10) + 10) % 10;
+    let cur = colorSlot(off);
     back.innerHTML = ta.value.split("\n").map((l, i) => {
-      if (/^\s*[-•](\s|$)/.test(l)) cur = (off + i) % 10;
+      if (/^\s*[-•](\s|$)/.test(l)) cur = colorSlot(off + i);
       const mk = findMark && findMark.ta === ta && findMark.line === i ? findMark : null;
       const body = mk ? hlLine(l.slice(0, mk.s)) + `<mark class="fp-hit">${esc(l.slice(mk.s, mk.e)) || "\u200b"}</mark>` + hlRest(l.slice(mk.e)) : hlLine(l);
       return `<div${colorOn ? ` data-c="${cur}"` : ""}>${body || "\u200b"}</div>`;
