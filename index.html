@@ -1989,7 +1989,12 @@ class OutlineView {
   }
   prevVisible(i) { const v = this.visible(); for (let k = i - 1; k >= 0; k--) if (v[k]) return k; return -1; }
   nextVisible(i) { const v = this.visible(); for (let k = i + 1; k < this.items.length; k++) if (v[k]) return k; return -1; }
-  inSel(i) { return this.sel && i >= Math.min(this.sel.a, this.sel.z) && i <= Math.max(this.sel.a, this.sel.z); }
+  inSel(i) { return this.sel && i >= Math.min(this.sel.a, this.sel.z) && i <= this.end(Math.max(this.sel.a, this.sel.z)); }
+  prevSib(i) { const lv = this.items[i].lv; let k = i - 1; while (k >= 0 && this.items[k].lv > lv) k--; return k >= 0 && this.items[k].lv === lv ? k : -1; }
+  nextSib(i) { const k = this.end(i) + 1; return k < this.items.length && this.items[k].lv === this.items[i].lv ? k : -1; }
+  // bulletの選択を始める（文字の選択から ⇧↑↓ で抜けたとき）
+  startSel(i) { this.sel = { a: i, z: i }; this.deactivate(); this.render(); this.host.focus({ preventScroll: true }); }
+  showSel() { const z = this.sel.z; this.render(); this.host.focus({ preventScroll: true }); const r = this.rowEl(z); if (r) r.scrollIntoView({ block: "nearest" }); }
   rowEl(i) { return this.host.querySelector(`:scope > .ov-row[data-i="${i}"]`); }
   subOf(i) { return this.subs.find(s => s.mirIndex === i) || null; }
   mirKids(i) { const ms = this.mirrorOf(i); return ms ? ms.kids : 0; }
@@ -2398,6 +2403,13 @@ class OutlineView {
       }, { i: prev, c: L });
       return;
     }
+    // ⇧↑↓：文字の選択が端まで来たら、そのbullet全体の選択に切り替える（Workflowyと同じ）
+    if (bare && e.shiftKey && (k === "ArrowUp" || k === "ArrowDown") && !e.isComposing) {
+      const up = k === "ArrowUp", s0 = ta.selectionStart, e0 = ta.selectionEnd, L = ta.value.length;
+      if ((up && s0 === 0) || (!up && e0 === L)) { e.preventDefault(); this.startSel(i); return; }
+      setTimeout(() => { if (this.ta === ta && ta.selectionStart === s0 && ta.selectionEnd === e0) this.startSel(i); }, 0);
+      return;
+    }
     if (bare && !e.shiftKey && (k === "ArrowUp" || k === "ArrowDown")) {
       const up = k === "ArrowUp", pos = ta.selectionStart;
       const go = () => this.step(i, up ? -1 : 1);
@@ -2588,6 +2600,40 @@ class OutlineView {
     const a = Math.min(this.sel.a, this.sel.z), z = Math.max(this.end(this.sel.a), this.end(this.sel.z));
     const cmd = CMD(e);
     if (e.key === "Escape") { this.sel = null; this.render(); return; }
+    const up = e.key === "ArrowUp", down = e.key === "ArrowDown";
+    // ⇧↑↓：選択を兄弟のbulletへ広げる・縮める
+    if ((up || down) && e.shiftKey && !cmd && !e.altKey) {
+      e.preventDefault();
+      const n = up ? this.prevSib(this.sel.z) : this.nextSib(this.sel.z);
+      if (n >= 0) { this.sel.z = n; this.showSel(); }
+      return;
+    }
+    // ⌘⇧↑↓：選んだまとまりごと、上下の兄弟と入れ替える
+    if ((up || down) && e.shiftKey && cmd && !e.altKey) {
+      e.preventDefault();
+      const s = a, t = z;
+      if (up) {
+        const p = this.prevSib(s); if (p < 0) return;
+        const d = s - p;
+        this.structural(() => { const blk = this.items.splice(s, t - s + 1); this.items.splice(p, 0, ...blk); });
+        this.sel = { a: this.sel.a - d, z: this.sel.z - d };
+      } else {
+        const n = this.nextSib(Math.max(this.sel.a, this.sel.z)); if (n < 0) return;
+        const d = this.end(n) - n + 1;
+        this.structural(() => { const blk = this.items.splice(n, d); this.items.splice(s, 0, ...blk); });
+        this.sel = { a: this.sel.a + d, z: this.sel.z + d };
+      }
+      this.showSel();
+      return;
+    }
+    // ↑↓（⇧なし）：選択をやめて、その端の行へ
+    if ((up || down) && !e.shiftKey && !cmd && !e.altKey) {
+      e.preventDefault();
+      this.sel = null; this.render();
+      this.edit(up ? a : z, up ? 0 : null);
+      return;
+    }
+    if (e.key === "Enter" && !cmd) { e.preventDefault(); const i = Math.min(this.sel.a, this.sel.z); this.sel = null; this.render(); this.edit(i, null); return; }
     if (cmd && (e.code === "KeyC" || e.code === "KeyX")) {
       e.preventDefault();
       const text = this.blockSource(a, z);
