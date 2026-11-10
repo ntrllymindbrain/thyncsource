@@ -647,9 +647,9 @@ const SAMPLE = `- 日本語受動文における動作主の標示 #doc
     - 本稿では、この二つの標示の分布を整理する。 #p
     - 基本的な対立を{ref:basic}に示す。
     - #ex {lbl:basic} 直接受動
-      - {lbl:basic-ni} ジョンがメアリーに殴られた。
-      - ジョンがメアリーによって殴られた。
-      - * ジョンがメアリーを殴られた。
+      - #ex {lbl:basic-ni} ジョンがメアリーに殴られた。
+      - #ex ジョンがメアリーによって殴られた。
+      - #ex * ジョンがメアリーを殴られた。
     - {ref:basic-ni}と{ref:basic.b}はどちらも容認されるが、{ref:basic.c}は容認されない。
       - 受動化によって、もとの目的語は主格（{sc:nom}）で標示されるようになる。
         - ここでは対格（{sc:acc}）の扱いには立ち入らない。 #fn
@@ -670,9 +670,9 @@ const SAMPLE = `- 日本語受動文における動作主の標示 #doc
     - 間接受動 #sec
       - 間接受動では、「によって」の容認度が下がる。
       - #ex {lbl:indirect}
-        - 太郎が雨に降られた。
-        - ?? 太郎が雨によって降られた。
-        - {#} 太郎が雨に喜ばれた。
+        - #ex 太郎が雨に降られた。
+        - #ex ?? 太郎が雨によって降られた。
+        - #ex {#} 太郎が雨に喜ばれた。
       - {ref:indirect.a~indirect.b}の差は、直接受動の{ref:basic.a,basic.b}には見られない。
   - まとめ #sec
     - ここで{ref:basic}を再掲する。
@@ -924,6 +924,24 @@ function compileOne(tree, opts) {
     return { judg, pre, words, tr, rowLines };
   }
 
+  // 例文の中のふつうの行（#ex の付いていない子）：記号なしでそのまま並べる。#br の後は改行
+  function exLines(nodes, ref, first = true) {
+    const lines = [];
+    nodes.forEach(k => {
+      const ki = info(k);
+      if (!ki.hyp) ki.labels.forEach(l => defLabel(l, { kind: "ex", num: ref.num, sub: ref.sub, id: ref.id }));
+      let t = ki.text;
+      if (first && !lines.length) t = stripManual(t);
+      t = hypify(k, ki, t, ref);
+      const kk = k.children.filter(visible);
+      const deeper = kk.filter(x => !info(x).tags.has("fn")).map(collectText).filter(Boolean);
+      if (deeper.length) t = smartJoin([t, ...deeper]);
+      lines.push({ text: t, line: k.line, br: ki.tags.has("br") || ki.tags.has("p"), fns: kk.filter(x => info(x).tags.has("fn")).map(addFn) });
+    });
+    let judg = "";
+    if (first && lines.length) { const s = splitJudg(lines[0].text); judg = s.judg; lines[0].text = s.text; }
+    return { judg, lines };
+  }
   function buildItem(k, num, path, id) {
     const ki = info(k);
     if (!ki.hyp) ki.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: path, id }));
@@ -938,8 +956,16 @@ function compileOne(tree, opts) {
     else {
       const sj = splitJudg(stripManual(ki.text));
       sj.text = hypify(k, ki, sj.text, { num, sub: path, id });
-      if (sub.length && path.length < 2) item = { letter, judg: sj.judg, text: sj.text, subitems: sub.map((s, j) => buildItem(s, num, [...path, ROMAN[j] || String(j + 1)], id)) };
-      else { if (sub.length) warn(`例文${where}の下位例文は2段までです。それより深い行は表示していません。`); item = { letter, judg: sj.judg, text: sj.text }; }
+      // 子に #ex があればさらに下位例文（i. ii.）、#ex のない子はこの例文の続きの行
+      const subEx = sub.filter(x => info(x).tags.has("ex")), plain = sub.filter(x => !info(x).tags.has("ex"));
+      item = { letter, judg: sj.judg, text: sj.text };
+      if (plain.length) {
+        const pl = exLines(plain, { num, sub: path, id }, !sj.text);
+        item.lines = (sj.text ? [{ text: sj.text, line: k.line, br: ki.tags.has("br") || ki.tags.has("p"), fns: [] }] : []).concat(pl.lines);
+        if (!sj.text) item.judg = pl.judg;
+      }
+      if (subEx.length && path.length < 2) item.subitems = subEx.map((s, j) => buildItem(s, num, [...path, ROMAN[j] || String(j + 1)], id));
+      else if (subEx.length) warn(`例文${where}の下位例文は2段までです。それより深い行は表示していません。`);
     }
     item.fns = fnKids.map(addFn);
     item.label = ki.labels[0] || null;
@@ -961,16 +987,25 @@ function compileOne(tree, opts) {
     const exRef = { num, sub: [], id };
     if (inf.tags.has("gl")) { ex.header = hypify(c, inf, inf.text, exRef); ex.single = { gloss: glossFrom(content, `(${num})`) }; }
     else if (!content.length) { ex.single = splitJudg(inf.text); ex.single.text = hypify(c, inf, ex.single.text, exRef); }
-    else if (content.length === 1 && inf.text && !info(content[0]).tags.has("gl") && !content[0].children.some(visible)) {
-      // 見出しの下に1行だけ：記号（a.）を付けずに見出しの下へ
-      const k = content[0], ki = info(k);
+    else if (content.some(x => info(x).tags.has("ex"))) {
+      // #ex の付いた子だけが下位例文（a. b.）。付いていない子は見出しの続きの行
+      const subs = content.filter(x => info(x).tags.has("ex")), rest = content.filter(x => !info(x).tags.has("ex"));
       ex.header = hypify(c, inf, inf.text, exRef);
-      if (!ki.hyp) ki.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: [], id }));
-      ex.single = splitJudg(stripManual(ki.text));
-      ex.single.text = hypify(k, ki, ex.single.text, exRef);
-      ex.single.line = k.line;
+      if (rest.length) { const pl = exLines(rest, exRef, false); ex.headLines = (ex.header ? [{ text: ex.header, line: c.line, br: inf.tags.has("br"), fns: [] }] : []).concat(pl.lines); }
+      ex.items = subs.map((k, i) => buildItem(k, num, [LETTERS[i] || String(i + 1)], id));
     }
-    else { ex.header = hypify(c, inf, inf.text, exRef); ex.items = content.map((k, i) => buildItem(k, num, [LETTERS[i] || String(i + 1)], id)); }
+    else if (content.length === 1 && info(content[0]).tags.has("gl")) {
+      const k = content[0], ki = info(k);
+      ex.header = hypify(c, inf, smartJoin([inf.text, ki.text].filter(Boolean)), exRef);
+      if (!ki.hyp) ki.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: [], id }));
+      ex.single = { gloss: glossFrom(k.children.filter(visible), `(${num})`), line: k.line };
+    }
+    else {
+      // 子は記号を付けずにそのまま並べる（#br の後は改行）
+      ex.header = hypify(c, inf, inf.text, exRef);
+      const pl = exLines(content, exRef, true);
+      ex.single = { judg: pl.judg, lines: pl.lines, line: content[0].line };
+    }
     ex.fns = fnKids.map(addFn);
     byId.set(id, ex);
     return ex;
@@ -1260,14 +1295,27 @@ function compileOne(tree, opts) {
     const cls = isItem ? "ex-item" : "ex-line";
     let content, judg = "";
     if (x.gloss) { judg = x.gloss.judg || ""; content = glossHTML(x.gloss); }
-    else if (x.subitems) { judg = x.judg; content = (x.text ? `<div class="ex-subhead">${R(x.text)}</div>` : "") + x.subitems.map(it => lineHTML(it, it.letter, ctx)).join(""); }
-    else { judg = x.judg; content = R(x.text); }
+    else {
+      judg = x.judg;
+      const head = x.lines ? linesHTML(x.lines) : x.text ? R(x.text) : "";
+      content = x.subitems ? (head ? `<div class="ex-subhead">${head}</div>` : "") + x.subitems.map(it => lineHTML(it, it.letter, ctx)).join("") : head;
+    }
     return `<div class="${cls}"${idAttr}${x.gloss ? "" : cAttr(isItem ? x.line : (x.line ?? ctx.line))}>${L}<span class="judg">${esc(judg)}</span><div class="ex-text">${content}${fnHTML(x.fns)}</div></div>`;
+  }
+  function linesHTML(lines) {
+    let out = "", prev = null;
+    for (const l of lines) {
+      if (prev) out += prev.br ? "<br>" : needSpace(prev.text, l.text) ? " " : "";
+      out += `<span${cAttr(l.line)}>${R(l.text)}${fnHTML(l.fns)}</span>`;
+      prev = l;
+    }
+    return out;
   }
   function exHTML(b, isRep, attr) {
     const ctx = { id: b.id, rep: isRep, label: b.label, line: b.min };
     let body = "";
-    if (b.header) body += `<div class="ex-head"${cAttr(b.min)}>${R(b.header)}${fnHTML(b.fns)}</div>`;
+    if (b.headLines) body += `<div class="ex-head">${linesHTML(b.headLines)}${fnHTML(b.fns)}</div>`;
+    else if (b.header) body += `<div class="ex-head"${cAttr(b.min)}>${R(b.header)}${fnHTML(b.fns)}</div>`;
     if (b.single) body += lineHTML(b.single, null, ctx);
     else body += b.items.map(it => lineHTML(it, it.letter, ctx)).join("");
     if (!b.header && b.fns && b.fns.length) body += fnHTML(b.fns);
