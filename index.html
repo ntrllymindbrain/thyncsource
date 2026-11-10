@@ -447,6 +447,13 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .ov-mirbox { margin-left: calc(var(--lv) * 1.45em + 1.45em - 2px); padding-left: 0; border-left: 2px dotted #c9c0e6; }
 .ov-mirbox.ov { min-height: 0; padding: 0; font-size: inherit; }
 .ov-ta-mir { background: #f4f1fb !important; }
+.paper blockquote.wfq { margin: .6em 0 .6em 1em; padding: .1em 0 .1em .9em; border-left: 3px solid var(--rule); color: var(--ink); text-indent: 0; }
+.wft-wrap { overflow-x: auto; margin: .8em 0; }
+.paper table.wft { border-collapse: collapse; font-size: .95em; text-indent: 0; margin: 0 auto; }
+.paper table.wft caption { caption-side: top; font-weight: 600; padding-bottom: .35em; }
+.paper table.wft th, .paper table.wft td { border: 1px solid var(--rule); padding: .3em .6em; text-align: left; vertical-align: top; }
+.paper table.wft thead th { border-bottom-width: 2px; font-family: inherit; font-weight: 600; }
+.paper table.wft th, .paper table.wft td { font-family: inherit; }
 .docsep { margin: 3em 0; border-top: 3px double var(--rule); }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent-soft); } }
@@ -977,6 +984,20 @@ function compileOne(tree, opts) {
       // 改ページ・ページ番号の始まり（そのbulletの内容の前に置く）
       if (inf.tags.has("clearpage")) { flush(); blocks.push({ type: "pagebreak" }); }
       if (inf.tags.has("startpagenum")) { flush(); blocks.push({ type: "pnstart" }); }
+      // 引用ブロック（Workflowyの quote-block）：そのbulletの文を引用として。子はふつうに続ける
+      if (inf.tags.has("quote")) {
+        flush();
+        blocks.push({ type: "quote", text: inf.text, min: c.line, max: c.line });
+        walk(c, depth); flush();
+        continue;
+      }
+      // 表（Workflowyの表）：子が行、孫がセル、最初の行が見出し行
+      if (inf.tags.has("table")) {
+        flush();
+        const rows = c.children.filter(visible).map(r => ({ line: r.line, cells: r.children.filter(visible).map(k => ({ line: k.line, text: collectText(k) })) }));
+        blocks.push({ type: "table", caption: inf.text, rows, min: c.line, max: c.lastLine });
+        continue;
+      }
       // 見出しの大きさだけを指定する（番号なし）
       const phc = inf.tags.has("title") ? "title" : inf.tags.has("h1") ? "h1" : inf.tags.has("h2") ? "h2" : inf.tags.has("h3") ? "h3" : null;
       if (phc && !inf.tags.has("sec")) {
@@ -1267,7 +1288,16 @@ function compileOne(tree, opts) {
   for (const b of blocks) {
     const at = attrOf(b);
     const before = html.length;
-    if (b.type === "ph") {
+    if (b.type === "quote") {
+      html += `<blockquote class="wfq"${at}><span${cAttr(b.min)}>${R(b.text)}</span></blockquote>`;
+    } else if (b.type === "table") {
+      const nc = Math.max(1, ...b.rows.map(r => r.cells.length));
+      const cell = (tag, c) => `<${tag}${c ? cAttr(c.line) : ""}>${c ? R(c.text) : ""}</${tag}>`;
+      const tr = (r, tag) => `<tr>${Array.from({ length: nc }, (_, k) => cell(tag, r.cells[k])).join("")}</tr>`;
+      const [head, ...body] = b.rows;
+      html += `<div class="wft-wrap"${at}><table class="wft">` + (b.caption ? `<caption${cAttr(b.min)}>${R(b.caption)}</caption>` : "") +
+        (head ? `<thead>${tr(head, "th")}</thead>` : "") + `<tbody>${body.map(r => tr(r, "td")).join("")}</tbody></table></div>`;
+    } else if (b.type === "ph") {
       const s = !starUsed && star && b.cls === "title" ? (starUsed = true, star) : "";
       html += `<div class="ph ph-${b.cls}"${at}><span${cAttr(b.min)}>${R(b.text)}</span>${s}</div>`;
     } else if (b.type === "envhead") {
@@ -3305,12 +3335,30 @@ async function loadSubtree(rootId, progress) {
   return { byParent, via: "list" };
 }
 
+let wfTableMode = store.get("thync.wftable") || "";
+function layoutTag(lm) { return lm === "quote-block" ? "#quote" : /table/i.test(lm || "") ? "#table" : ""; }
+// 原稿の文から #quote・#table を外して、Workflowyに送る名前と layoutMode にする
+function splitLayout(text) {
+  let lm = null;
+  const t = text.replace(/(^|\s)#(quote|table)(?=\s|$)/gi, (m, pre, w) => { lm = w.toLowerCase(); return pre; }).replace(/\s{2,}/g, " ").trim();
+  return { name: t, kind: lm };
+}
+function layoutFor(kind, old) {
+  if (kind === "quote") return "quote-block";
+  if (kind === "table") return /table/i.test(old || "") ? old : (wfTableMode || null);
+  return /^(quote-block)$/.test(old || "") || /table/i.test(old || "") ? "bullets" : null;
+}
 function treeToBase(root, byParent) {
   const base = [], nodes = {};
   (function walk(n, ind) {
-    const name = decodeText(n.name);
+    const lm = (n.data && n.data.layoutMode) || n.layoutMode || "";
+    let name = decodeText(n.name);
+    // Workflowyの引用ブロック・表は、原稿では #quote・#table のタグとして見せる（保存のときに戻す）
+    const lt = layoutTag(lm);
+    if (lt && !new RegExp("(^|\\s)" + lt + "(\\s|$)").test(name)) name = name ? name + " " + lt : lt;
+    if (/table/i.test(lm) && wfTableMode !== lm) { wfTableMode = lm; store.set("thync.wftable", lm); }
     const note = n.note ? decodeText(n.note) : "";
-    base.push({ id: n.id, ind, text: name, note, done: !!n.completed });
+    base.push({ id: n.id, ind, text: name, note, done: !!n.completed, lm });
     nodes[n.id] = { name: n.name || "", note: n.note || "", completed: !!n.completed };
     const kids = (byParent.get(n.id) || []).slice().sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
     for (const k of kids) walk(k, ind + 2);
@@ -3462,13 +3510,20 @@ async function runSync(plan) {
   let doneN = 0;
   const tick = () => { doneN++; docStatus(`保存しています… ${doneN}/${total}`); };
   try {
-    const nodeName = it => encodeText(it.text);
+    const oldLm = new Map(wf.base.map(b => [b.id, b.lm || ""]));
+    // 表の layoutMode の値がまだ分からないとき（Workflowyで表を一度も読んでいない）は #table を名前に残す
+    const nodeName = (it, old) => { const s = splitLayout(it.text); return encodeText(s.kind === "table" && !layoutFor("table", old ? old.lm : "") ? it.text : s.name); };
+    const layoutBody = (it, old) => {
+      const s = splitLayout(it.text), want = layoutFor(s.kind, old ? old.lm : "");
+      const cur = old ? old.lm || "bullets" : "bullets";
+      return want && want !== cur ? { layoutMode: want } : {};
+    };
     // 1. 新しいbullet（親から順に）。名前は作ったあとにHTMLで入れ直す（作成時はマークダウンとして解釈されるため）
     for (const k of ops.create) {
       const pid = ids[parent[k]];
       const r = await wfFetch("/nodes", { method: "POST", body: { parent_id: pid, name: "…", position: "bottom" } });
       ids[k] = r.item_id;
-      await wfFetch("/nodes/" + ids[k], { method: "POST", body: { name: nodeName(items[k]), note: items[k].note ? encodeText(items[k].note) : "" } });
+      await wfFetch("/nodes/" + ids[k], { method: "POST", body: { name: nodeName(items[k], null), note: items[k].note ? encodeText(items[k].note) : "", ...layoutBody(items[k], null) } });
       if (items[k].done) await wfFetch("/nodes/" + ids[k] + "/complete", { method: "POST" });
       tick();
     }
@@ -3476,7 +3531,7 @@ async function runSync(plan) {
     for (const k of ops.update) {
       const id = ids[k], old = wf.base.find(b => b.id === id), it = items[k];
       const body = {};
-      if (old.text !== it.text) body.name = nodeName(it);
+      if (old.text !== it.text) { body.name = nodeName(it, old); Object.assign(body, layoutBody(it, old)); }
       if ((old.note || "").trim() !== (it.note || "").trim()) body.note = it.note ? encodeText(it.note) : "";
       if (Object.keys(body).length) await wfFetch("/nodes/" + id, { method: "POST", body });
       if (old.done !== it.done) await wfFetch("/nodes/" + id + (it.done ? "/complete" : "/uncomplete"), { method: "POST" });
@@ -3496,7 +3551,7 @@ async function runSync(plan) {
       tick();
     }
     // 保存後の状態を「前回の状態」にする
-    wf.base = items.map((it, k) => ({ id: ids[k], ind: it.ind, text: it.text, note: it.note, done: it.done }));
+    wf.base = items.map((it, k) => { const s = splitLayout(it.text), o = oldLm.get(ids[k]) || ""; return { id: ids[k], ind: it.ind, text: it.text, note: it.note, done: it.done, lm: s.kind ? (layoutFor(s.kind, o) || o) : (/^quote-block$/.test(o) || /table/i.test(o) ? "bullets" : o) }; });
     wf.savedAt = new Date().toISOString();
     saveWf();
     docStatus(`保存しました（${stamp(wf.savedAt)}）`, "ok");
@@ -3720,7 +3775,7 @@ renderMemos();
 renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
-const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br"]);
+const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table"]);
 const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))#[\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 function hlRest(s) {
   let out = "", last = 0;
