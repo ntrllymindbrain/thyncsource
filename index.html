@@ -333,9 +333,9 @@ mark.fp-hit { background: hsla(48, 100%, 55%, .55); color: inherit; border-radiu
 .ov { outline: none; font-family: var(--font-ui); font-size: calc(14px * var(--code-scale, 1)); line-height: 1.6; padding: 8px 10px 40px 4px; color: var(--ink); }
 .ie-ov.ov { padding: 4px 4px 4px 0; background: var(--paper); border-radius: 6px; border: 1px solid var(--rule); }
 .ov-row { display: grid; grid-template-columns: 1.15em 1.2em minmax(0, 1fr); align-items: start; padding-left: calc(var(--lv) * 1.45em); border-radius: 4px; position: relative; }
-.ov-tog { width: 1.15em; height: 1.6em; border: none; background: none; padding: 0; margin: 0; color: var(--muted); font-size: .78em; line-height: 1; cursor: pointer; opacity: 0; transition: opacity .12s; }
+.ov-tog { width: 1.15em; height: 1.6em; border: none; background: none; padding: 0; margin: 0; color: var(--muted); font-size: .78em; line-height: 1; cursor: pointer; }
 .ov-tog.none { visibility: hidden; }
-.ov-row:hover > .ov-tog, .ov-tog:focus-visible, .ov-row:has(> .ov-bul.col) > .ov-tog { opacity: 1; }
+.ov-tog:hover { color: var(--ink); }
 .ov-bul { width: 1.2em; height: 1.6em; display: flex; align-items: center; justify-content: center; cursor: grab; user-select: none; -webkit-user-select: none; }
 .ov-bul::before { content: ""; width: .4em; height: .4em; border-radius: 50%; background: var(--ink); opacity: .72; transition: background .12s; }
 .ov-bul.col::before { box-shadow: 0 0 0 .26em color-mix(in srgb, var(--ink) 18%, transparent); }
@@ -343,6 +343,8 @@ mark.fp-hit { background: hsla(48, 100%, 55%, .55); color: inherit; border-radiu
 .ov-bul:hover::before { background: var(--accent); opacity: 1; }
 .ov-main { min-width: 0; }
 .ov-text { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.6em; cursor: text; }
+div.ov-rich { display: block; width: 100%; min-height: 1.6em; outline: none; padding: 0; margin: 0; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; caret-color: var(--ink); }
+.ov-text b, .ov-rich b { font-weight: 700; } .ov-text i, .ov-rich i { font-style: italic; }
 textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; border-radius: 0; outline: none; resize: none; padding: 0; margin: 0; font: inherit; line-height: inherit; background: transparent; color: var(--ink); overflow: hidden; flex: none; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ov-note, textarea.ov-note-ta { color: var(--muted); font-size: .86em; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ov-row.done > .ov-main > .ov-text { text-decoration: line-through; color: var(--muted); }
@@ -593,7 +595,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <div class="kp-head"><b>ショートカット（Mac）</b><button type="button" id="kp-close">閉じる</button></div>
     <div class="kp-body">
       <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌥+Enter</kbd></td><td>ノートの行を足す（Workflowyでは Shift+Enter）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>複製</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>Backspace（行頭）</kbd></td><td>前の行につなぐ（子は前の行の子になる）</td></tr><tr><td><kbd>⇧+⌥+⌘+↑ ／ ↓</kbd></td><td>このbulletの変更履歴を選ぶ（キーを離すと差し替え・Escでやめる）</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
-      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>段落の区切り #p を付けて次のbulletへ（文の途中なら付け外し）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>字下げなしの改行 #br を付けて次のbulletへ</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr></table>
+      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>段落の区切り #p を付けて次のbulletへ（文の途中なら付け外し）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>字下げなしの改行 #br を付けて次のbulletへ</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr></table>
     </div>
   </div>
   <div class="clip-dock" id="clip-dock">
@@ -710,32 +712,33 @@ function parseSource(src) {
 }
 
 /* ---------- 貼り付け：WorkflowyのHTML → 箇条書きテキスト ---------- */
+const MAP = { b: "b", strong: "b", i: "i", em: "i", u: "u", s: "s", strike: "s", del: "s", code: "code" };
+function htmlInline(el) {
+  let s = "";
+  for (const n of el.childNodes) {
+    if (n.nodeType === 3) { s += n.textContent; continue; }
+    if (n.nodeType !== 1) continue;
+    const t = n.tagName.toLowerCase();
+    if (t === "ul" || t === "ol" || t === "li") continue;
+    if (n.classList && (n.classList.contains("note") || n.classList.contains("notes"))) continue;
+    const inner = htmlInline(n);
+    if (MAP[t]) { s += `<${MAP[t]}>${inner}</${MAP[t]}>`; continue; }
+    if (t === "a" && n.getAttribute("href")) { s += `<a href="${n.getAttribute("href").replace(/"/g, "%22")}">${inner}</a>`; continue; }
+    if (t === "br") { s += " "; continue; }
+    const st = n.style || {};
+    let w = inner;
+    if (parseInt(st.fontWeight, 10) >= 600 || st.fontWeight === "bold") w = `<b>${w}</b>`;
+    if (st.fontStyle === "italic") w = `<i>${w}</i>`;
+    if ((st.textDecoration || "").includes("underline")) w = `<u>${w}</u>`;
+    if ((st.textDecoration || "").includes("line-through")) w = `<s>${w}</s>`;
+    s += w;
+  }
+  return s;
+}
 function htmlToSource(html) {
   const doc = new DOMParser().parseFromString(html, "text/html");
   if (!doc.body.querySelector("li")) return null;
-  const MAP = { b: "b", strong: "b", i: "i", em: "i", u: "u", s: "s", strike: "s", del: "s", code: "code" };
-  function inline(el) {
-    let s = "";
-    for (const n of el.childNodes) {
-      if (n.nodeType === 3) { s += n.textContent; continue; }
-      if (n.nodeType !== 1) continue;
-      const t = n.tagName.toLowerCase();
-      if (t === "ul" || t === "ol" || t === "li") continue;
-      if (n.classList && (n.classList.contains("note") || n.classList.contains("notes"))) continue;
-      const inner = inline(n);
-      if (MAP[t]) { s += `<${MAP[t]}>${inner}</${MAP[t]}>`; continue; }
-      if (t === "a" && n.getAttribute("href")) { s += `<a href="${n.getAttribute("href").replace(/"/g, "%22")}">${inner}</a>`; continue; }
-      if (t === "br") { s += " "; continue; }
-      const st = n.style || {};
-      let w = inner;
-      if (parseInt(st.fontWeight, 10) >= 600 || st.fontWeight === "bold") w = `<b>${w}</b>`;
-      if (st.fontStyle === "italic") w = `<i>${w}</i>`;
-      if ((st.textDecoration || "").includes("underline")) w = `<u>${w}</u>`;
-      if ((st.textDecoration || "").includes("line-through")) w = `<s>${w}</s>`;
-      s += w;
-    }
-    return s;
-  }
+  const inline = htmlInline;
   const out = [];
   function walkList(list, depth) {
     for (const li of list.querySelectorAll("li")) {
@@ -1435,7 +1438,15 @@ function jumpTo(el) {
 
 /* 貼り付け：書式付きで来たら箇条書きテキストに直す */
 function attachPaste(ta) {
+  let got = false;
+  ta.addEventListener("keydown", e => {
+    if (!wantPlainPaste(e)) return;
+    plainPasteUntil = Date.now() + 400; got = false;
+    setTimeout(async () => { if (got) return; try { const t = await navigator.clipboard.readText(); if (t) insertText(ta, t); } catch (_) { toast("クリップボードを読めませんでした（ブラウザの許可が必要です）"); } }, 60);
+  });
   ta.addEventListener("paste", e => {
+    got = true;
+    if (Date.now() < plainPasteUntil) { plainPasteUntil = 0; return; }  // ⌘⇧V：文字のまま
     const html = e.clipboardData && e.clipboardData.getData("text/html");
     if (!html) return;
     const text = htmlToSource(html);
@@ -1445,7 +1456,186 @@ function attachPaste(ta) {
   });
 }
 // ⌘+Z で取り消せるよう、できるだけブラウザの「入力」として書き換える
+/* ---------- 箇条書きの編集欄：太字・斜体などを見たまま直す ----------
+   中身は入力全体と同じ文字列（<b>…</b> など）で読み書きする。画面では <b> などを本当の太字にして見せ、
+   位置（selectionStart など）も入力全体の文字列で数える。 */
+const RT_OF = { b: "b", strong: "b", i: "i", em: "i", u: "u", s: "s", strike: "s" };
+function isTA(el) { return !!el && (el.tagName === "TEXTAREA" || !!el._rich); }
+function rtOf(n) { return n.nodeType === 1 ? (n.dataset && n.dataset.rt) || RT_OF[n.tagName.toLowerCase()] || "" : ""; }
+function richHTML(v) {
+  const re = /<(\/?)(b|i|u|s)>/gi;
+  let out = "", last = 0;
+  const stack = [];
+  const seg = t => hlRest(t);
+  let m;
+  while ((m = re.exec(v))) {
+    out += seg(v.slice(last, m.index)); last = m.index + m[0].length;
+    const t = m[2].toLowerCase();
+    if (!m[1]) { stack.push({ t, at: out.length }); out += `<${t} data-rt="${t}">`; }
+    else {
+      const k = stack.map(x => x.t).lastIndexOf(t);
+      if (k !== stack.length - 1) { out += `<span class="hl-html">${esc(m[0])}</span>`; continue; }  // 入れ違い・対のない閉じタグはそのまま
+      const op = stack.pop();
+      if (out.length === op.at + `<${t} data-rt="${t}">`.length) out += "​";
+      out += `</${t}>`;
+    }
+  }
+  out += seg(v.slice(last));
+  // 閉じていない開きタグ：閉じタグは書き足さない
+  while (stack.length) { const op = stack.pop(); out = out.slice(0, op.at) + out.slice(op.at).replace(`<${op.t} data-rt="${op.t}">`, `<${op.t} data-rt="${op.t}" data-open="1">`) + `</${op.t}>`; }
+  return out;
+}
+function richSerialize(el) {
+  let s = "";
+  (function walk(n) {
+    for (const c of n.childNodes) {
+      if (c.nodeType === 3) { s += c.data.replace(/​/g, "").replace(/ /g, " "); continue; }
+      if (c.nodeType !== 1 || c.tagName === "BR") continue;
+      const t = rtOf(c);
+      if (t) { s += `<${t}>`; walk(c); if (!c.dataset.open) s += `</${t}>`; }
+      else walk(c);
+    }
+  })(el);
+  return s.replace(/\n/g, " ");
+}
+function richPos(el, node, off) {
+  let s = 0, done = false;
+  const tl = d => d.replace(/​/g, "").length;
+  (function walk(n) {
+    for (let k = 0; k < n.childNodes.length; k++) {
+      if (n === node && k === off) { done = true; return; }
+      const c = n.childNodes[k];
+      if (c.nodeType === 3) { if (c === node) { s += tl(c.data.slice(0, off)); done = true; return; } s += tl(c.data); }
+      else if (c.nodeType === 1 && c.tagName !== "BR") {
+        const t = rtOf(c);
+        if (t) s += t.length + 2;
+        walk(c); if (done) return;
+        if (t && !c.dataset.open) s += t.length + 3;
+      }
+    }
+    if (n === node) done = true;
+  })(el);
+  return s;
+}
+function richPoint(el, pos) {
+  let s = 0, res = null;
+  const endOf = n => ({ node: n, off: n.childNodes.length });
+  (function walk(n) {
+    for (const c of n.childNodes) {
+      if (res) return;
+      if (c.nodeType === 3) {
+        const d = c.data, len = d.replace(/​/g, "").length;
+        if (pos <= s + len) {
+          let need = pos - s, idx = 0;
+          while (idx < d.length && (need > 0 || d[idx] === "​")) { if (d[idx] !== "​") need--; idx++; }
+          res = { node: c, off: idx }; return;
+        }
+        s += len;
+      } else if (c.nodeType === 1 && c.tagName !== "BR") {
+        const t = rtOf(c);
+        if (t) { s += t.length + 2; if (pos < s) { res = { node: c, off: 0 }; return; } }
+        walk(c); if (res) return;
+        if (t && !c.dataset.open) { s += t.length + 3; if (pos < s) { res = endOf(c); return; } }
+      }
+    }
+  })(el);
+  return res || endOf(el);
+}
+function makeRichEditor(value) {
+  const el = document.createElement("div");
+  el.className = "ov-ta ov-rich";
+  el.contentEditable = "true";
+  el.spellcheck = false;
+  el.setAttribute("role", "textbox");
+  el.innerHTML = richHTML(value) || "";
+  let lastSel = [value.length, value.length];
+  const getSel = () => {
+    const sel = getSelection();
+    if (sel && sel.rangeCount && el.contains(sel.anchorNode)) {
+      const r = sel.getRangeAt(0);
+      lastSel = [richPos(el, r.startContainer, r.startOffset), richPos(el, r.endContainer, r.endOffset)];
+    }
+    return lastSel;
+  };
+  const setSel = (a, b) => {
+    const v = richSerialize(el).length;
+    a = Math.max(0, Math.min(a, v)); b = Math.max(a, Math.min(b === undefined ? a : b, v));
+    lastSel = [a, b];
+    if (!el.isConnected) return;
+    const p = richPoint(el, a), q = richPoint(el, b);
+    const r = document.createRange(); r.setStart(p.node, p.off); r.setEnd(q.node, q.off);
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+  };
+  Object.defineProperty(el, "value", { get: () => richSerialize(el), set: v => { el.innerHTML = richHTML(String(v)); } });
+  Object.defineProperty(el, "selectionStart", { get: () => getSel()[0], set: x => setSel(x, Math.max(x, getSel()[1])) });
+  Object.defineProperty(el, "selectionEnd", { get: () => getSel()[1], set: x => { const a = getSel()[0]; setSel(Math.min(a, x), x); } });
+  el.setSelectionRange = (a, b) => setSel(a, b);
+  el.setRangeText = (text, s, e) => el._rich.replace(s, e, text);
+  el.select = () => setSel(0, richSerialize(el).length);
+  // 自前の取り消し（中身を描き直すので、ブラウザの取り消しは使えない）
+  const R = el._rich = {
+    hist: [], redo: [], prev: value, prevSel: [value.length, value.length], t: 0, composing: false,
+    push(force) { const now = Date.now(); if (force || now - R.t > 700 || !R.hist.length) { R.hist.push({ v: R.prev, c: R.prevSel }); if (R.hist.length > 200) R.hist.shift(); } R.t = now; R.redo = []; },
+    after() { R.prev = el.value; R.prevSel = getSel(); },
+    replace(s, e, text) {
+      R.push(true); R.t = 0;
+      const v = el.value; el.value = v.slice(0, s) + text + v.slice(e);
+      el.focus({ preventScroll: true }); setSel(s + text.length, s + text.length);
+      el.dispatchEvent(new InputEvent("input", { inputType: "insertText", data: text }));
+    },
+    restore(st) { el.value = st.v; setSel(st.c[0], st.c[1]); R.prev = st.v; R.prevSel = st.c; el.dispatchEvent(new InputEvent("input", { inputType: "historyUndo" })); },
+    undo() { if (!R.hist.length) return false; R.redo.push({ v: el.value, c: getSel() }); R.restore(R.hist.pop()); return true; },
+    redoOne() { if (!R.redo.length) return false; R.hist.push({ v: el.value, c: getSel() }); R.restore(R.redo.pop()); return true; },
+    // 色付け（タグ・参照など）を打ち込んだあとで付け直す
+    rehl() {
+      clearTimeout(R.hlT);
+      R.hlT = setTimeout(() => {
+        if (R.composing || !el.isConnected || document.activeElement !== el) return;
+        const v = el.value, want = richHTML(v);
+        if (el.innerHTML === want) return;
+        const c = getSel(); el.innerHTML = want; setSel(c[0], c[1]);
+      }, 500);
+    }
+  };
+  el.addEventListener("compositionstart", () => { R.composing = true; });
+  el.addEventListener("compositionend", () => { R.composing = false; R.rehl(); });
+  el.addEventListener("beforeinput", e => {
+    if (e.inputType === "historyUndo" || e.inputType === "historyRedo") { e.preventDefault(); if (e.inputType === "historyUndo") R.undo(); else R.redoOne(); return; }
+    if (/^format/.test(e.inputType) || e.inputType === "insertParagraph" || e.inputType === "insertLineBreak") { e.preventDefault(); return; }
+    if (!R.composing && e.inputType !== "insertText") R.push(true);
+    else if (!R.composing) R.push(false);
+  });
+  el.addEventListener("input", e => { if (e.inputType !== "historyUndo") R.after(); if (!R.composing) R.rehl(); });
+  el.addEventListener("keyup", () => { if (!R.composing) R.prevSel = getSel(); });
+  el.addEventListener("mouseup", () => { R.prevSel = getSel(); });
+  // コピー・切り取りは入力全体と同じ文字列（タグ付き）で
+  const copyOut = (e, cut) => {
+    const [a, b] = getSel(); if (a === b) return;
+    e.preventDefault();
+    const s = el.value.slice(a, b);
+    e.clipboardData.setData("text/plain", s);
+    e.clipboardData.setData("text/html", richHTML(s));
+    if (cut) R.replace(a, b, "");
+  };
+  el.addEventListener("copy", e => copyOut(e, false));
+  el.addEventListener("cut", e => copyOut(e, true));
+  el.addEventListener("drop", e => e.preventDefault());
+  return el;
+}
+// ⌘⇧V：書式を落として、そのままの文字で貼る
+let plainPasteUntil = 0;
+function wantPlainPaste(e) { return CMD(e) && e.shiftKey && !e.altKey && e.code === "KeyV"; }
+// 貼り付けの中身（1行）：書式付きならタグに直す。⌘⇧V のときは文字だけ
+function inlinePasteText(cd) {
+  const plain = cd.getData("text/plain") || "";
+  if (Date.now() < plainPasteUntil) return plain;
+  const html = cd.getData("text/html");
+  if (!html) return plain;
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  return htmlInline(doc.body).replace(/\s+/g, " ").trim() || plain;
+}
 function replaceRange(ta, s, e, text) {
+  if (ta._rich) { ta._rich.replace(s, e, text); return; }
   ta.focus({ preventScroll: true });
   ta.setSelectionRange(s, e);
   let ok = false;
@@ -1812,10 +2002,10 @@ class OutlineView {
   textHTML(i) {
     const it = this.items[i];
     const ms = this.mirrorOf(i);
-    if (ms) return `<span class="ov-mirtxt" title="ミラー（元：${esc(ms.label)}）。ここで直すと元のbulletも変わります">${hlBody(ms.text) || "​"}</span>` ;
+    if (ms) return `<span class="ov-mirtxt" title="ミラー（元：${esc(ms.label)}）。ここで直すと元のbulletも変わります">${hlBody(ms.text, true) || "​"}</span>`;
     const mk = this.mark && this.mark.i === i && !this.mark.note ? this.mark : null;
     if (mk) return hlBody(it.text.slice(0, mk.s)) + `<mark class="fp-hit">${esc(it.text.slice(mk.s, mk.e)) || "​"}</mark>` + hlRest(it.text.slice(mk.e));
-    return hlBody(it.text);
+    return hlBody(it.text, true);
   }
   rowHTML(i) {
     const it = this.items[i], kids = this.hasKids(i) || this.mirKids(i) > 0, col = this.isCollapsed(i), abs = this.lineOf(i);
@@ -1929,24 +2119,21 @@ class OutlineView {
     this.deactivate();
     const row = this.rowEl(i); if (!row) return;
     const div = row.querySelector(".ov-text");
-    const ta = document.createElement("textarea");
-    ta.className = "ov-ta"; ta.rows = 1; ta.spellcheck = false; ta.value = this.items[i].text;
     const ms = this.mirrorOf(i);
+    const ta = makeRichEditor(ms ? ms.text : this.items[i].text);
     ta._mir = ms;  // ミラー行：元のbulletの文を直接直す
-    if (ms) { ta.value = ms.text; ta.classList.add("ov-ta-mir"); }
+    if (ms) ta.classList.add("ov-ta-mir");
     ta.setAttribute("aria-label", "bulletの文");
     div.replaceWith(ta);
     this.active = i; this.ta = ta; this.lastActive = i;
     ta._abs = () => this.lineOf(this.active);
     ta._ov = this;
-    this.fit();
     ta.focus({ preventScroll: true });
     const c = caret === null ? ta.value.length : Math.max(0, Math.min(caret, ta.value.length));
     ta.setSelectionRange(c, c);
     row.scrollIntoView({ block: "nearest" });
     ta.addEventListener("input", e => {
       if (this.ta !== ta) return;
-      if (ta.value.includes("\n")) { const p = ta.selectionStart; ta.value = ta.value.replace(/\n/g, " "); ta.setSelectionRange(p, p); }
       if (ta._mir) {
         const ms = mirrorSource(ta._mir.label);
         if (ms) { setSrcLine(ms.li, ms.prefix + ta.value); ta._mir = ms; ta._mir.text = ta.value; }
@@ -1964,13 +2151,13 @@ class OutlineView {
         if (two === "((" || two === "（（") openMirrorPicker(ta, p - 2);
       }
     });
-    ta.addEventListener("keydown", e => this.onKey(e, ta));
+    ta.addEventListener("keydown", e => { this.onKey(e, ta); if (e.key === "Enter" && !e.defaultPrevented && !e.isComposing) e.preventDefault(); });
     ta.addEventListener("paste", e => this.onPaste(e, ta));
     ta.addEventListener("blur", () => setTimeout(() => {
       if (this.ta === ta && document.activeElement !== ta && !(mpState && mpState.ta === ta)) this.deactivate();
     }, 0));
   }
-  fit() { if (!this.ta) return; this.ta.style.height = "auto"; this.ta.style.height = this.ta.scrollHeight + "px"; }
+  fit() { if (!this.ta || this.ta._rich) return; this.ta.style.height = "auto"; this.ta.style.height = this.ta.scrollHeight + "px"; }
   deactivate() {
     if (!this.ta) return;
     const i = this.active, ta = this.ta;
@@ -2162,6 +2349,12 @@ class OutlineView {
     if (k === "Escape") { if (this.opts.onEsc) { e.preventDefault(); this.opts.onEsc(); } else { e.preventDefault(); ta.blur(); } return; }
     if (cmd && e.altKey && e.shiftKey && e.code === "KeyM") { e.preventDefault(); this.memo(i); return; }
     if (handleInlineKeys(e, ta)) return;
+    if (ta._rich && cmd && !e.altKey && (e.code === "KeyZ" || (e.code === "KeyY" && !e.shiftKey))) {
+      const redo = e.shiftKey || e.code === "KeyY";
+      if (redo) { e.preventDefault(); ta._rich.redoOne(); return; }
+      if (this.typed || !this.undo.length) { e.preventDefault(); if (!ta._rich.undo()) { this.typed = false; if (this.undo.length) this.restoreUndo(); } return; }
+    }
+    if (wantPlainPaste(e)) { this.plainKey(ta); }
     if (cmd && !e.shiftKey && !e.altKey && e.code === "KeyZ" && !this.typed && this.undo.length) { e.preventDefault(); this.restoreUndo(); return; }
     const bare = !e.metaKey && !e.ctrlKey && !e.altKey;
     if (k === "Enter" && bare && !e.shiftKey && ta._mir && this.subOf(i) && ta.selectionStart === ta.value.length) {
@@ -2304,14 +2497,41 @@ class OutlineView {
     const s = cand[0]; if (s) s.edit(Math.max(0, s.items.length - part.length), c);
     clearTimeout(lpTimer); lpTimer = setTimeout(() => keepScroll(render), 150);
   }
+  // ⌘⇧V：貼り付けの出来事が来ればそちらで、来なければ（ブラウザによる）クリップボードを読んで貼る
+  plainKey(ta) {
+    plainPasteUntil = Date.now() + 400;
+    this.gotPaste = false;
+    setTimeout(async () => {
+      if (this.gotPaste || this.ta !== ta) return;
+      try { const t = await navigator.clipboard.readText(); if (t) this.pasteText(ta, t, true); } catch (_) { toast("クリップボードを読めませんでした（ブラウザの許可が必要です）"); }
+    }, 60);
+  }
+  pasteText(ta, t, plain) {
+    t = t.replace(/\r\n?/g, "\n");
+    const lines = t.split("\n").filter(l => l.trim());
+    if (lines.length <= 1) { replaceRange(ta, ta.selectionStart, ta.selectionEnd, (lines[0] || "").replace(/\s+/g, " ").trim()); return; }
+    // 何行もあるとき：箇条書きの形ならその階層で、ただの行なら1行ずつbulletにする
+    const text = lines.some(l => /^\s*[-•*]\s/.test(l)) ? lines.map(l => /^\s*[-•*]\s/.test(l) ? l.replace(/^(\s*)[*•]\s/, "$1- ") : "- " + l.trim()).join("\n") : lines.map(l => "- " + l.trim()).join("\n");
+    this.pasteItems(text);
+  }
   onPaste(e, ta) {
     const cd = e.clipboardData; if (!cd) return;
+    this.gotPaste = true;
+    e.preventDefault();
+    const plain = Date.now() < plainPasteUntil;
+    plainPasteUntil = 0;
     let text = null;
     const html = cd.getData("text/html");
-    if (html) text = htmlToSource(html);
-    if (!text) { const t = cd.getData("text/plain"); if (t && t.includes("\n")) text = t; }
-    if (!text) return;
-    e.preventDefault();
+    if (html && !plain) text = htmlToSource(html);
+    if (!text) {
+      const t = cd.getData("text/plain") || "";
+      if (t.includes("\n") && t.trim().includes("\n")) { this.pasteText(ta, t, plain); return; }
+      replaceRange(ta, ta.selectionStart, ta.selectionEnd, plain ? t.replace(/\s+/g, " ").trim() : inlinePasteText(cd));
+      return;
+    }
+    this.pasteItems(text);
+  }
+  pasteItems(text) {
     const add = textToItems(text).items; if (!add.length) return;
     const i = this.active, it = this.items[i];
     this.structural(() => {
@@ -2706,7 +2926,7 @@ async function refFromNumber(btn) {
   }
   const text = `{ref:${ref}}`;
   const ae = document.activeElement;
-  const target = ae && ae.tagName === "TEXTAREA" && ae.closest(".app") && ae.id !== "fp-q" ? ae : null;
+  const target = isTA(ae) && ae.closest(".app") && ae.id !== "fp-q" ? ae : null;
   if (target) {
     insertText(target, text);
     toast(labeled ? `ラベルを付けて ${text} を入れました` : `${text} を入れました`);
@@ -3446,7 +3666,7 @@ function hlLine(l) {
   if (!bul) return l.trim() ? esc(ws) + `<span class="hl-note">${esc(l.slice(ws.length))}</span>` : esc(l);
   return esc(ws) + `<span class="hl-bul">${esc(bul)}</span>` + hlBody(l.slice(ws.length + bul.length));
 }
-function hlBody(rest) {
+function hlBody(rest, rich) {
   let pre = "";
   const done = rest.match(/^\[(?:x|COMPLETE|COMPLETED)\]\s*/i);
   if (done) { pre += `<span class="hl-done">${esc(done[0])}</span>`; rest = rest.slice(done[0].length); }
@@ -3454,7 +3674,7 @@ function hlBody(rest) {
   if (lb) { pre += `<span class="hl-lbl">${esc(lb[1])}</span>`; rest = rest.slice(lb[1].length); }
   const j = rest.match(/^(\?\*|\?\?|\*|\?|%|\{#\}|\{j:[^}]*\})(?=\s)/);
   if (j) { pre += `<span class="hl-j">${esc(j[1])}</span>`; rest = rest.slice(j[1].length); }
-  return pre + hlRest(rest);
+  return pre + (rich ? richHTML(rest) : hlRest(rest));
 }
 
 /* ---------- バレットごとの色分け ---------- */
@@ -3727,7 +3947,7 @@ document.addEventListener("mousedown", e => { if (mpState && !mp.contains(e.targ
 let clips = [];
 try { clips = JSON.parse(store.get("thync.clips") || "[]"); } catch (e) { clips = []; }
 let lastTA = null;
-document.addEventListener("focusin", e => { if (e.target.tagName === "TEXTAREA" && e.target.isConnected && e.target.closest(".app")) lastTA = e.target; });
+document.addEventListener("focusin", e => { if (isTA(e.target) && e.target.isConnected && e.target.closest(".app")) lastTA = e.target; });
 function addClip(text) {
   if (!text || !text.trim()) return;
   clips = clips.filter(c => c.text !== text);
@@ -3785,7 +4005,7 @@ function onCopy(e) {
     addClip(pendingCopy); pendingCopy = null; return;
   }
   const t = e.target;
-  if (t && t.tagName === "TEXTAREA") { addClip(t.value.slice(t.selectionStart, t.selectionEnd)); return; }
+  if (isTA(t)) { addClip(t.value.slice(t.selectionStart, t.selectionEnd)); return; }
   const s = paperSelectionSource();
   if (s && e.clipboardData) { e.clipboardData.setData("text/plain", s.text); e.preventDefault(); addClip(s.text); return; }
   addClip(String(window.getSelection ? window.getSelection() : ""));
@@ -3793,7 +4013,7 @@ function onCopy(e) {
 document.addEventListener("copy", onCopy);
 document.addEventListener("cut", e => {
   const t = e.target;
-  if (t && t.tagName === "TEXTAREA") addClip(t.value.slice(t.selectionStart, t.selectionEnd));
+  if (isTA(t)) addClip(t.value.slice(t.selectionStart, t.selectionEnd));
 });
 
 function cutFromPaper() {
@@ -3817,7 +4037,7 @@ function cutFromPaper() {
 window.addEventListener("keydown", e => {
   if (!CMD(e) || e.altKey || e.shiftKey || (e.code !== "KeyC" && e.code !== "KeyX")) return;
   const t = document.activeElement;
-  if (t && t.tagName === "TEXTAREA") { addClip(t.value.slice(t.selectionStart, t.selectionEnd)); return; }
+  if (isTA(t)) { addClip(t.value.slice(t.selectionStart, t.selectionEnd)); return; }
   const s = paperSelectionSource();
   if (!s) { addClip(String(window.getSelection ? window.getSelection() : "")); return; }
   if (e.code === "KeyX") { e.preventDefault(); cutFromPaper(); return; }
@@ -3845,7 +4065,7 @@ $("clip-list").addEventListener("click", async e => {
   if (del) { clips.splice(+del.dataset.del, 1); store.set("thync.clips", JSON.stringify(clips)); renderClips(); return; }
   const use = e.target.closest("[data-i]"); if (!use) return;
   const c = clips[+use.dataset.i]; if (!c) return;
-  const active = document.activeElement && document.activeElement.tagName === "TEXTAREA" ? document.activeElement : null;
+  const active = isTA(document.activeElement) ? document.activeElement : null;
   const ta = active || (lastTA && lastTA.isConnected ? lastTA : null);
   if (ta) { ta.focus({ preventScroll: true }); insertText(ta, c.text); toast("貼り付けました"); }
   else { const ok = await copyText(c.text); toast(ok ? "編集欄が開いていないので、コピーだけしました" : "貼り付け先の編集欄がありません"); }
@@ -4183,7 +4403,7 @@ function navigatePane(pane, p) {
 function pasteLinkCode(ctx, p) {
   // 書き込む場所を先に決めておく（ラベルを付けると画面が描き直されるため）
   const t = ctx.target;
-  const ta = t.closest && t.closest("textarea");
+  const ta = t.closest && t.closest("textarea,.ov-ta");
   const row = !ta && t.closest && t.closest(".ov-row"), host = row && row.closest(".ov");
   let ov = null, idx = -1, caret = null;
   if (row && host && host._ov) {
@@ -4239,7 +4459,7 @@ document.addEventListener("click", e => {
 // ⌥+⌘+＝ ／ ⌥+⌘+− ／ ⌥+⌘+0：書いている欄にいればコードを、そうでなければ表示を拡大・縮小
 window.addEventListener("keydown", e => {
   if (!CMD(e) || !e.altKey) return;
-  const which = document.activeElement && document.activeElement.tagName === "TEXTAREA" ? "code" : "paper";
+  const which = isTA(document.activeElement) ? "code" : "paper";
   if (e.code === "Equal" || e.code === "NumpadAdd" || e.code === "Semicolon") { e.preventDefault(); stepScale(which, 1); }
   else if (e.code === "Minus" || e.code === "NumpadSubtract") { e.preventDefault(); stepScale(which, -1); }
   else if (e.code === "Digit0" || e.code === "Numpad0") { e.preventDefault(); stepScale(which, 0); }
@@ -4346,7 +4566,7 @@ function openFind() {
   $("fp-zoom-wrap").hidden = !zoom;
   // 書いている欄で文字を選んでいれば、それを検索語にする
   const a = document.activeElement;
-  if (a && a.tagName === "TEXTAREA" && a.selectionStart !== a.selectionEnd) {
+  if (isTA(a) && a.selectionStart !== a.selectionEnd) {
     const sel = a.value.slice(a.selectionStart, a.selectionEnd);
     if (!sel.includes("\n")) $("fp-q").value = sel;
   } else {
@@ -4641,7 +4861,7 @@ function keyLabel(sc) {
 }
 function renderKs() {
   const own = SHORTCUTS.map(sc => `<div class="ks-row"><kbd>${esc(keyLabel(sc))}</kbd><span><code>${esc(sc.text.replace("▮", "").trim())}</code></span></div>`).join("");
-  const more = [["⇧Return", "段落 #p"], ["⇧⌥Return", "改行 #br"], ["⌘Return", "編集欄を確定"], ["⌘⌥⇧M", "行をメモ集へ"], ["⌘⌥E", "選んだ範囲を編集"], ["⌘⌥F", "検索と置換"], ["⌥Return", "ノート"], ["⌘S", "記録・保存"], ["⌘.", "ズーム"], ["⌘,", "ズームを戻す"], ["⌥⌘＝/−", "拡大・縮小"]]
+  const more = [["⇧Return", "段落 #p"], ["⇧⌥Return", "改行 #br"], ["⌘Return", "編集欄を確定"], ["⌘⇧V", "文字だけ貼る"], ["⌘⌥⇧M", "行をメモ集へ"], ["⌘⌥E", "選んだ範囲を編集"], ["⌘⌥F", "検索と置換"], ["⌥Return", "ノート"], ["⌘S", "記録・保存"], ["⌘.", "ズーム"], ["⌘,", "ズームを戻す"], ["⌥⌘＝/−", "拡大・縮小"]]
     .map(([k, t]) => `<div class="ks-row"><kbd>${esc(k)}</kbd><span>${esc(t)}</span></div>`).join("");
   $("ks-body").innerHTML = `<div class="ks-sep">記法を入れる</div>` + own + `<div class="ks-sep">thyncSourceの操作</div>` + more + `<div class="ks-sep">すべての一覧は ⌘/</div>`;
 }
