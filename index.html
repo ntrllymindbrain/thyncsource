@@ -118,7 +118,8 @@ textarea {
 .paper ol.list, .paper ul.list { margin: .4em 0 .8em; padding-left: 2.2em; }
 .empty { color: var(--muted); font-family: var(--font-ui); text-align: center; padding: 40px 0; }
 
-.ex { display: grid; grid-template-columns: 3.4em 1fr; margin: 1em 0 1.1em; scroll-margin-top: 40px; border-radius: 3px; }
+/* 例文の番号・記号・判定の幅：(555) と半角2つ、viii. と半角2つ、??? が入る幅（実際の字形で測って --ex-* に入れる） */
+.ex { display: grid; grid-template-columns: var(--ex-num, 2.75em) 1fr; margin: 1em 0 1.1em; scroll-margin-top: 40px; border-radius: 3px; }
 .ex-num, .ex-letter {
   font: inherit; color: inherit; background: none; border: none; padding: 0; margin: 0; text-align: left;
   align-self: start; cursor: pointer; font-variant-numeric: tabular-nums; border-radius: 3px;
@@ -126,9 +127,9 @@ textarea {
 .ex-num:hover, .ex-letter:hover { color: var(--accent); text-decoration: underline dotted; text-underline-offset: 3px; }
 .ex-item { scroll-margin-top: 40px; }
 .ex-head { color: var(--ink); }
-.ex-line { display: grid; grid-template-columns: 1.4em 1fr; }
-.ex-item { display: grid; grid-template-columns: 1.7em 1.4em 1fr; }
-.judg { text-align: right; padding-right: .3em; }
+.ex-line { display: grid; grid-template-columns: var(--ex-judg, 1.3em) 1fr; }
+.ex-item { display: grid; grid-template-columns: var(--ex-let, 1.75em) var(--ex-judg, 1.3em) 1fr; }
+.judg { text-align: right; padding-right: var(--ex-gap, .25em); white-space: nowrap; }
 .ex-subhead { }
 .gl-pre { }
 .gl-words { display: flex; flex-wrap: wrap; column-gap: 0; }
@@ -899,7 +900,7 @@ function compileOne(tree, opts) {
   const addFn = node => { footnotes.push({ text: collectText(node), line: node.line }); return footnotes.length; };
 
   function splitJudg(t) {
-    const m = t.match(/^(\?\*|\?\?|\*|\?|%|\{#\}|\{j:([^}]*)\})\s*/);
+    const m = t.match(/^(\?\?\?|\?\?\*|\?\*|\?\?|\*\*|\*|\?|%|\{#\}|\{j:([^}]*)\})\s*/);
     if (!m) return { judg: "", text: t };
     let j = m[1];
     if (j === "{#}") j = "#"; else if (m[2] !== undefined) j = m[2];
@@ -3879,6 +3880,25 @@ function applyFonts() {
   rs.setProperty("--font-ja", j.stack);
   rs.setProperty("--paper-size", fontPref.size + "px");
   store.set("thync.font", JSON.stringify(fontPref));
+  measureExWidths();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureExWidths);
+}
+// 本文の字形で (555)・viii.・???・半角空白の幅を測り、例文の欄の幅にする（em で持つので文字の大きさが変わっても合う）
+function measureExWidths() {
+  const host = document.querySelector(".paper") || document.body;
+  const s = document.createElement("span");
+  s.style.cssText = "position:absolute;visibility:hidden;white-space:pre;left:-9999px;top:0;font-size:100px;font-variant-numeric:tabular-nums";
+  host.appendChild(s);
+  const w = t => { s.textContent = t; return s.getBoundingClientRect().width / 100; };
+  const sp = w("x x") - w("xx");
+  const num = w("(555)") + sp * 2, let_ = w("viii.") + sp * 2, judg = w("???") + sp;
+  s.remove();
+  if (!(num > 0)) return;
+  const rs = document.documentElement.style;
+  rs.setProperty("--ex-num", num.toFixed(3) + "em");
+  rs.setProperty("--ex-let", let_.toFixed(3) + "em");
+  rs.setProperty("--ex-judg", judg.toFixed(3) + "em");
+  rs.setProperty("--ex-gap", sp.toFixed(3) + "em");
 }
 $("f-latin").innerHTML = LATIN.map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join("");
 $("f-ja").innerHTML = JA.map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join("");
