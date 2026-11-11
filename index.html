@@ -456,6 +456,8 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .paper table.wft th, .paper table.wft td { font-family: inherit; }
 @keyframes syncflash { 0% { background-color: rgba(255, 214, 102, .65); } 100% { background-color: transparent; } }
 .sync-flash { animation: syncflash 1.2s ease-out; }
+.hfill { float: right; margin-left: 1em; text-indent: 0; }
+.paper :is(p, h1, h2, h3, h4, .ex-text, .ex-head, .ph, li, blockquote):has(.hfill)::after { content: ""; display: block; clear: both; }
 .docsep { margin: 3em 0; border-top: 3px double var(--rule); }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent-soft); } }
@@ -806,6 +808,7 @@ function compileOne(tree, opts) {
     // 仮説などの通し番号：#H（そのまま）・#HB（[ ]）・#HP（( )）、後ろに「J-」などの接頭辞
     const hm = t.match(/(?:^|\s)#H([BP]?)((?:[A-Za-z0-9]+-)?)(?=\s|$)/);
     const hyp = hm ? { style: hm[1] || "", prefix: hm[2] || "" } : null;
+    t = t.replace(/(^|\s)#hfill(?=\s|$)/gi, (m, pre) => { tags.add("hfill"); return pre + "\uE000 "; });
     // タグ：記法のタグ（#sec など）はいつも外す。それ以外の #タグ・@タグは「タグを表示」のときだけ残す
     t = t.replace(/(^|\s)#([\p{L}\p{N}_-]+)/gu, (m, pre, tag) => { const low = tag.toLowerCase(); tags.add(low); return opts.showTags && !KNOWN_TAG.has(low) && !/^H[BP]?([A-Za-z0-9]+-)?$/.test(tag) ? m : pre; });
     t = t.replace(/(^|\s)@([\p{L}\p{N}_-]+)/gu, (m, pre) => opts.showTags ? m : pre);
@@ -1169,7 +1172,13 @@ function compileOne(tree, opts) {
 
   /* --- 文中の記法 --- */
   const RAW = new Set(["ref", "refn", "rep", "lbl", "j", "cite", "mirror", "hyp", "exref"]);
+  // #hfill：その位置から後ろを、その行の右端へ寄せる（TeX の \hfill）
   function R(s) {
+    const html = R0(s), k = html.indexOf("\uE000");
+    if (k < 0) return html;
+    return html.slice(0, k).replace(/\s+$/, "") + `<span class="hfill">` + html.slice(k + 1).replace(/\uE000/g, "").replace(/^\s+/, "") + `</span>`;
+  }
+  function R0(s) {
     let i = 0;
     function parse(inBrace) {
       let out = "";
@@ -3857,7 +3866,7 @@ renderMemos();
 renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
-const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table"]);
+const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill"]);
 const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 function hlRest(s) {
   let out = "", last = 0;
