@@ -454,6 +454,8 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .paper table.wft th, .paper table.wft td { border: 1px solid var(--rule); padding: .3em .6em; text-align: left; vertical-align: top; }
 .paper table.wft thead th { border-bottom-width: 2px; font-family: inherit; font-weight: 600; }
 .paper table.wft th, .paper table.wft td { font-family: inherit; }
+@keyframes syncflash { 0% { background-color: rgba(255, 214, 102, .65); } 100% { background-color: transparent; } }
+.sync-flash { animation: syncflash 1.2s ease-out; }
 .docsep { margin: 3em 0; border-top: 3px double var(--rule); }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent-soft); } }
@@ -2120,7 +2122,7 @@ class OutlineView {
   rowHTML(i) {
     const it = this.items[i], kids = this.hasKids(i) || this.mirKids(i) > 0, col = this.isCollapsed(i), abs = this.lineOf(i);
     const mirror = /^\{mirror:[^}]+\}$/.test(it.text.trim());
-    return `<div class="ov-row${mirror ? " mirrow" : ""}${it.done ? " done" : ""}${this.inSel(i) ? " sel" : ""}" data-i="${i}" style="--lv:${it.lv}"${colorOn ? ` data-c="${colorSlot(abs)}"` : ""}>` +
+    return `<div class="ov-row${mirror ? " mirrow" : ""}${it.done ? " done" : ""}${this.inSel(i) ? " sel" : ""}" data-i="${i}" data-line="${abs}" style="--lv:${it.lv}"${colorOn ? ` data-c="${colorSlot(abs)}"` : ""}>` +
       `<button type="button" class="ov-tog${kids ? "" : " none"}" tabindex="-1" aria-label="${col ? "開く" : "閉じる"}">${kids ? (col ? "▸" : "▾") : ""}</button>` +
       `<span class="ov-bul${col ? " col" : ""}${mirror ? " mir" : ""}" draggable="true" title="クリックでズーム・ドラッグで移動・Shift+クリックで範囲を選ぶ"></span>` +
       `<div class="ov-main"><div class="ov-text">${this.textHTML(i) || "​"}</div>` +
@@ -5083,6 +5085,83 @@ $("ks-btn").addEventListener("click", () => {
 $("ks-close").addEventListener("click", () => { $("ks-side").hidden = true; $("ks-btn").setAttribute("aria-expanded", "false"); store.set("thync.ks", "0"); });
 if (store.get("thync.ks") === "1") { $("ks-side").hidden = false; $("ks-btn").setAttribute("aria-expanded", "true"); renderKs(); }
 
+/* ---------- 表示と編集欄を行き来する（Overleafのように） ----------
+   表示のブロックをクリック → 左の編集欄のそのbulletへ。編集欄をダブルクリック → 表示のその場所へ。
+   どちらも、その場所が欄の上から 20% ほどに来るようにスクロールするだけ（あとは自由にスクロールできる） */
+function scrollBox(el) {
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    const s = getComputedStyle(p);
+    if (/(auto|scroll)/.test(s.overflowY) && p.scrollHeight > p.clientHeight + 1) return p;
+  }
+  return null;
+}
+function scrollToFrac(el, frac = 0.2, box) {
+  box = box || scrollBox(el);
+  const r = el.getBoundingClientRect();
+  if (box) { const b = box.getBoundingClientRect(); box.scrollBy({ top: r.top - (b.top + box.clientHeight * frac), behavior: "smooth" }); }
+  else window.scrollBy({ top: r.top - window.innerHeight * frac, behavior: "smooth" });
+}
+function flashEl(el) { el.classList.remove("sync-flash"); void el.offsetWidth; el.classList.add("sync-flash"); setTimeout(() => el.classList.remove("sync-flash"), 1300); }
+// テキスト欄の li 行目が、欄の中で上から何pxにあるか（折り返しも数える）
+function taLineTop(ta, li) {
+  const cs = getComputedStyle(ta), m = document.createElement("div");
+  for (const k of ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "paddingTop", "paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth", "boxSizing", "tabSize", "wordBreak", "overflowWrap"]) m.style[k] = cs[k];
+  m.style.width = ta.clientWidth + "px"; m.style.position = "absolute"; m.style.visibility = "hidden"; m.style.whiteSpace = "pre-wrap"; m.style.top = "0"; m.style.left = "-9999px";
+  m.textContent = ta.value.split("\n").slice(0, li).join("\n") + (li ? "\n" : "") + "​";
+  document.body.appendChild(m);
+  const top = m.scrollHeight - parseFloat(cs.lineHeight || "20") - parseFloat(cs.paddingBottom || "0");
+  m.remove();
+  return Math.max(0, top);
+}
+function revealInEditor(line) {
+  if (line === undefined || line === null || isNaN(line)) return;
+  const [lo, hi] = lpRange();
+  if (lpMode === "outline") {
+    if (line < lo || line > hi) { zoomTo(null); setTimeout(() => revealInEditor(line), 60); return; }
+    const hit = lpOv.itemAtLine(line); if (!hit) return;
+    const v = lpOv.visible();
+    let k = hit.i; while (k > 0 && !v[k]) k--;
+    const row = lpOv.rowEl(k); if (!row) return;
+    scrollToFrac(row, 0.2); flashEl(row);
+  } else if (lpMode === "text") {
+    const ta = zoom ? zsrc : src, base = zoom ? zoom.line : 0;
+    if (zoom && (line < lo || line > hi)) { zoomTo(null); setTimeout(() => revealInEditor(line), 60); return; }
+    const y = taLineTop(ta, line - base);
+    const box = ta.scrollHeight > ta.clientHeight + 1 ? ta : scrollBox(ta);
+    if (box === ta) ta.scrollTo({ top: Math.max(0, y - ta.clientHeight * 0.2), behavior: "smooth" });
+    else if (box) { const b = box.getBoundingClientRect(), r = ta.getBoundingClientRect(); box.scrollBy({ top: r.top + y - (b.top + box.clientHeight * 0.2), behavior: "smooth" }); }
+  }
+}
+function revealInView(line) {
+  const host = viewMode === "page" ? $("pages") : paper;
+  const els = [...host.querySelectorAll("[data-ln]")].filter(x => !x.closest(".mir-ex") && !x.closest(".inline-edit") && x.getClientRects().length);
+  let best = null, bw = Infinity;
+  for (const x of els) { const a = +x.dataset.ln, z = +(x.dataset.le ?? a); if (a <= line && line <= z && z - a < bw) { best = x; bw = z - a; } }
+  if (!best) best = els.filter(x => +x.dataset.ln >= line).sort((x, y) => x.dataset.ln - y.dataset.ln)[0] || els.filter(x => +x.dataset.ln < line).pop();
+  if (!best) return;
+  const blk = best.closest("[data-b]") || best;
+  scrollToFrac(best, 0.2); flashEl(blk.contains(best) && best.offsetHeight < 4 ? blk : best);
+}
+// 表示 → 編集欄（クリック）。リンク・番号・編集欄の中、文字を選んだとき、修飾キー付きは除く
+function viewClickToEditor(e) {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+  if (e.target.closest(".inline-edit,a,button,input,select,textarea,[data-exline],[data-target],[data-fn],.mir-mark,.xref")) return;
+  const s = window.getSelection && window.getSelection(); if (s && !s.isCollapsed) return;
+  const ln = e.target.closest("[data-ln]");
+  let line = ln ? +ln.dataset.ln : NaN;
+  if (isNaN(line)) { const b = e.target.closest("[data-b]"); const r = b && lastRanges[+b.dataset.b]; if (r) line = r.min; }
+  if (!isNaN(line)) revealInEditor(line);
+}
+paper.addEventListener("click", viewClickToEditor);
+$("pages").addEventListener("click", viewClickToEditor);
+// 編集欄 → 表示（ダブルクリック）
+$("lp-ov").addEventListener("dblclick", e => {
+  const row = e.target.closest(".ov-row"); if (!row || row.dataset.line === undefined) return;
+  revealInView(+row.dataset.line);
+});
+for (const [ta, baseFn] of [[src, () => 0], [zsrc, () => (zoom ? zoom.line : 0)]]) {
+  ta.addEventListener("dblclick", () => { const p = ta.selectionStart; revealInView(baseFn() + ta.value.slice(0, p).split("\n").length - 1); });
+}
 src.value = store.get("thync.src") || SAMPLE;
 // 以前の版で原稿に入っていたWorkflowyのノートの行を外す（Workflowy側のノートはそのまま残る）
 if (wf && wf.base && wf.base.some(b => b.note)) {
