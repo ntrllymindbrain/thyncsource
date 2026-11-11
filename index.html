@@ -487,6 +487,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     </div>
     <div class="spacer"></div>
     <label class="chk" for="hide-done"><input type="checkbox" id="hide-done" checked>完了ノードを隠す</label>
+    <label class="chk" for="show-tags" title="表示に #タグ・@タグを出す（#sec などの記法のタグは出しません）"><input type="checkbox" id="show-tags">タグを表示</label>
     <button id="btn-wf" type="button" aria-expanded="false">Workflowy接続</button>
     <button id="btn-keys" type="button" title="ショートカット一覧（⌘+/）">ショートカット</button>
     <button id="btn-font" type="button" aria-expanded="false">表示</button>
@@ -601,7 +602,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
   <div class="keys-pop" id="keys-pop" hidden role="dialog" aria-label="ショートカット一覧">
     <div class="kp-head"><b>ショートカット（Mac）</b><button type="button" id="kp-close">閉じる</button></div>
     <div class="kp-body">
-      <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌥+Enter</kbd></td><td>ノートの行を足す（Workflowyでは Shift+Enter）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>複製</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>Backspace（行頭）</kbd></td><td>前の行につなぐ（子は前の行の子になる）</td></tr><tr><td><kbd>⇧+⌥+⌘+↑ ／ ↓</kbd></td><td>このbulletの変更履歴を選ぶ（キーを離すと差し替え・Escでやめる）</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
+      <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌘+クリック（タグの上）</kbd></td><td>そのタグを消す（#タグ・@タグ）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>複製</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>Backspace（行頭）</kbd></td><td>前の行につなぐ（子は前の行の子になる）</td></tr><tr><td><kbd>⇧+⌥+⌘+↑ ／ ↓</kbd></td><td>このbulletの変更履歴を選ぶ（キーを離すと差し替え・Escでやめる）</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
       <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>段落の区切り #p を付けて次のbulletへ（文の途中なら付け外し）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>字下げなしの改行 #br を付けて次のbulletへ</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr></table>
     </div>
   </div>
@@ -700,11 +701,8 @@ function parseSource(src) {
     const bm = rest.match(/^[-•](?:\s+(.*)|$)/);
     if (bm) name = bm[1] || "";
     else if (!hasBullets) name = rest;
-    if (name === null) {
-      const last = stack[stack.length - 1];
-      if (last !== root) { last.note += (last.note ? "\n" : "") + rest; last.lastLine = li; }
-      continue;
-    }
+    // ノートは扱わない：「- 」のない行も、その字下げのbulletとして読む
+    if (name === null) name = rest.replace(/^\\(?=[-•])/, "");
     let completed = false;
     name = name.replace(/^\[(?:COMPLETE|COMPLETED|x)\]\s*/i, () => { completed = true; return ""; });
     const node = { name, note: "", children: [], ind, completed, line: li, lastLine: li };
@@ -806,7 +804,9 @@ function compileOne(tree, opts) {
     // 仮説などの通し番号：#H（そのまま）・#HB（[ ]）・#HP（( )）、後ろに「J-」などの接頭辞
     const hm = t.match(/(?:^|\s)#H([BP]?)((?:[A-Za-z0-9]+-)?)(?=\s|$)/);
     const hyp = hm ? { style: hm[1] || "", prefix: hm[2] || "" } : null;
-    t = t.replace(/(^|\s)#([\p{L}\p{N}_-]+)/gu, (m, pre, tag) => { tags.add(tag.toLowerCase()); return pre; });
+    // タグ：記法のタグ（#sec など）はいつも外す。それ以外の #タグ・@タグは「タグを表示」のときだけ残す
+    t = t.replace(/(^|\s)#([\p{L}\p{N}_-]+)/gu, (m, pre, tag) => { const low = tag.toLowerCase(); tags.add(low); return opts.showTags && !KNOWN_TAG.has(low) && !/^H[BP]?([A-Za-z0-9]+-)?$/.test(tag) ? m : pre; });
+    t = t.replace(/(^|\s)@([\p{L}\p{N}_-]+)/gu, (m, pre) => opts.showTags ? m : pre);
     t = t.replace(/\{lbl:([^}]*)\}/g, (m, l) => { if (l.trim()) labels.push(l.trim()); return ""; });
     t = t.replace(/[ \t　]{2,}/g, " ").trim();
     const r = { tags, labels, text: t, hyp };
@@ -1434,7 +1434,7 @@ function renderInner() {
   const active = editors.find(ed => ed.box.contains(ae));
   const sS = ae && ae.selectionStart !== undefined ? ae.selectionStart : 0, sE = ae && ae.selectionEnd !== undefined ? ae.selectionEnd : 0;
   const tree = parseSource(src.value);
-  const res = compile(tree, { hideCompleted: $("hide-done").checked, collapsed: typeof collapsedKeys !== "undefined" ? collapsedKeys : null, rootAsDoc: !!(typeof wf !== "undefined" && wf) });
+  const res = compile(tree, { showTags: $("show-tags").checked, hideCompleted: $("hide-done").checked, collapsed: typeof collapsedKeys !== "undefined" ? collapsedKeys : null, rootAsDoc: !!(typeof wf !== "undefined" && wf) });
   lastRanges = res.ranges;
   currentTitle = res.title || "（無題）";
   paper.innerHTML = res.html;
@@ -1469,6 +1469,8 @@ src.addEventListener("input", () => {
   clearTimeout(timer); timer = setTimeout(render, 120);
 });
 $("hide-done").addEventListener("change", () => keepScroll(render));
+$("show-tags").checked = store.get("thync.showtags") === "1";
+$("show-tags").addEventListener("change", () => { store.set("thync.showtags", $("show-tags").checked ? "1" : "0"); keepScroll(render); });
 $("btn-sample").addEventListener("click", () => { editors = []; src.value = SAMPLE; render(); });
 $("btn-clear").addEventListener("click", () => { editors = []; src.value = ""; render(); src.focus(); });
 chip.addEventListener("click", () => { setView("in"); warnsEl.scrollIntoView({ block: "nearest", behavior: "smooth" }); });
@@ -2022,15 +2024,13 @@ function textToItems(text) {
     if (!raw.trim()) continue;
     const ind = indentOf(raw);
     const m = raw.match(/^\s*[-•](?:\s(.*)|$)/);
-    if (m || !items.length) {
+    // ノートは扱わない：「- 」のない行も、その字下げのbulletにする
+    {
       while (stack.length && stack[stack.length - 1] >= ind) stack.pop();
       const lv = stack.length; stack.push(ind);
-      let t = m ? (m[1] || "") : raw.trim(), done = false;
+      let t = m ? (m[1] || "") : unescNoteLine(raw.trim()), done = false;
       t = t.replace(/^\[(?:x|COMPLETE|COMPLETED)\]\s*/i, () => { done = true; return ""; });
       items.push({ lv, text: t, note: "", done });
-    } else {
-      const it = items[items.length - 1];
-      it.note += (it.note ? "\n" : "") + unescNoteLine(raw.trim());
     }
   }
   return { items, base };
@@ -2124,7 +2124,7 @@ class OutlineView {
       `<button type="button" class="ov-tog${kids ? "" : " none"}" tabindex="-1" aria-label="${col ? "開く" : "閉じる"}">${kids ? (col ? "▸" : "▾") : ""}</button>` +
       `<span class="ov-bul${col ? " col" : ""}${mirror ? " mir" : ""}" draggable="true" title="クリックでズーム・ドラッグで移動・Shift+クリックで範囲を選ぶ"></span>` +
       `<div class="ov-main"><div class="ov-text">${this.textHTML(i) || "​"}</div>` +
-      (it.note ? `<div class="ov-note">${esc(it.note)}</div>` : "") + `</div></div>`;
+      `</div></div>`;
   }
   render() {
     const v = this.visible(), stack = this.opts.mirStack || [];
@@ -2477,7 +2477,7 @@ class OutlineView {
     if (k === "Enter" && bare && e.shiftKey) { e.preventDefault(); this.paraBreak(ta, "#p"); return; }
     if (k === "Enter" && e.shiftKey && e.altKey && !e.metaKey && !e.ctrlKey) { e.preventDefault(); this.paraBreak(ta, "#br"); return; }
     if (k === "Enter" && cmd && !e.shiftKey && !e.altKey && this.opts.onCommit) { e.preventDefault(); this.opts.onCommit(); return; }
-    if (k === "Enter" && e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); this.editNote(i); return; }
+    if (k === "Enter" && e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); return; }  // ノートは使わない
     if (k === "Enter" && cmd && !e.shiftKey && !e.altKey) { e.preventDefault(); const c = ta.selectionStart; this.structural(() => { it.done = !it.done; }, { i, c }); return; }
     if (k === "Tab" && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); e.shiftKey ? this.outdent(i) : this.indent(i); return; }
     if (cmd && e.shiftKey && e.altKey && (k === "ArrowUp" || k === "ArrowDown")) { e.preventDefault(); this.histStep(k === "ArrowUp" ? -1 : 1); return; }
@@ -2661,9 +2661,44 @@ class OutlineView {
   }
   // ---- マウス：黒丸のクリックでズーム、トグルで開閉、Shift+クリックで範囲選択 ----
   onMouseDown(e) {
+    this.exploded = false;
     if (e.target.closest(".ov-tog,.ov-bul")) { if (e.shiftKey) e.preventDefault(); return; }
+    // ⌘+クリックでタグを消す（Workflowyの「explode」）
+    const tg = CMD(e) && !e.shiftKey && !e.altKey && e.target.closest(".hl-tag,.hl-tag2");
+    if (tg) { e.preventDefault(); this.explodeTag(tg); }
+  }
+  explodeTag(span) {
+    const row = span.closest(".ov-row"); if (!row) return;
+    const i = +row.dataset.i, scope = span.closest(".ov-rich") || span.closest(".ov-text"); if (!scope) return;
+    const tag = span.textContent;
+    const same = [...scope.querySelectorAll(".hl-tag,.hl-tag2")].filter(s => s.textContent === tag);
+    const nth = same.indexOf(span);
+    const cut = text => {
+      const re = new RegExp("(^|\\s)" + tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?=\\s|$)", "gu");
+      let k = -1, out = null;
+      out = text.replace(re, (m, pre, off) => { k++; return k === nth ? (pre && off === 0 ? "" : pre) : m; });
+      return out.replace(/[ \t]{2,}/g, " ").replace(/^\s+|\s+$/g, "");
+    };
+    this.exploded = true;
+    if (this.ta && i === this.active) {
+      const ta = this.ta, v = ta.value, nv = cut(v);
+      if (nv === v) return;
+      // 変わった範囲だけを置き換える（取り消しも効く）
+      let a = 0; while (a < v.length && v[a] === nv[a]) a++;
+      let z = 0; while (z < v.length - a && z < nv.length - a && v[v.length - 1 - z] === nv[nv.length - 1 - z]) z++;
+      replaceRange(ta, a, v.length - z, nv.slice(a, nv.length - z));
+    } else {
+      const ms = this.mirrorOf(i);
+      if (ms) { setSrcLine(ms.li, ms.prefix + cut(ms.text)); this.changed(); this.refreshMirrors(-1); return; }
+      const nv = cut(this.items[i].text); if (nv === this.items[i].text) return;
+      const a = this.active;
+      this.structural(() => { this.items[i].text = nv; });
+      if (a >= 0 && this.items[a]) this.edit(a, null);
+    }
+    toast(`${tag} を外しました`);
   }
   onClick(e) {
+    if (this.exploded) { this.exploded = false; return; }
     const row = e.target.closest(".ov-row"); if (!row) return;
     const i = +row.dataset.i;
     if (e.target.closest(".ov-tog")) {
@@ -2686,7 +2721,6 @@ class OutlineView {
       return;
     }
     if (e.target.closest(".ov-ta")) return;
-    if (e.target.closest(".ov-note")) { this.editNote(i); return; }
     if (this.sel) { this.sel = null; this.render(); }
     // クリックした位置の文字にカーソルを置く
     let caret = null;
@@ -3417,7 +3451,7 @@ function baseToSource(base) {
   const out = [];
   for (const b of base) {
     out.push(" ".repeat(b.ind) + "- " + (b.done ? "[x] " : "") + b.text);
-    if (b.note) for (const l of b.note.split("\n")) if (l.trim()) out.push(" ".repeat(b.ind + 2) + escNoteLine(l));
+    // ノートは原稿に出さない（Workflowy側のノートには触れない）
   }
   return out.join("\n");
 }
@@ -3434,9 +3468,8 @@ function sourceToItems(text) {
       let t = m[1] || "", done = false;
       t = t.replace(/^\[(?:x|COMPLETE|COMPLETED)\]\s*/i, () => { done = true; return ""; });
       items.push({ ind, text: t, note: "", done });
-    } else if (items.length) {
-      const it = items[items.length - 1];
-      it.note += (it.note ? "\n" : "") + unescNoteLine(raw.trim());
+    } else {
+      items.push({ ind, text: unescNoteLine(raw.trim()), note: "", done: false });
     }
   }
   return items;
@@ -3502,7 +3535,7 @@ function planSync() {
     const id = ids[k];
     if (!id) { ops.create.push(k); return; }
     const old = wf.base[baseIdx.get(id)];
-    if (old && (old.text !== it.text || (old.note || "").trim() !== (it.note || "").trim() || old.done !== it.done)) ops.update.push(k);
+    if (old && (old.text !== it.text || old.done !== it.done)) ops.update.push(k);
     if (k > 0) { const np = ids[parent[k]]; if (baseParent.get(id) !== np || !np) ops.move.push(k); }
   });
   // 消えたbullet：親も消えているものは親ごと動くので、いちばん上のものだけ
@@ -3571,7 +3604,7 @@ async function runSync(plan) {
       const pid = ids[parent[k]];
       const r = await wfFetch("/nodes", { method: "POST", body: { parent_id: pid, name: "…", position: "bottom" } });
       ids[k] = r.item_id;
-      await wfFetch("/nodes/" + ids[k], { method: "POST", body: { name: nodeName(items[k], null), note: items[k].note ? encodeText(items[k].note) : "", ...layoutBody(items[k], null) } });
+      await wfFetch("/nodes/" + ids[k], { method: "POST", body: { name: nodeName(items[k], null), ...layoutBody(items[k], null) } });
       if (items[k].done) await wfFetch("/nodes/" + ids[k] + "/complete", { method: "POST" });
       tick();
     }
@@ -3580,7 +3613,6 @@ async function runSync(plan) {
       const id = ids[k], old = wf.base.find(b => b.id === id), it = items[k];
       const body = {};
       if (old.text !== it.text) { body.name = nodeName(it, old); Object.assign(body, layoutBody(it, old)); }
-      if ((old.note || "").trim() !== (it.note || "").trim()) body.note = it.note ? encodeText(it.note) : "";
       if (Object.keys(body).length) await wfFetch("/nodes/" + id, { method: "POST", body });
       if (old.done !== it.done) await wfFetch("/nodes/" + id + (it.done ? "/complete" : "/uncomplete"), { method: "POST" });
       tick();
@@ -3599,7 +3631,7 @@ async function runSync(plan) {
       tick();
     }
     // 保存後の状態を「前回の状態」にする
-    wf.base = items.map((it, k) => { const s = splitLayout(it.text), o = oldLm.get(ids[k]) || ""; return { id: ids[k], ind: it.ind, text: it.text, note: it.note, done: it.done, lm: s.kind ? (layoutFor(s.kind, o) || o) : (/^quote-block$/.test(o) || /table/i.test(o) ? "bullets" : o) }; });
+    wf.base = items.map((it, k) => { const s = splitLayout(it.text), o = oldLm.get(ids[k]) || ""; return { id: ids[k], ind: it.ind, text: it.text, note: "", done: it.done, lm: s.kind ? (layoutFor(s.kind, o) || o) : (/^quote-block$/.test(o) || /table/i.test(o) ? "bullets" : o) }; });
     wf.savedAt = new Date().toISOString();
     saveWf();
     docStatus(`保存しました（${stamp(wf.savedAt)}）`, "ok");
@@ -3824,12 +3856,12 @@ renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
 const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table"]);
-const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))#[\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
+const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 function hlRest(s) {
   let out = "", last = 0;
   s.replace(HL_RE, (m, lbl, ref, cmd, tag, html, br, off) => {
     out += esc(s.slice(last, off));
-    const cls = lbl ? "hl-lbl" : ref ? "hl-ref" : cmd ? "hl-cmd" : tag ? (KNOWN_TAG.has(tag.slice(1).toLowerCase()) || /^#H[BP]?([A-Za-z0-9]+-)?$/.test(tag) ? "hl-tag" : "hl-tag2") : html ? "hl-html" : "hl-br";
+    const cls = lbl ? "hl-lbl" : ref ? "hl-ref" : cmd ? "hl-cmd" : tag ? (tag[0] === "#" && KNOWN_TAG.has(tag.slice(1).toLowerCase()) || /^#H[BP]?([A-Za-z0-9]+-)?$/.test(tag) ? "hl-tag" : "hl-tag2") : html ? "hl-html" : "hl-br";
     out += `<span class="${cls}">${esc(m)}</span>`;
     last = off + m.length;
     return m;
@@ -5037,7 +5069,7 @@ function keyLabel(sc) {
 }
 function renderKs() {
   const own = SHORTCUTS.map(sc => `<div class="ks-row"><kbd>${esc(keyLabel(sc))}</kbd><span><code>${esc(sc.text.replace("▮", "").trim())}</code></span></div>`).join("");
-  const more = [["⇧Return", "段落 #p"], ["⇧⌥Return", "改行 #br"], ["⌘Return", "編集欄を確定"], ["⌘⇧V", "文字だけ貼る"], ["⌘⌥⇧M", "行をメモ集へ"], ["⌘⌥E", "選んだ範囲を編集"], ["⌘⌥F", "検索と置換"], ["⌥Return", "ノート"], ["⌘S", "記録・保存"], ["⌘.", "ズーム"], ["⌘,", "ズームを戻す"], ["⌥⌘＝/−", "拡大・縮小"]]
+  const more = [["⇧Return", "段落 #p"], ["⇧⌥Return", "改行 #br"], ["⌘Return", "編集欄を確定"], ["⌘⇧V", "文字だけ貼る"], ["⌘⌥⇧M", "行をメモ集へ"], ["⌘⌥E", "選んだ範囲を編集"], ["⌘⌥F", "検索と置換"], ["⌘クリック", "タグを消す"], ["⌘S", "記録・保存"], ["⌘.", "ズーム"], ["⌘,", "ズームを戻す"], ["⌥⌘＝/−", "拡大・縮小"]]
     .map(([k, t]) => `<div class="ks-row"><kbd>${esc(k)}</kbd><span>${esc(t)}</span></div>`).join("");
   $("ks-body").innerHTML = `<div class="ks-sep">記法を入れる</div>` + own + `<div class="ks-sep">thyncSourceの操作</div>` + more + `<div class="ks-sep">すべての一覧は ⌘/</div>`;
 }
@@ -5052,6 +5084,15 @@ $("ks-close").addEventListener("click", () => { $("ks-side").hidden = true; $("k
 if (store.get("thync.ks") === "1") { $("ks-side").hidden = false; $("ks-btn").setAttribute("aria-expanded", "true"); renderKs(); }
 
 src.value = store.get("thync.src") || SAMPLE;
+// 以前の版で原稿に入っていたWorkflowyのノートの行を外す（Workflowy側のノートはそのまま残る）
+if (wf && wf.base && wf.base.some(b => b.note)) {
+  const notes = new Set();
+  for (const b of wf.base) if (b.note) for (const l of b.note.split("\n")) if (l.trim()) notes.add(l.trim());
+  const L = src.value.split("\n");
+  const kept = L.filter(l => !l.trim() || /^\s*[-•](\s|$)/.test(l) || !notes.has(unescNoteLine(l.trim())));
+  if (kept.length !== L.length) { src.value = kept.join("\n"); store.set("thync.src", src.value); setTimeout(() => toast(`ノートの行 ${L.length - kept.length} 行を原稿から外しました（Workflowy側のノートはそのままです）`), 800); }
+  wf.base.forEach(b => { b.note = ""; }); saveWf();
+}
 { const zl = store.get("thync.zoom"); if (zl) { const L = srcLines(), k = +zl; if (isBullet(L[k] || "")) zoom = { line: k, max: blockEndLine(L, k), text: L[k].trim() }; } }
 applyLpMode();
 render();
