@@ -118,7 +118,7 @@ textarea {
 .paper ol.list, .paper ul.list { margin: .4em 0 .8em; padding-left: 2.2em; }
 .empty { color: var(--muted); font-family: var(--font-ui); text-align: center; padding: 40px 0; }
 
-/* 例文の番号・記号・判定の幅：(555) と半角2つ、viii. と半角2つ、??? が入る幅（実際の字形で測って --ex-* に入れる） */
+/* 例文の番号・記号・判定の幅：(555) と半角2つ、ii. と半角2つ、??? が入る幅（実際の字形で測って --ex-* に入れる） */
 .ex { display: grid; grid-template-columns: var(--ex-num, 2.75em) 1fr; margin: 1em 0 1.1em; scroll-margin-top: 40px; border-radius: 3px; }
 .ex-num, .ex-letter {
   font: inherit; color: inherit; background: none; border: none; padding: 0; margin: 0; text-align: left;
@@ -3883,7 +3883,7 @@ function applyFonts() {
   measureExWidths();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureExWidths);
 }
-// 本文の字形で (555)・viii.・???・半角空白の幅を測り、例文の欄の幅にする（em で持つので文字の大きさが変わっても合う）
+// 本文の字形で (555)・ii.・???・半角空白の幅を測り、例文の欄の幅にする（em で持つので文字の大きさが変わっても合う）
 function measureExWidths() {
   const host = document.querySelector(".paper") || document.body;
   const s = document.createElement("span");
@@ -3891,7 +3891,7 @@ function measureExWidths() {
   host.appendChild(s);
   const w = t => { s.textContent = t; return s.getBoundingClientRect().width / 100; };
   const sp = w("x x") - w("xx");
-  const num = w("(555)") + sp * 2, let_ = w("viii.") + sp * 2, judg = w("???") + sp;
+  const num = w("(555)") + sp * 2, let_ = w("ii.") + sp * 2, judg = w("???") + sp;
   s.remove();
   if (!(num > 0)) return;
   const rs = document.documentElement.style;
