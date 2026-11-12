@@ -502,7 +502,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.3</div>
+    <div class="ver">v1.4</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -5569,7 +5569,28 @@ for (const host of [paper, $("pages")]) {
   host.addEventListener("dblclick", e => { const hd = e.target.closest(".img-handle"); if (!hd) return; e.preventDefault(); e.stopPropagation(); imgCommitWidth(hd.closest(".img-wrap"), null); }, true);
 }
 // Workflowyから届いたデータの形を調べる（画像の入り方を確かめるため。名前とノートは伏せる）
+// 1つのbulletを直接調べる（URLを入れたとき）。名前・ノートの文字は伏せ、タグや属性は残す
+async function wfDiagOne(ref) {
+  const out = $("wf-diag-out"); out.hidden = false; out.value = "調べています…";
+  const mask = s => String(s || "").replace(/>([^<]+)</g, (m, t) => ">（" + t.length + "字）<").replace(/^([^<]+)/, (m, t) => "（" + t.length + "字）").replace(/>([^<]+)$/, (m, t) => ">（" + t.length + "字）");
+  try {
+    const id = parseRef(ref);
+    const r = await wfFetch("/nodes/" + encodeURIComponent(id));
+    const n = r.node || r;
+    const c = JSON.parse(JSON.stringify(n)); c.name = mask(n.name); if (c.note) c.note = mask(n.note);
+    let kidsInfo = "";
+    try {
+      const k = await wfFetch("/nodes?parent_id=" + encodeURIComponent(n.id));
+      kidsInfo = (k.nodes || []).slice(0, 5).map(x => { const y = JSON.parse(JSON.stringify(x)); y.name = mask(x.name); if (y.note) y.note = mask(x.note); return JSON.stringify(y, null, 1); }).join("\n\n");
+    } catch (_) {}
+    out.value = `このbulletのデータ（名前・ノートの文字は伏せています）\n画像として見つけたURL: ${wfImagesOf(n).length} 件\n\n${JSON.stringify(c, null, 1)}\n\n--- 子（最初の5件）---\n${kidsInfo || "なし"}`;
+    out.select();
+  } catch (e) { out.value = "調べられませんでした：" + (e.message || e); }
+}
 $("wf-diag").addEventListener("click", () => {
+  const ref = prompt("調べたいbulletのURL（Workflowyで、そのbulletをズームしたときのアドレス）を貼ってください。空のまま OK なら、読み込んだ文書全体を調べます。", "");
+  if (ref === null) return;
+  if (ref.trim()) { wfDiagOne(ref.trim()); return; }
   const out = $("wf-diag-out");
   if (!wfRawSeen.length) { out.hidden = false; out.value = "先に「読み込む」で文書を読み込んでください。"; return; }
   const keys = new Map(), dkeys = new Map(), samples = [];
