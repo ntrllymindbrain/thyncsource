@@ -521,7 +521,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.15</div>
+    <div class="ver">v1.16</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -2125,35 +2125,48 @@ function addNote(ta) {
 }
 // bulletの文全体を書式で囲む／外す。前後の #タグ・@タグ・{lbl:…} は外側に残す（タグとして効くように）
 const FMT_EDGE = /^((?:\s*(?:[#@][\p{L}\p{N}_-]+|\{lbl:[^}]*\}|\[(?:x|COMPLETE|COMPLETED)\])(?=\s|$))*\s*)([\s\S]*?)((?:\s+(?:[#@][\p{L}\p{N}_-]+|\{lbl:[^}]*\}))*\s*)$/u;
-// 文全体を外側から包んでいる書式の重なり（<i><b>…</b></i> なら ["i","b"]）
-function fmtLayers(core) {
-  const layers = [];
-  for (;;) {
-    const m = core.match(/^<(b|i|u|s|code)>([\s\S]*)<\/\1>$/);
-    if (!m) break;
-    // 中身の同じタグが釣り合っているか（<b>a</b> x <b>b</b> を誤って外さないため）
-    const t = m[1], inner = m[2];
-    const opens = (inner.match(new RegExp("<" + t + ">", "g")) || []).length, closes = (inner.match(new RegExp("</" + t + ">", "g")) || []).length;
-    if (opens !== closes) break;
-    let depth = 0, ok = true;
-    for (const x of inner.matchAll(new RegExp("<(/?)" + t + ">", "g"))) { depth += x[1] ? -1 : 1; if (depth < 0) { ok = false; break; } }
-    if (!ok) break;
-    layers.push(t); core = inner;
+// ---- 書式を1文字ずつの印として扱う（入れ違いのタグや、選択の端がタグの外にずれていても正しく付け外しできるように）----
+const FMT_TAGS = ["b", "i", "u", "s", "code"];
+function fmtParse(v) {
+  const re = /<(\/?)(b|i|u|s|code)>/gi, cnt = { b: 0, i: 0, u: 0, s: 0, code: 0 }, chars = [];
+  let last = 0, m;
+  const push = (a, z) => { for (let k = a; k < z; k++) chars.push({ ch: v[k], src: k, f: new Set(FMT_TAGS.filter(t => cnt[t] > 0)) }); };
+  while ((m = re.exec(v))) { push(last, m.index); last = m.index + m[0].length; const t = m[2].toLowerCase(); if (m[1]) { if (cnt[t] > 0) cnt[t]--; } else cnt[t]++; }
+  push(last, v.length);
+  return chars;
+}
+function fmtSerialize(chars) {
+  let out = ""; const st = [], pos = [];
+  for (const c of chars) {
+    let k = st.findIndex(t => !c.f.has(t));
+    if (k >= 0) while (st.length > k) out += `</${st.pop()}>`;
+    for (const t of FMT_TAGS) if (c.f.has(t) && !st.includes(t)) { st.push(t); out += `<${t}>`; }
+    pos.push(out.length); out += c.ch;
   }
-  return { layers, inner: core };
+  while (st.length) out += `</${st.pop()}>`;
+  return { out, pos };
+}
+// v の [s, e) の文字に書式 t を付ける（on=true）／外す（false）。on が null なら「全部付いていれば外す、でなければ付ける」
+function fmtToggleRange(v, s, e, t, on = null) {
+  const chars = fmtParse(v), sel = chars.filter(c => c.src >= s && c.src < e);
+  const vis = sel.filter(c => /\S/.test(c.ch));
+  if (!vis.length) return null;
+  if (on === null) on = !vis.every(c => c.f.has(t));
+  sel.forEach(c => { if (on) c.f.add(t); else c.f.delete(t); });
+  const { out, pos } = fmtSerialize(chars);
+  const i0 = chars.indexOf(sel[0]), i1 = chars.indexOf(sel[sel.length - 1]);
+  return { out, s: pos[i0], e: pos[i1] + 1, on };
 }
 const tagOf = open => open.replace(/[<>]/g, "");
-function fmtIsWrapped(text, open, close) { const m = text.match(FMT_EDGE); const c = m ? m[2] : text; return fmtLayers(c).layers.includes(tagOf(open)); }
+function fmtIsWrapped(text, open, close) {
+  const m = text.match(FMT_EDGE); if (!m || !m[2]) return false;
+  const off = m[1].length, t = tagOf(open);
+  return fmtParse(text).filter(c => c.src >= off && c.src < off + m[2].length && /\S/.test(c.ch)).every(c => c.f.has(t));
+}
 function fmtApply(text, open, close, on) {
-  const m = text.match(FMT_EDGE); if (!m) return text;
-  let [, lead, core, trail] = m;
-  if (!core) return text;
-  const t = tagOf(open), { layers, inner } = fmtLayers(core);
-  const has = layers.includes(t);
-  if (on && !has) layers.unshift(t);
-  if (!on && has) layers.splice(layers.indexOf(t), 1);
-  core = layers.reduceRight((s, x) => `<${x}>${s}</${x}>`, inner);
-  return lead + core + trail;
+  const m = text.match(FMT_EDGE); if (!m || !m[2]) return text;
+  const off = m[1].length, r = fmtToggleRange(text, off, off + m[2].length, tagOf(open), on);
+  return r ? r.out : text;
 }
 // テキスト欄で何行にもまたがって選んでいるとき：各bulletの文をそれぞれ囲む（全部囲まれていれば外す）
 function wrapLines(ta, open, close) {
@@ -2196,8 +2209,19 @@ function mergeAdjacentFmt(ta) {
   ta.setSelectionRange(ns, ne);
 }
 function wrapSel(ta, open, close) {
+  const t = (open.match(/^<(b|i|u|s|code)>$/) || [])[1];
+  const s = ta.selectionStart, e = ta.selectionEnd, v = ta.value;
+  if (t && s !== e && !v.slice(s, e).includes("\n")) {
+    const r = fmtToggleRange(v, s, e, t);
+    if (r) {
+      let a = 0; while (a < v.length && v[a] === r.out[a]) a++;
+      let z = 0; while (z < v.length - a && z < r.out.length - a && v[v.length - 1 - z] === r.out[r.out.length - 1 - z]) z++;
+      replaceRange(ta, a, v.length - z, r.out.slice(a, r.out.length - z));
+      ta.setSelectionRange(r.s, r.e);
+      return;
+    }
+  }
   wrapSel0(ta, open, close);
-  if (/^<(b|i|u|s|code)>$/.test(open)) mergeAdjacentFmt(ta);
 }
 function wrapSel0(ta, open, close) {
   if (/^<(b|i|u|s|code)>$/.test(open)) mergeAdjacentFmt(ta);
@@ -4971,7 +4995,12 @@ function lpRefresh(force) {
   const [lo, hi] = lpRange();
   lpLo = lo; lpHi = hi;
   const a = lpOv.active;
-  lpOv.setText(srcLines().slice(lo, hi + 1).join("\n"));
+  const txt = srcLines().slice(lo, hi + 1).join("\n");
+  // 中身が同じなら描き直さない（bulletを選んでいる状態などを保つ）
+  if (!force && lpOv.items.length && lpOv.getLines().join("\n") === txt) return;
+  const keepSel = lpOv.sel && document.activeElement === lpOv.host ? { ...lpOv.sel } : null;
+  lpOv.setText(txt);
+  if (keepSel && keepSel.z < lpOv.items.length) { lpOv.sel = keepSel; lpOv.render(); lpOv.host.focus({ preventScroll: true }); }
 }
 function lpChanged() {
   if (lpHi === null) return;
