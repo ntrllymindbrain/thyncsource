@@ -183,6 +183,14 @@ textarea {
 }
 .pop[hidden], .drawer[hidden], .dr-body[hidden] { display: none; }
 .pop label { font-size: 12.5px; color: var(--muted); }
+.chars-btn { font-family: "Palatino Linotype", Palatino, serif; font-size: 15px; min-width: 2em; }
+.chars-pop { position: fixed; left: 12px; top: 52px; width: min(560px, calc(100vw - 24px)); max-height: 72vh; overflow: auto; display: block; z-index: 70; }
+.chars-pop .cp-head { display: flex; align-items: baseline; gap: 10px; position: sticky; top: 0; background: inherit; padding-bottom: 4px; font-weight: 600; font-size: 13px; }
+.chars-pop .cp-hint { font-weight: 400; font-size: 11.5px; color: var(--muted); flex: 1; }
+.chars-pop .cp-sec { font-size: 12px; color: var(--muted); margin: 8px 0 3px; }
+.chars-pop .cp-grid { display: flex; flex-wrap: wrap; gap: 3px; }
+.chars-pop .cp-grid button { min-width: 2.1em; height: 2.1em; padding: 0 4px; font: 17px/1 "Doulos SIL", "Charis SIL", "Gentium Plus", "Noto Serif", "Times New Roman", serif; border: 1px solid var(--rule); border-radius: 5px; background: #fff; cursor: pointer; }
+.chars-pop .cp-grid button:hover { background: #eef3fb; border-color: #8fb1e3; }
 .win-pop { width: 380px; grid-template-columns: auto 1fr; }
 .win-pop .wp-title, .win-pop .wp-sub { grid-column: 1 / -1; font-weight: 600; font-size: 13px; }
 .win-pop .wp-sub { margin-top: 6px; color: var(--muted); font-weight: 500; }
@@ -521,7 +529,8 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.19</div>
+    <div class="ver">v1.20</div>
+    <button id="btn-chars" type="button" class="chars-btn" title="ギリシャ文字・IPAの一覧（押すとカーソルの場所に入れる。カーソルがなければコピー）" aria-expanded="false">α</button>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -555,6 +564,10 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <button type="button" data-open="view,web,0">表示 Web（連動なし）</button><span class="wp-note">自分でスクロールする</span>
     <button type="button" data-open="view,page,0">表示 ページ（連動なし）</button><span class="wp-note">ページ・PDFの確認用</span>
     <p class="hint">「メイン」の編集ウィンドウでbulletをクリックすると、「メイン」の表示ウィンドウがそこへ動きます（逆も同じ）。メインのウィンドウは青い枠で囲まれます。並べるときは、初回だけChromeが「ウィンドウの管理」の許可と、ポップアップの許可を求めます。</p>
+  </div>
+  <div class="pop chars-pop" id="chars-pop" hidden>
+    <div class="cp-head"><span>ギリシャ文字・IPA</span><span class="cp-hint">押すとカーソルの場所に入ります（カーソルがなければコピー）</span><button type="button" id="chars-close" aria-label="閉じる">×</button></div>
+    <div id="chars-body"></div>
   </div>
   <main id="main" data-view="out">
    <div class="row-top" id="row-top">
@@ -669,7 +682,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <div class="kp-head"><b>ショートカット（Mac）</b><button type="button" id="kp-close">閉じる</button></div>
     <div class="kp-body">
       <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌘+クリック（タグ・コードの上）</kbd></td><td>そのタグ・コードを消す（#タグ・@タグ・{lbl:…}・{ref:…} など。{sc:…} のような囲みは中身を残して外す）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>複製</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>Backspace（行頭）</kbd></td><td>前の行につなぐ（子は前の行の子になる）</td></tr><tr><td><kbd>⇧+⌥+⌘+↑ ／ ↓</kbd></td><td>このbulletの変更履歴を開く（↑↓で選び Return で差し替え・Escで閉じる・各版を「コピー」できる）</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
-      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex {lbl:xxx}（xxx はまだ使っていない小文字3字。#ex {lbl:zzz} の子なら zzza, zzzb…）</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>カーソルの場所に #p（そこで段落を改める）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>カーソルの場所に #br（そこで字下げなしに改行）</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr></table>
+      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex {lbl:xxx}（xxx はまだ使っていない小文字3字。#ex {lbl:zzz} の子なら zzza, zzzb…）</td></tr><tr><td><kbd>⇧+⌥+⌘+5</kbd></td><td>#ex {lbl:xxx}（xxx はいつもランダムの3字）</td></tr><tr><td><kbd>⇧+⌥+⌘+1</kbd></td><td>#sec {lbl:xxx}（xxx はランダムの3字）</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>カーソルの場所に #p（そこで段落を改める）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>カーソルの場所に #br（そこで字下げなしに改行）</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr></table>
     </div>
   </div>
   <div class="clip-dock" id="clip-dock">
@@ -1906,6 +1919,8 @@ const SHORTCUTS = [
   { mods: "cos", code: "KeyK", text: "{sc:▮}" },
   { mods: "cos", code: "KeyD", text: "#draft ▮" },
   { mods: "co", code: "Digit1", text: "#sec ▮" },
+  { mods: "cos", code: "Digit1", label: "#sec {lbl:…}（ランダム）", text: () => `#sec {lbl:${newExLabel(-1)}} ▮` },
+  { mods: "cos", code: "Digit5", label: "#ex {lbl:…}（ランダム）", text: () => `#ex {lbl:${newExLabel(-1)}} ▮` },
   { mods: "co", code: "Digit5", label: "#ex {lbl:…}", text: ta => `#ex {lbl:${newExLabel(taSrcLine(ta))}} ▮` }
 ];
 // 欄のカーソルがある行が、入力全体の何行目か
@@ -6142,6 +6157,37 @@ document.addEventListener("contextmenu", e => {
 document.addEventListener("mousedown", e => { if (ctxMenu && !ctxMenu.contains(e.target)) closeCtx(); }, true);
 document.addEventListener("keydown", e => { if (ctxMenu && e.key === "Escape") closeCtx(); }, true);
 window.addEventListener("blur", closeCtx);
+/* ---------- ギリシャ文字・IPA の一覧 ---------- */
+const CHAR_SETS = [
+  ["ギリシャ文字（小文字）", "αβγδεζηθικλμνξοπρσςτυφχψω"],
+  ["ギリシャ文字（大文字）", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"],
+  ["ギリシャ文字（異体字）", "ϑϕϖϵϱϰϒ"],
+  ["IPA 子音（肺気流）", "pbtdʈɖcɟkɡqɢʔmɱnɳɲŋɴʙrʀⱱɾɽɸβfvθðszʃʒʂʐçʝxɣχʁħʕhɦɬɮʋɹɻjɰlɭʎʟ"],
+  ["IPA 子音（非肺気流）", "ʘǀǃǂǁɓɗʄɠʛʼ"],
+  ["IPA その他の記号", "ʍwɥʜʢʡɕʑɺɧ"],
+  ["IPA 母音", "iyɨʉɯuɪʏʊeøɘɵɤoəɛœɜɞʌɔæɐaɶɑɒɚɝ"],
+  ["IPA 超分節", ["ˈ", "ˌ", "ː", "ˑ", "̆", "|", "‖", ".", "‿"]],
+  ["IPA 声調", ["˥", "˦", "˧", "˨", "˩", "↗", "↘", "ꜛ", "ꜜ", "̋", "́", "̄", "̀", "̏", "̌", "̂"]],
+  ["IPA 補助記号", ["̥", "̊", "̬", "ʰ", "̹", "̜", "̟", "̠", "̈", "̽", "̩", "̍", "̯", "˞", "̤", "̰", "̼", "ʷ", "ʲ", "ˠ", "ˤ", "̴", "̝", "̞", "̘", "̙", "̪", "̺", "̻", "̃", "ⁿ", "ˡ", "̚", "͡", "͜"]]
+];
+const isMark = ch => /\p{M}/u.test(ch);
+$("chars-body").innerHTML = CHAR_SETS.map(([name, chars]) => `<div class="cp-sec">${esc(name)}</div><div class="cp-grid">` +
+  [...(Array.isArray(chars) ? chars : Array.from(chars))].map(ch => `<button type="button" data-ch="${esc(ch)}" title="U+${ch.codePointAt(0).toString(16).toUpperCase().padStart(4, "0")}${isMark(ch) ? "（前の文字に付く記号）" : ""}">${isMark(ch) ? "◌" + ch : esc(ch)}</button>`).join("") + `</div>`).join("");
+let charsTarget = null;   // 一覧を開く前にカーソルがあった欄
+document.addEventListener("focusin", e => { if (isTA(e.target) && e.target.closest(".app")) charsTarget = e.target; });
+document.addEventListener("focusout", e => { if (isTA(e.target)) setTimeout(() => { if (document.activeElement !== e.target && !e.target.isConnected) charsTarget = null; }, 0); });
+$("btn-chars").addEventListener("mousedown", e => e.preventDefault());
+$("btn-chars").addEventListener("click", () => { const p = $("chars-pop"); p.hidden = !p.hidden; $("btn-chars").setAttribute("aria-expanded", String(!p.hidden)); });
+$("chars-close").addEventListener("click", () => { $("chars-pop").hidden = true; $("btn-chars").setAttribute("aria-expanded", "false"); });
+$("chars-pop").addEventListener("mousedown", e => { if (e.target.closest("[data-ch]")) e.preventDefault(); });   // 欄からカーソルを外さない
+$("chars-pop").addEventListener("click", e => {
+  const b = e.target.closest("[data-ch]"); if (!b) return;
+  const ch = b.dataset.ch, ta = document.activeElement;
+  if (isTA(ta) && ta.closest(".app")) { replaceRange(ta, ta.selectionStart, ta.selectionEnd, ch); return; }
+  (navigator.clipboard ? navigator.clipboard.writeText(ch) : Promise.reject()).then(() => toast(`${ch} をコピーしました`)).catch(() => toast("コピーできませんでした"));
+  if (typeof addClip === "function") addClip(ch);
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("chars-pop").hidden && !isTA(document.activeElement)) { $("chars-pop").hidden = true; } });
 src.value = store.get("thync.src") || SAMPLE;
 // 以前の版で原稿に入っていたWorkflowyのノートの行を外す（Workflowy側のノートはそのまま残る）
 if (wf && wf.base && wf.base.some(b => b.note)) {
