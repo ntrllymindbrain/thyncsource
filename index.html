@@ -521,7 +521,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.12</div>
+    <div class="ver">v1.13</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -669,7 +669,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <div class="kp-head"><b>ショートカット（Mac）</b><button type="button" id="kp-close">閉じる</button></div>
     <div class="kp-body">
       <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌘+クリック（タグ・コードの上）</kbd></td><td>そのタグ・コードを消す（#タグ・@タグ・{lbl:…}・{ref:…} など。{sc:…} のような囲みは中身を残して外す）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>複製</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>Backspace（行頭）</kbd></td><td>前の行につなぐ（子は前の行の子になる）</td></tr><tr><td><kbd>⇧+⌥+⌘+↑ ／ ↓</kbd></td><td>このbulletの変更履歴を開く（↑↓で選び Return で差し替え・Escで閉じる・各版を「コピー」できる）</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
-      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex {lbl:xxx}（xxx はまだ使っていない小文字3字。#ex {lbl:zzz} の子なら zzza, zzzb…）</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>段落の区切り #p を付けて次のbulletへ（文の途中なら付け外し）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>字下げなしの改行 #br を付けて次のbulletへ</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr></table>
+      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex {lbl:xxx}（xxx はまだ使っていない小文字3字。#ex {lbl:zzz} の子なら zzza, zzzb…）</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>カーソルの場所に #p（そこで段落を改める）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>カーソルの場所に #br（そこで字下げなしに改行）</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr></table>
     </div>
   </div>
   <div class="clip-dock" id="clip-dock">
@@ -872,6 +872,8 @@ function compileOne(tree, opts) {
     const hm = t.match(/(?:^|\s)#H([BP]?)((?:[A-Za-z0-9]+-)?)(?=\s|$)/);
     const hyp = hm ? { style: hm[1] || "", prefix: hm[2] || "" } : null;
     t = t.replace(/(^|\s)#hfill(?=\s|$)/gi, (m, pre) => { tags.add("hfill"); return pre + "\uE000 "; });
+    // 文の途中の #p（段落を改める）・#br（字下げなしの改行）は、その場所の印にする。行末のものはこれまでどおりタグとして
+    t = t.replace(/(^|\s)#(p|br)(?=\s)(?!\s*(?:#[\p{L}\p{N}_-]+\s*)*$)/giu, (m, pre, w) => pre + (w.toLowerCase() === "p" ? "\uE001 " : "\uE002 "));
     // タグ：記法のタグ（#sec など）はいつも外す。それ以外の #タグ・@タグは「タグを表示」のときだけ残す
     t = t.replace(/(^|\s)#([\p{L}\p{N}_-]+)/gu, (m, pre, tag) => { const low = tag.toLowerCase(); tags.add(low); return opts.showTags && !KNOWN_TAG.has(low) && !/^H[BP]?([A-Za-z0-9]+-)?$/.test(tag) ? m : pre; });
     t = t.replace(/(^|\s)@([\p{L}\p{N}_-]+)/gu, (m, pre) => opts.showTags ? m : pre);
@@ -1196,6 +1198,16 @@ function compileOne(tree, opts) {
       const fnNodes = c.children.filter(k => visible(k) && info(k).tags.has("fn"));
       const fns = fnNodes.map(addFn);
       if (text) text = hypify(c, inf, text, null);
+      // 文の途中の #p：そこで段落を改める
+      if (text && text.includes("\uE001")) {
+        const segs = text.split(/\s*\uE001\s*/);
+        segs.forEach((sg, k) => {
+          if (sg) { addSentence(sg, k === segs.length - 1 ? fns : [], c.line); if (c.completed) para.parts[para.parts.length - 1].done = true; touch(para, c.line, c.line); }
+          if (k < segs.length - 1) flush();
+        });
+        text = "";
+        if (fns.length && !segs[segs.length - 1] && para && para.parts.length) para.parts[para.parts.length - 1].fns.push(...fns);
+      }
       if (text) { addSentence(text, fns, c.line); if (c.completed) para.parts[para.parts.length - 1].done = true; }
       if (br && para && para.parts.length) para.parts[para.parts.length - 1].br = true;
       else if (fns.length && para && para.parts.length) para.parts[para.parts.length - 1].fns.push(...fns);
@@ -1252,7 +1264,8 @@ function compileOne(tree, opts) {
   const RAW = new Set(["ref", "refn", "rep", "lbl", "j", "cite", "mirror", "hyp", "exref", "img", "wfimg"]);
   // #hfill：その位置から後ろを、その行の右端へ寄せる（TeX の \hfill）
   function R(s) {
-    const html = R0(s), k = html.indexOf("\uE000");
+    s = String(s).replace(/\s*[\uE001\uE002]\s*/g, "\uE003");
+    const html = R0(s).replace(/\uE003/g, "<br>"), k = html.indexOf("\uE000");
     if (k < 0) return html;
     return html.slice(0, k).replace(/\s+$/, "") + `<span class="hfill">` + html.slice(k + 1).replace(/\uE000/g, "").replace(/^\s+/, "") + `</span>`;
   }
@@ -2078,17 +2091,21 @@ function setBreakTag(text, tag) {
   let t = text.replace(/\s*(?:#p|#br|\/\/)\s*$/i, "").replace(/\s+$/, "");
   return { text: had ? t : (t ? t + " " : "") + tag, had };
 }
-// ⇧Return：その行の末尾に #p を付けて次のbulletへ（⇧⌥Return は #br）。文の途中なら付け外しだけ
+function insertBreakTag(ta, tag) {
+  const v = ta.value, s = ta.selectionStart, e = ta.selectionEnd;
+  const ins = (s > 0 && !/\s/.test(v[s - 1]) ? " " : "") + tag + (e < v.length && !/\s/.test(v[e]) ? " " : "");
+  replaceRange(ta, s, e, ins);
+  // 後ろに文が続くときは、空白の後ろにカーソルを
+  const at = s + ins.length + (e < v.length && /\s/.test(v[e]) ? 1 : 0);
+  ta.setSelectionRange(at, at);
+}
+// ⇧Return：カーソルの場所に #p（⇧⌥Return は #br）。行の頭（「- 」の前）では何もしない
 function paraBreakText(ta, tag) {
   const v = ta.value, p = ta.selectionStart;
   const ls = v.lastIndexOf("\n", p - 1) + 1;
-  let le = v.indexOf("\n", p); if (le < 0) le = v.length;
-  const line = v.slice(ls, le);
-  if (!isBullet(line)) { insertText(ta, "\n"); return; }
-  const r = setBreakTag(line, tag);
-  if (p !== le) { replaceRange(ta, ls, le, r.text); ta.setSelectionRange(Math.min(p, ls + r.text.length), Math.min(p, ls + r.text.length)); return; }
-  if (!r.had) { replaceRange(ta, ls, le, r.text); ta.setSelectionRange(ls + r.text.length, ls + r.text.length); }
-  newBullet(ta);
+  const m = v.slice(ls).match(/^\s*[-•]\s?/);
+  if (m && p < ls + m[0].length) return;
+  insertBreakTag(ta, tag);
 }
 function addNote(ta) {
   const L = linesOf(ta); const cur = caretLC(ta);
@@ -2525,21 +2542,8 @@ class OutlineView {
     ta.addEventListener("blur", () => setTimeout(done, 0));
   }
   // ⇧Return：末尾に #p（⇧⌥Return は #br）を付けて次のbulletへ。文の途中なら付け外しするだけ
-  paraBreak(ta, tag) {
-    const i = this.active, it = this.items[i];
-    if (ta._mir) return;
-    const r = setBreakTag(it.text, tag), has = r.had;
-    const atEnd = ta.selectionStart === ta.value.length && ta.selectionEnd === ta.value.length;
-    if (!atEnd) {
-      const p = ta.selectionStart;
-      it.text = r.text;
-      ta.value = it.text; ta.setSelectionRange(Math.min(p, it.text.length), Math.min(p, it.text.length));
-      this.fit(); this.changed();
-      return;
-    }
-    if (!has) { it.text = r.text; ta.value = it.text; this.changed(); }
-    this.split(ta.value.length, ta.value.length);
-  }
+  // ⇧Return：カーソルの場所に #p（⇧⌥Return は #br）を置く。1つのbulletの中で段落・行を改められる
+  paraBreak(ta, tag) { insertBreakTag(ta, tag); }
   // ---- まとまり（項目とその子）の操作 ----
   structural(fn, focus) {
     this.snapshot();
