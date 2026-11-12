@@ -472,11 +472,14 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .paper :is(p, h1, h2, h3, h4, .ex-text, .ex-head, .ph, li, blockquote):has(.hfill)::after { content: ""; display: block; clear: both; }
 .img-wrap { display: inline-block; position: relative; max-width: 100%; vertical-align: top; line-height: 0; text-indent: 0; }
 .img-wrap img { display: block; max-width: 100%; height: auto; }
+.img-wrap img.img-missing { min-width: 8em; min-height: 3em; border: 1px dashed #c66; font-size: .8em; line-height: 1.4; color: #a33; }
 .img-wrap.sized img { width: 100%; }
 .img-handle { position: absolute; top: 0; right: -4px; width: 8px; height: 100%; cursor: ew-resize; }
 .img-handle::after { content: ""; position: absolute; top: 50%; left: 2px; width: 4px; height: 36px; max-height: 80%; transform: translateY(-50%); border-radius: 2px; background: #2f6fdf; opacity: 0; transition: opacity .12s; }
 .img-wrap:hover .img-handle::after { opacity: .85; }
 @media print { .img-handle { display: none; } }
+.dbx-box { border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; margin: 10px 0; }
+.dbx-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
 .diag-out { width: 100%; height: 220px; font: 11.5px/1.4 ui-monospace, Menlo, monospace; margin-top: 8px; }
 .docsep { margin: 3em 0; border-top: 3px double var(--rule); }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
@@ -502,7 +505,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.5</div>
+    <div class="ver">v1.6</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -585,6 +588,13 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <input type="password" id="wf-key" autocomplete="off" spellcheck="false" placeholder="workflowy.com/api-key で発行">
     <label for="wf-relay">中継のURL</label>
     <input type="url" id="wf-relay" autocomplete="off" spellcheck="false" placeholder="https://thyncsource-relay.○○.workers.dev">
+    <div class="dbx-box">
+      <div class="dbx-title">画像置き場：Dropbox（公開リンクは作りません）</div>
+      <label for="dbx-key">Dropbox の App key（App Console で作った自分用アプリのもの）</label>
+      <input type="text" id="dbx-key" autocomplete="off" spellcheck="false" placeholder="例：abcd1234efgh567">
+      <div class="wf-acts"><button type="button" id="dbx-connect" class="primary">Dropboxにつなぐ</button><button type="button" id="dbx-unlink">つなぐのをやめる</button><span id="dbx-status" class="wf-status"></span></div>
+      <p class="hint">つないでいると、貼ったり落としたりした画像は Dropbox の「アプリ」フォルダの中に入り、原稿には {img:dropbox:/…} と書かれます。表示のたびにあなたの権限で読み、手元に写しを置くので、同じ画像を何度も落としません。</p>
+    </div>
     <label for="img-token">画像置き場の合言葉（中継の Worker に UPLOAD_TOKEN として入れたもの）</label>
     <input type="password" id="img-token" autocomplete="off" spellcheck="false" placeholder="画像を貼る・落とすと、中継の画像置き場に上げて {img:URL} を書き込みます">
     <div class="wf-acts"><button type="button" id="wf-save">この端末に保存</button><button type="button" id="wf-test" class="primary">接続テスト</button><button type="button" id="wf-forget">キーを消す</button></div>
@@ -4213,6 +4223,7 @@ function setSrcLine(li, nl) {
 }
 // ---------- 画像 ----------
 // {img:URL} {img:URL w=40}（w は本文の幅に対する%）。{wfimg:URL} はWorkflowyに貼った画像（幅はこの端末に覚える）
+const dbxURLs = new Map();   // Dropboxの場所 → 手元の写しのURL
 let imgWidths = {}; try { imgWidths = JSON.parse(store.get("thync.imgw") || "{}"); } catch (_) {}
 function parseImgArg(arg) {
   const m = String(arg).trim().match(/^(\S+)(?:\s+w=(\d+(?:\.\d+)?))?/);
@@ -4220,9 +4231,11 @@ function parseImgArg(arg) {
 }
 function imgHTML(kind, arg) {
   const { url, w } = parseImgArg(arg);
-  if (!/^(https?:|data:image\/)/i.test(url)) return `<span class="hl-err">［画像のURLが読めません］</span>`;
+  const dbx = /^dropbox:(\/.*)$/i.exec(url);
+  if (!dbx && !/^(https?:|data:image\/)/i.test(url)) return `<span class="hl-err">［画像のURLが読めません］</span>`;
   const width = kind === "wfimg" ? imgWidths[url] : w;
-  return `<span class="img-wrap${width ? " sized" : ""}" data-kind="${kind}" data-url="${esc(url)}"${width ? ` style="width:${width}%"` : ""}><img src="${esc(url)}" alt="" loading="lazy" draggable="false"><span class="img-handle" title="ドラッグで大きさを変える（ダブルクリックで元の大きさ）"></span></span>`;
+  const srcAttr = dbx ? (dbxURLs.get(dbx[1]) ? `src="${dbxURLs.get(dbx[1])}" ` : "") + `data-dbx="${esc(dbx[1])}"` : `src="${esc(url)}"`;
+  return `<span class="img-wrap${width ? " sized" : ""}" data-kind="${kind}" data-url="${esc(url)}"${width ? ` style="width:${width}%"` : ""}><img ${srcAttr} alt="" draggable="false"><span class="img-handle" title="ドラッグで大きさを変える（ダブルクリックで元の大きさ）"></span></span>`;
 }
 // Workflowyのノードの中から画像のURLを探す（ファイル添付の形は資料にないので、data などを広く見る）
 function wfImagesOf(n) {
@@ -5172,6 +5185,7 @@ async function renderPagesNow(token, force) {
   const work = document.createElement("div");
   work.className = "paper paged";
   work.innerHTML = lastPaperHTML;
+  await dbxHydrate(work);
   work.querySelectorAll(".inline-edit, .empty").forEach(x => x.remove());
   // 脚注は、そのページの下に置く（本文の参照位置に脚注の中身を入れ、割り付けで下へ送る）
   const fnLists = [...work.querySelectorAll(".fns")];
@@ -5613,9 +5627,124 @@ $("wf-diag").addEventListener("click", () => {
   out.value = `ノード ${wfRawSeen.length} 件\nノードの項目: ${[...keys].map(([k, v]) => k + "×" + v).join(", ")}\ndata の項目: ${[...dkeys].map(([k, v]) => k + "×" + v).join(", ") || "なし"}\n画像として見つけたURL: ${wfRawSeen.reduce((s, n) => s + wfImagesOf(n).length, 0)} 件\n\n--- ふつうと違う項目を持つノードの例（名前・ノートは伏せています）---\n${samples.join("\n\n") || "なし"}`;
   out.select();
 });
+/* ---------- Dropbox（画像置き場） ----------
+   ブラウザから直接（PKCE）。原稿には {img:dropbox:/場所} と書き、表示のときに読んで手元（Cache Storage）に写しを置く。
+   写しはDropbox上の版（rev）で見分け、変わったときだけ取り直す。 */
+const DBX_REDIRECT = location.origin + location.pathname;
+const dbxAsciiJSON = o => JSON.stringify(o).replace(/[\u007f-￿]/g, c => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));
+function dbxKey() { return ($("dbx-key").value || store.get("thync.dbxkey") || "").trim(); }
+function dbxConnected() { return !!store.get("thync.dbxrt"); }
+function dbxShowStatus() {
+  const s = $("dbx-status"); if (!s) return;
+  s.textContent = dbxConnected() ? "つながっています" : "つないでいません";
+  s.className = "wf-status" + (dbxConnected() ? " ok" : "");
+}
+const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+$("dbx-key").value = store.get("thync.dbxkey") || "";
+$("dbx-connect").addEventListener("click", async () => {
+  const key = dbxKey(); if (!key) { toast("先に App key を入れてください"); return; }
+  store.set("thync.dbxkey", key);
+  const verifier = b64url(crypto.getRandomValues(new Uint8Array(48)));
+  const challenge = b64url(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
+  const state = b64url(crypto.getRandomValues(new Uint8Array(12)));
+  sessionStorage.setItem("thync.dbxpkce", JSON.stringify({ verifier, state }));
+  const q = new URLSearchParams({ client_id: key, response_type: "code", code_challenge: challenge, code_challenge_method: "S256", token_access_type: "offline", redirect_uri: DBX_REDIRECT, state });
+  location.href = "https://www.dropbox.com/oauth2/authorize?" + q.toString();
+});
+$("dbx-unlink").addEventListener("click", () => { ["thync.dbxrt", "thync.dbxat"].forEach(k => localStorage.removeItem(k)); dbxShowStatus(); toast("Dropboxとのつながりを外しました（画像の写しは手元に残ります）"); });
+// Dropboxから戻ってきたとき
+(async () => {
+  const q = new URLSearchParams(location.search);
+  if (!q.get("code") || !q.get("state")) return;
+  let pk = null; try { pk = JSON.parse(sessionStorage.getItem("thync.dbxpkce") || "null"); } catch (_) {}
+  history.replaceState(null, "", location.pathname);
+  if (!pk || pk.state !== q.get("state")) { toast("Dropboxからの戻りを確かめられませんでした。もう一度「Dropboxにつなぐ」を押してください"); return; }
+  try {
+    const r = await fetch("https://api.dropboxapi.com/oauth2/token", { method: "POST", body: new URLSearchParams({ code: q.get("code"), grant_type: "authorization_code", code_verifier: pk.verifier, client_id: store.get("thync.dbxkey") || "", redirect_uri: DBX_REDIRECT }) });
+    const j = await r.json();
+    if (!r.ok || !j.refresh_token) throw new Error(j.error_description || j.error || r.status);
+    store.set("thync.dbxrt", j.refresh_token);
+    store.set("thync.dbxat", JSON.stringify({ t: j.access_token, exp: Date.now() + (j.expires_in - 120) * 1000 }));
+    sessionStorage.removeItem("thync.dbxpkce");
+    dbxShowStatus(); toast("Dropboxにつながりました");
+  } catch (e) { toast("Dropboxにつなげませんでした：" + (e.message || e)); }
+})();
+async function dbxToken() {
+  let at = null; try { at = JSON.parse(store.get("thync.dbxat") || "null"); } catch (_) {}
+  if (at && at.exp > Date.now()) return at.t;
+  const rt = store.get("thync.dbxrt"); if (!rt) throw new Error("Dropboxにつないでいません");
+  const r = await fetch("https://api.dropboxapi.com/oauth2/token", { method: "POST", body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: rt, client_id: store.get("thync.dbxkey") || "" }) });
+  const j = await r.json();
+  if (!r.ok || !j.access_token) throw new Error("Dropboxの許可が切れています。もう一度つないでください");
+  store.set("thync.dbxat", JSON.stringify({ t: j.access_token, exp: Date.now() + (j.expires_in - 120) * 1000 }));
+  return j.access_token;
+}
+async function dbxApi(url, body, raw) {
+  const t = await dbxToken();
+  const r = await fetch(url, { method: "POST", headers: { Authorization: "Bearer " + t, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) { let m = ""; try { m = (await r.json()).error_summary || ""; } catch (_) {} const e = new Error(`Dropboxがエラーを返しました（${r.status}${m ? "：" + m : ""}）`); e.status = r.status; throw e; }
+  return raw ? r : r.json();
+}
+async function dbxUpload(file) {
+  const t = await dbxToken();
+  const ext = ({ "image/png": "png", "image/jpeg": "jpg", "image/gif": "gif", "image/webp": "webp", "image/svg+xml": "svg" })[file.type] || "img";
+  const d = new Date(), pad = n => String(n).padStart(2, "0");
+  const name = `/${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}_${Math.random().toString(36).slice(2, 6)}.${ext}`;
+  const r = await fetch("https://content.dropboxapi.com/2/files/upload", { method: "POST", headers: { Authorization: "Bearer " + t, "Content-Type": "application/octet-stream", "Dropbox-API-Arg": dbxAsciiJSON({ path: name, mode: "add", autorename: true }) }, body: file });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.path_display) throw new Error("Dropboxに上げられませんでした" + (j.error_summary ? "：" + j.error_summary : ""));
+  await dbxPutCache(j.path_display, j.rev, file);
+  dbxURLs.set(j.path_display, URL.createObjectURL(file));
+  return "dropbox:" + j.path_display;
+}
+const DBX_CACHE = "thync-dbx-img";
+const dbxReq = path => new Request("https://dbx.thync.invalid/" + encodeURIComponent(path));
+async function dbxPutCache(path, rev, blob) {
+  try { const c = await caches.open(DBX_CACHE); await c.put(dbxReq(path), new Response(blob, { headers: { "x-rev": rev || "", "x-checked": String(Date.now()), "Content-Type": blob.type || "application/octet-stream" } })); } catch (_) {}
+}
+const dbxPending = new Map();
+function dbxResolve(path) {
+  if (dbxURLs.has(path)) return Promise.resolve(dbxURLs.get(path));
+  if (dbxPending.has(path)) return dbxPending.get(path);
+  const p = (async () => {
+    let cached = null, c = null;
+    try { c = await caches.open(DBX_CACHE); cached = await c.match(dbxReq(path)); } catch (_) {}
+    const fresh = cached && Date.now() - (+cached.headers.get("x-checked") || 0) < 6 * 3600e3;
+    if (cached && (fresh || !dbxConnected())) { const u = URL.createObjectURL(await cached.blob()); dbxURLs.set(path, u); return u; }
+    if (!dbxConnected()) throw new Error("Dropboxにつないでいません");
+    // 版を確かめて、同じなら手元の写しを使う
+    const meta = await dbxApi("https://api.dropboxapi.com/2/files/get_metadata", { path });
+    if (cached && cached.headers.get("x-rev") === meta.rev) {
+      const blob = await cached.blob(); await dbxPutCache(path, meta.rev, blob);
+      const u = URL.createObjectURL(blob); dbxURLs.set(path, u); return u;
+    }
+    const t = await dbxToken();
+    const r = await fetch("https://content.dropboxapi.com/2/files/download", { method: "POST", headers: { Authorization: "Bearer " + t, "Dropbox-API-Arg": dbxAsciiJSON({ path }) } });
+    if (!r.ok) throw new Error("Dropboxから読めませんでした（" + r.status + "）");
+    const blob = await r.blob();
+    await dbxPutCache(path, meta.rev, blob);
+    const u = URL.createObjectURL(blob); dbxURLs.set(path, u); return u;
+  })();
+  dbxPending.set(path, p);
+  p.catch(() => {}).finally(() => dbxPending.delete(path));
+  return p;
+}
+async function dbxHydrate(root) {
+  const imgs = [...root.querySelectorAll("img[data-dbx]")].filter(i => !i.getAttribute("src"));
+  await Promise.all(imgs.map(async img => {
+    try { img.src = await dbxResolve(img.dataset.dbx); try { await img.decode(); } catch (_) {} }
+    catch (e) { img.alt = "［Dropboxの画像を読めません］"; img.title = e.message || ""; img.classList.add("img-missing"); }
+  }));
+}
+// 表示に出てきた Dropbox の画像を、出てきたそばから読む
+new MutationObserver(muts => {
+  for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1 && (n.matches("img[data-dbx]") || n.querySelector("img[data-dbx]"))) { dbxHydrate(n.matches("img[data-dbx]") ? n.parentNode : n); }
+}).observe(document.body, { childList: true, subtree: true });
+dbxShowStatus();
 /* ---------- 画像を上げる（中継の画像置き場へ） ---------- */
 function imgFilesOf(dt) { return dt ? [...(dt.files || [])].filter(f => /^image\//.test(f.type)) : []; }
 async function uploadImage(file) {
+  if (dbxConnected()) return dbxUpload(file);
   const relay = ($("wf-relay").value || store.get("thync.wfrelay") || "").trim().replace(/\/+$/, "");
   const token = ($("img-token").value || store.get("thync.imgtoken") || "").trim();
   if (!relay || !token) throw new Error("画像置き場の設定がまだです（「Workflowy接続」で中継のURLと画像置き場の合言葉を入れて保存してください）");
