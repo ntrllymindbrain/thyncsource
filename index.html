@@ -183,6 +183,17 @@ textarea {
 }
 .pop[hidden], .drawer[hidden], .dr-body[hidden] { display: none; }
 .pop label { font-size: 12.5px; color: var(--muted); }
+.win-pop { width: 380px; grid-template-columns: auto 1fr; }
+.win-pop .wp-title, .win-pop .wp-sub { grid-column: 1 / -1; font-weight: 600; font-size: 13px; }
+.win-pop .wp-sub { margin-top: 6px; color: var(--muted); font-weight: 500; }
+.win-pop .wp-note { font-size: 12px; color: var(--muted); align-self: center; }
+/* 役割を分けたウィンドウ */
+body[data-role="edit"] .row-top, body[data-role="view"] .row-top { grid-template-columns: 1fr; }
+body[data-role="edit"] .pane-out, body[data-role="view"] .pane-in { display: none; }
+body[data-role] .hint, body[data-role] .out-hint { display: none; }
+body[data-role="edit"] [data-lp="view"] { display: none; }
+body.win-main::after { content: ""; position: fixed; inset: 0; border: 4px solid #2f6fdf; pointer-events: none; z-index: 9999; border-radius: 2px; }
+#win-badge.main { background: #2f6fdf; color: #fff; }
 .pop select { font: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); }
 .pop .hint { grid-column: 1 / -1; }
 .drawer {
@@ -486,6 +497,8 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <div class="ver">プレビュー試作 v0.1</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
+    <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
+    <button id="win-badge" class="chip" type="button" hidden></button>
     <div class="tabs" role="tablist">
       <button id="tab-in" role="tab" aria-selected="false">入力</button>
       <button id="tab-out" role="tab" aria-selected="true">表示</button>
@@ -505,6 +518,17 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <button id="wf-chip" class="chip" type="button" hidden>Workflowy</button>
     <button id="warn-chip" class="chip" type="button">警告 0</button>
   </header>
+  <div class="pop win-pop" id="win-pop" hidden>
+    <div class="wp-title">ウィンドウを分ける</div>
+    <button type="button" data-arr="3">3画面に並べる</button><span class="wp-note">中央：編集（メイン）／左：表示 Web（メイン）／右：表示 ページ（連動なし）</span>
+    <button type="button" data-arr="2">2画面に並べる</button><span class="wp-note">この画面：編集（メイン）／もう1台：表示 Web（メイン）</span>
+    <div class="wp-sub">別ウィンドウを1つ開く</div>
+    <button type="button" data-open="edit,,1">編集（メイン）</button><span class="wp-note">箇条書きだけの画面</span>
+    <button type="button" data-open="view,web,1">表示 Web（メイン）</button><span class="wp-note">編集（メイン）と連動して動く</span>
+    <button type="button" data-open="view,web,0">表示 Web（連動なし）</button><span class="wp-note">自分でスクロールする</span>
+    <button type="button" data-open="view,page,0">表示 ページ（連動なし）</button><span class="wp-note">ページ・PDFの確認用</span>
+    <p class="hint">「メイン」の編集ウィンドウでbulletをクリックすると、「メイン」の表示ウィンドウがそこへ動きます（逆も同じ）。メインのウィンドウは青い枠で囲まれます。並べるときは、初回だけChromeが「ウィンドウの管理」の許可と、ポップアップの許可を求めます。</p>
+  </div>
   <main id="main" data-view="out">
    <div class="row-top" id="row-top">
     <section class="pane-in" data-pane="edit">
@@ -1470,8 +1494,10 @@ function renderInner() {
   const ca = $("close-all");
   ca.hidden = !editors.length;
   ca.textContent = `編集欄 ${editors.length} ・ すべて閉じる`;
-  store.set("thync.src", src.value);
+  // ほかのウィンドウから受け取ったままの原稿は書き戻さない（古い内容で上書きし合うのを防ぐ）
+  if (src.value !== lastRemoteSrc) store.set("thync.src", src.value);
 }
+var lastRemoteSrc = null;
 function keepScroll(fn) { const top = pane.scrollTop; fn(); pane.scrollTop = top; }
 
 let timer = null;
@@ -3216,7 +3242,9 @@ document.addEventListener("keydown", e => {
 
 /* 複数ウィンドウ：同じブラウザで開いた別のウィンドウの変更を受け取る */
 window.addEventListener("storage", e => {
-  if (e.key !== "thync.src" || e.newValue == null || e.newValue === src.value) return;
+  if (e.key !== "thync.src" || e.newValue == null) return;
+  lastRemoteSrc = e.newValue;
+  if (e.newValue === src.value) return;
   if (editors.length) { pendingRemote = e.newValue; $("remote-chip").hidden = false; return; }
   src.value = e.newValue;
   keepScroll(render);
@@ -5214,7 +5242,9 @@ function viewClickToEditor(e) {
   const ln = e.target.closest("[data-ln]");
   let line = ln ? +ln.dataset.ln : NaN;
   if (isNaN(line)) { const b = e.target.closest("[data-b]"); const r = b && lastRanges[+b.dataset.b]; if (r) line = r.min; }
-  if (!isNaN(line)) revealInEditor(line);
+  if (isNaN(line)) return;
+  if (typeof winRole !== "undefined" && winRole === "view") { if (winMain) winSend({ t: "edit", line }); return; }
+  revealInEditor(line);
 }
 paper.addEventListener("click", viewClickToEditor);
 $("pages").addEventListener("click", viewClickToEditor);
@@ -5226,6 +5256,87 @@ $("lp-ov").addEventListener("dblclick", e => {
 for (const [ta, baseFn] of [[src, () => 0], [zsrc, () => (zoom ? zoom.line : 0)]]) {
   ta.addEventListener("dblclick", () => { const p = ta.selectionStart; revealInView(baseFn() + ta.value.slice(0, p).split("\n").length - 1); });
 }
+/* ---------- ウィンドウを分ける（マルチディスプレイ） ----------
+   ?role=edit：編集だけ ／ ?role=view&mode=web|page：表示だけ ／ &main=1：メイン（互いに連動）
+   メインの編集でクリック → メインの表示がそこへ。メインの表示でクリック → メインの編集がそこへ。 */
+const WIN = new URLSearchParams(location.search);
+const winRole = /^(edit|view)$/.test(WIN.get("role") || "") ? WIN.get("role") : "";
+let winMain = !!winRole && WIN.get("main") === "1";
+const winChan = "BroadcastChannel" in window ? new BroadcastChannel("thync-win") : null;
+function applyWinRole() {
+  if (!winRole) return;
+  document.body.dataset.role = winRole;
+  document.body.classList.toggle("win-main", winMain);
+  const b = $("win-badge"); b.hidden = false; b.classList.toggle("main", winMain);
+  b.textContent = (winRole === "edit" ? "編集" : "表示") + (winMain ? "・メイン（連動）" : "・連動なし");
+  b.title = "押すと連動のオン・オフを切り替えます";
+  document.title = (winRole === "edit" ? "編集" : "表示") + (winMain ? "（メイン）" : "") + " — thyncSource";
+  if (winRole === "view" && /^(web|page)$/.test(WIN.get("mode") || "")) { viewMode = WIN.get("mode"); applyViewMode(); }
+  if (winRole === "edit" && lpMode === "view") { lpMode = "outline"; applyLpMode(); }
+}
+$("win-badge").addEventListener("click", () => {
+  winMain = !winMain;
+  const q = new URLSearchParams(location.search); if (winMain) q.set("main", "1"); else q.delete("main");
+  history.replaceState(null, "", location.pathname + "?" + q.toString());
+  applyWinRole();
+});
+function winSend(msg) { if (winChan && winMain) winChan.postMessage(msg); }
+if (winChan) winChan.onmessage = ev => {
+  const m = ev.data || {};
+  if (!winMain) return;
+  if (m.t === "view" && winRole === "view") revealInView(m.line);
+  if (m.t === "edit" && winRole === "edit") revealInEditor(m.line);
+};
+// メインの編集：bulletをクリックしたら表示へ知らせる（テキスト欄ならカーソルの行）
+$("lp-ov").addEventListener("click", e => {
+  if (winRole !== "edit" || !winMain) return;
+  const row = e.target.closest(".ov-row"); if (!row || row.dataset.line === undefined) return;
+  winSend({ t: "view", line: +row.dataset.line });
+}, true);
+for (const [ta, baseFn] of [[src, () => 0], [zsrc, () => (zoom ? zoom.line : 0)]]) {
+  ta.addEventListener("click", () => { if (winRole === "edit" && winMain) winSend({ t: "view", line: baseFn() + ta.value.slice(0, ta.selectionStart).split("\n").length - 1 }); });
+}
+// 並べる・開く
+function winURL(role, mode, main) {
+  const q = new URLSearchParams(); q.set("role", role); if (mode) q.set("mode", mode); if (main) q.set("main", "1");
+  return location.pathname + "?" + q.toString();
+}
+function openWin(role, mode, main, rect, name) {
+  const f = rect ? `popup,left=${Math.round(rect.left)},top=${Math.round(rect.top)},width=${Math.round(rect.width)},height=${Math.round(rect.height)}` : "popup,width=1100,height=900";
+  return window.open(winURL(role, mode, main), name || ("thync-" + role + "-" + (mode || "") + (main ? "-m" : "") + "-" + Date.now()), f);
+}
+async function arrangeWindows(n) {
+  let screens = null;
+  try { if ("getScreenDetails" in window) { const sd = await window.getScreenDetails(); screens = sd.screens.slice().sort((a, b) => a.availLeft - b.availLeft); } } catch (_) { screens = null; }
+  const rectOf = s => ({ left: s.availLeft, top: s.availTop, width: s.availWidth, height: s.availHeight });
+  const cur = { left: screen.availLeft || 0, top: screen.availTop || 0, width: screen.availWidth, height: screen.availHeight };
+  const tile = k => ({ left: cur.left + cur.width * k / n, top: cur.top, width: cur.width / n, height: cur.height });
+  let rects, note = "";
+  const plan = n === 3 ? [["view", "web", true, "thync-viewL"], ["edit", "", true, "thync-edit"], ["view", "page", false, "thync-viewR"]]
+                       : [["edit", "", true, "thync-edit"], ["view", "web", true, "thync-viewL"]];
+  if (screens && screens.length >= n) {
+    if (n === 3) { const mid = Math.floor((screens.length - 1) / 2); rects = [screens[mid - 1], screens[mid], screens[mid + 1]].map(rectOf); }
+    else {
+      const here = screens.find(s => s.availLeft === cur.left && s.availTop === cur.top) || screens.find(s => s.isPrimary) || screens[0];
+      const other = screens.find(s => s !== here);
+      rects = [rectOf(here), rectOf(other)];
+    }
+  } else {
+    rects = plan.map((_, k) => tile(k));
+    note = screens ? `ディスプレイが ${screens.length} 台なので、この画面の中に並べました` : "ディスプレイの情報を使えなかったので、この画面の中に並べました（Chromeの「ウィンドウの管理」を許可すると各ディスプレイに置けます）";
+  }
+  let blocked = 0;
+  plan.forEach(([role, mode, main, name], k) => { const w = openWin(role, mode, main, rects[k], name); if (!w) blocked++; });
+  if (blocked) toast("ポップアップが止められました。アドレスバー右端の表示からこのサイトのポップアップを許可して、もう一度押してください");
+  else toast(note || "ウィンドウを並べました。このウィンドウは閉じても構いません");
+}
+$("btn-win").addEventListener("click", e => { const p = $("win-pop"); p.hidden = !p.hidden; $("btn-win").setAttribute("aria-expanded", String(!p.hidden)); e.stopPropagation(); });
+document.addEventListener("click", e => { const p = $("win-pop"); if (!p.hidden && !e.target.closest("#win-pop,#btn-win")) { p.hidden = true; $("btn-win").setAttribute("aria-expanded", "false"); } });
+$("win-pop").addEventListener("click", e => {
+  const a = e.target.closest("[data-arr]"), o = e.target.closest("[data-open]");
+  if (a) { arrangeWindows(+a.dataset.arr); $("win-pop").hidden = true; }
+  if (o) { const [role, mode, main] = o.dataset.open.split(","); if (!openWin(role, mode, main === "1")) toast("ポップアップが止められました。このサイトのポップアップを許可してください"); $("win-pop").hidden = true; }
+});
 src.value = store.get("thync.src") || SAMPLE;
 // 以前の版で原稿に入っていたWorkflowyのノートの行を外す（Workflowy側のノートはそのまま残る）
 if (wf && wf.base && wf.base.some(b => b.note)) {
@@ -5243,6 +5354,7 @@ applyViewMode();
 applySplit();
 applyColor();
 recordHistory("開いたときの状態");
+applyWinRole();
 </script>
 </body>
 </html>
