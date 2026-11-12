@@ -494,7 +494,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.0</div>
+    <div class="ver">v1.1</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1495,7 +1495,22 @@ function renderInner() {
   ca.hidden = !editors.length;
   ca.textContent = `編集欄 ${editors.length} ・ すべて閉じる`;
   // ほかのウィンドウから受け取ったままの原稿は書き戻さない（古い内容で上書きし合うのを防ぐ）
-  if (src.value !== lastRemoteSrc) store.set("thync.src", src.value);
+  if (src.value !== lastRemoteSrc) {
+    if (autoHistSeen !== src.value) { autoHistSeen = src.value; scheduleAutoHistory(); }
+    store.set("thync.src", src.value);
+  }
+}
+// 直してから10秒手が止まったら、履歴に記録する
+let autoHistTimer = null, autoHistSeen = null;
+function scheduleAutoHistory() {
+  clearTimeout(autoHistTimer);
+  autoHistTimer = setTimeout(() => {
+    // 日本語の変換中や、ほかのウィンドウから受け取っただけのときは記録しない
+    const ae = document.activeElement;
+    if (ae && ae._rich && ae._rich.composing) { scheduleAutoHistory(); return; }
+    if (src.value === lastRemoteSrc) return;
+    recordHistory("自動（10秒止まった）");
+  }, 10000);
 }
 var lastRemoteSrc = null;
 function keepScroll(fn) { const top = pane.scrollTop; fn(); pane.scrollTop = top; }
