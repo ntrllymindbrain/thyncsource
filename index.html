@@ -466,8 +466,13 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .wft-wrap { overflow-x: auto; margin: .8em 0; }
 .paper table.wft { border-collapse: collapse; font-size: .95em; text-indent: 0; margin: 0 auto; }
 .paper table.wft caption { caption-side: top; font-weight: 600; padding-bottom: .35em; }
-.paper table.wft th, .paper table.wft td { border: 1px solid var(--rule); padding: .3em .6em; text-align: left; vertical-align: top; }
-.paper table.wft thead th { border-bottom-width: 2px; font-family: inherit; font-weight: 600; }
+/* 表：ふだんは論文でよく使う横線3本（上・見出しの下・下）。#grid なら1セルずつ枠で囲む */
+.paper table.wft { border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); }
+.paper table.wft th, .paper table.wft td { border: none; padding: .3em .7em; text-align: left; vertical-align: top; }
+.paper table.wft thead th { border-bottom: 1px solid var(--ink); font-family: inherit; font-weight: 600; }
+.paper table.wft.grid { border: none; }
+.paper table.wft.grid th, .paper table.wft.grid td { border: 1px solid var(--ink); }
+.paper table.wft.grid thead th { border-bottom-width: 1.5px; }
 .paper table.wft th, .paper table.wft td { font-family: inherit; }
 @keyframes syncflash { 0% { background-color: rgba(255, 214, 102, .65); } 100% { background-color: transparent; } }
 .sync-flash { animation: syncflash 1.2s ease-out; }
@@ -516,7 +521,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.11</div>
+    <div class="ver">v1.12</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1108,7 +1113,7 @@ function compileOne(tree, opts) {
       if (inf.tags.has("table")) {
         flush();
         const rows = c.children.filter(visible).map(r => ({ line: r.line, cells: r.children.filter(visible).map(k => ({ line: k.line, text: collectText(k) })) }));
-        blocks.push({ type: "table", caption: inf.text, rows, min: c.line, max: c.lastLine });
+        blocks.push({ type: "table", caption: inf.text, rows, grid: inf.tags.has("grid"), min: c.line, max: c.lastLine });
         continue;
       }
       // 見出しの大きさだけを指定する（番号なし）
@@ -1430,7 +1435,7 @@ function compileOne(tree, opts) {
       const cell = (tag, c) => `<${tag}${c ? cAttr(c.line) : ""}>${c ? R(c.text) : ""}</${tag}>`;
       const tr = (r, tag) => `<tr>${Array.from({ length: nc }, (_, k) => cell(tag, r.cells[k])).join("")}</tr>`;
       const [head, ...body] = b.rows;
-      html += `<div class="wft-wrap"${at}><table class="wft">` + (b.caption ? `<caption${cAttr(b.min)}>${R(b.caption)}</caption>` : "") +
+      html += `<div class="wft-wrap"${at}><table class="wft${b.grid ? " grid" : ""}">` + (b.caption ? `<caption${cAttr(b.min)}>${R(b.caption)}</caption>` : "") +
         (head ? `<thead>${tr(head, "th")}</thead>` : "") + `<tbody>${body.map(r => tr(r, "td")).join("")}</tbody></table></div>`;
     } else if (b.type === "ph") {
       const s = !starUsed && star && b.cls === "title" ? (starUsed = true, star) : "";
@@ -4269,7 +4274,7 @@ renderMemos();
 renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
-const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill"]);
+const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid"]);
 const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 function hlRest(s) {
   let out = "", last = 0;
