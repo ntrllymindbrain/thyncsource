@@ -470,6 +470,14 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .sync-flash { animation: syncflash 1.2s ease-out; }
 .hfill { float: right; margin-left: 1em; text-indent: 0; }
 .paper :is(p, h1, h2, h3, h4, .ex-text, .ex-head, .ph, li, blockquote):has(.hfill)::after { content: ""; display: block; clear: both; }
+.img-wrap { display: inline-block; position: relative; max-width: 100%; vertical-align: top; line-height: 0; text-indent: 0; }
+.img-wrap img { display: block; max-width: 100%; height: auto; }
+.img-wrap.sized img { width: 100%; }
+.img-handle { position: absolute; top: 0; right: -4px; width: 8px; height: 100%; cursor: ew-resize; }
+.img-handle::after { content: ""; position: absolute; top: 50%; left: 2px; width: 4px; height: 36px; max-height: 80%; transform: translateY(-50%); border-radius: 2px; background: #2f6fdf; opacity: 0; transition: opacity .12s; }
+.img-wrap:hover .img-handle::after { opacity: .85; }
+@media print { .img-handle { display: none; } }
+.diag-out { width: 100%; height: 220px; font: 11.5px/1.4 ui-monospace, Menlo, monospace; margin-top: 8px; }
 .docsep { margin: 3em 0; border-top: 3px double var(--rule); }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent-soft); } }
@@ -494,7 +502,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.2</div>
+    <div class="ver">v1.3</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -582,7 +590,8 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <p class="wf-status" id="wf-status" role="status"></p>
     <label for="wf-url">原稿のURL</label>
     <input type="text" id="wf-url" autocomplete="off" spellcheck="false" placeholder="原稿のいちばん上のbulletのURL（またはID）">
-    <div class="wf-acts"><button type="button" id="wf-load" class="primary">読み込む</button><button type="button" id="wf-sync">Workflowyへ保存</button><button type="button" id="wf-pull">Workflowyから取り込む</button><button type="button" id="wf-unlink">つなぐのをやめる</button></div>
+    <div class="wf-acts"><button type="button" id="wf-load" class="primary">読み込む</button><button type="button" id="wf-sync">Workflowyへ保存</button><button type="button" id="wf-pull">Workflowyから取り込む</button><button type="button" id="wf-unlink">つなぐのをやめる</button><button type="button" id="wf-diag" title="画像などがWorkflowyからどんな形で届いているかを見る">データの形を調べる</button></div>
+    <textarea id="wf-diag-out" class="diag-out" readonly hidden></textarea>
     <p class="hint">保存は ⌘+S でもできます。消した行はWorkflowyから消さず、「thyncSource 削除済み」というbulletの下へ移します。Workflowy側で直した分は、こちらに未保存の変更がなければ1分ごとに自動で取り込みます。未保存の変更があるときは、保存したあとに取り込みます。</p>
     <p class="wf-status" id="wf-doc-status" role="status"></p>
   </div>
@@ -1197,7 +1206,7 @@ function compileOne(tree, opts) {
   }
 
   /* --- 文中の記法 --- */
-  const RAW = new Set(["ref", "refn", "rep", "lbl", "j", "cite", "mirror", "hyp", "exref"]);
+  const RAW = new Set(["ref", "refn", "rep", "lbl", "j", "cite", "mirror", "hyp", "exref", "img", "wfimg"]);
   // #hfill：その位置から後ろを、その行の右端へ寄せる（TeX の \hfill）
   function R(s) {
     const html = R0(s), k = html.indexOf("\uE000");
@@ -1243,6 +1252,8 @@ function compileOne(tree, opts) {
             i += m[0].length;
             continue;
           }
+          const imgTag = rest.match(/^<img\b[^<>]*\bsrc="([^"]+)"[^<>]*>/i);
+          if (imgTag) { out += imgHTML("wfimg", imgTag[1]); i += imgTag[0].length; continue; }
           const tagLike = rest.match(/^<\/?[a-zA-Z][^<>]*>/);
           if (tagLike) { i += tagLike[0].length; continue; } // Workflowyの色やハイライトなど：表示では外す
           out += "&lt;"; i++; continue;
@@ -1277,6 +1288,7 @@ function compileOne(tree, opts) {
     }
     function raw(name, arg) {
       switch (name) {
+        case "img": case "wfimg": return imgHTML(name, arg);
         case "ref": case "rep": return refHTML(arg, false).replace(/<a class="xref"/g, `<a class="xref" draggable="true" data-code="${esc("{ref:" + arg + "}")}"`);
         case "refn": return refHTML(arg, true).replace(/<a class="xref"/g, `<a class="xref" draggable="true" data-code="${esc("{refn:" + arg + "}")}"`);
         case "lbl": return "";
@@ -3568,6 +3580,7 @@ $("wf-test").addEventListener("click", async () => {
 /* ---------- Workflowy：読み込みと書き戻し ---------- */
 // wf = { rootId, base: [{id, ind, text, note, done}] 前回読み込み／保存したときの状態, nodes: {id: {name, note, completed}} }
 let wf = null;
+let wfRawSeen = [];
 try { wf = JSON.parse(store.get("thync.wf") || "null"); } catch (e) { wf = null; }
 const saveWf = () => store.set("thync.wf", JSON.stringify(wf));
 const wfKey = () => ($("wf-key").value || "").trim();
@@ -3645,7 +3658,7 @@ function layoutTag(lm) { return lm === "quote-block" ? "#quote" : /table/i.test(
 // 原稿の文から #quote・#table を外して、Workflowyに送る名前と layoutMode にする
 function splitLayout(text) {
   let lm = null;
-  const t = text.replace(/(^|\s)#(quote|table)(?=\s|$)/gi, (m, pre, w) => { lm = w.toLowerCase(); return pre; }).replace(/\s{2,}/g, " ").trim();
+  const t = text.replace(/\s*\{wfimg:[^}]*\}/g, "").replace(/(^|\s)#(quote|table)(?=\s|$)/gi, (m, pre, w) => { lm = w.toLowerCase(); return pre; }).replace(/\s{2,}/g, " ").trim();
   return { name: t, kind: lm };
 }
 function layoutFor(kind, old) {
@@ -3662,6 +3675,8 @@ function treeToBase(root, byParent) {
     const lt = layoutTag(lm);
     if (lt && !new RegExp("(^|\\s)" + lt + "(\\s|$)").test(name)) name = name ? name + " " + lt : lt;
     if (/table/i.test(lm) && wfTableMode !== lm) { wfTableMode = lm; store.set("thync.wftable", lm); }
+    // Workflowyに貼った画像：原稿では {wfimg:URL} として見せる（保存のときは外す）
+    for (const u of wfImagesOf(n)) if (!name.includes(u)) name = (name ? name + " " : "") + `{wfimg:${u}}`;
     const note = n.note ? decodeText(n.note) : "";
     base.push({ id: n.id, ind, text: name, note, done: !!n.completed, lm });
     nodes[n.id] = { name: n.name || "", note: n.note || "", completed: !!n.completed };
@@ -3930,6 +3945,7 @@ async function loadFromWorkflowy() {
     const root = rootRes.node;
     const { byParent, via } = await loadSubtree(root.id, n => docStatus(`読み込んでいます… ${n} 件`));
     const { base, nodes } = treeToBase(root, byParent);
+    wfRawSeen = []; (function g(id) { for (const k of byParent.get(id) || []) { wfRawSeen.push(k); g(k.id); } })(root.id);
     wf = { rootId: root.id, ref, base, loadedAt: new Date().toISOString(), via };
     saveWf();
     store.set("thync.wfurl", $("wf-url").value.trim());
@@ -4191,6 +4207,35 @@ function setSrcLine(li, nl) {
   src.setRangeText(nl, s, s + L[li].length, "preserve");
   store.set("thync.src", src.value);
   if (src._paint) src._paint();
+}
+// ---------- 画像 ----------
+// {img:URL} {img:URL w=40}（w は本文の幅に対する%）。{wfimg:URL} はWorkflowyに貼った画像（幅はこの端末に覚える）
+let imgWidths = {}; try { imgWidths = JSON.parse(store.get("thync.imgw") || "{}"); } catch (_) {}
+function parseImgArg(arg) {
+  const m = String(arg).trim().match(/^(\S+)(?:\s+w=(\d+(?:\.\d+)?))?/);
+  return m ? { url: m[1], w: m[2] ? +m[2] : null } : { url: "", w: null };
+}
+function imgHTML(kind, arg) {
+  const { url, w } = parseImgArg(arg);
+  if (!/^(https?:|data:image\/)/i.test(url)) return `<span class="hl-err">［画像のURLが読めません］</span>`;
+  const width = kind === "wfimg" ? imgWidths[url] : w;
+  return `<span class="img-wrap${width ? " sized" : ""}" data-kind="${kind}" data-url="${esc(url)}"${width ? ` style="width:${width}%"` : ""}><img src="${esc(url)}" alt="" loading="lazy" draggable="false"><span class="img-handle" title="ドラッグで大きさを変える（ダブルクリックで元の大きさ）"></span></span>`;
+}
+// Workflowyのノードの中から画像のURLを探す（ファイル添付の形は資料にないので、data などを広く見る）
+function wfImagesOf(n) {
+  const out = [], seen = new Set();
+  const IMG = /^https?:\/\/\S+\.(png|jpe?g|gif|webp|svg|avif|heic)(\?\S*)?$/i;
+  const STD = new Set(["id", "name", "note", "parent_id", "priority", "completed", "completedAt", "completed_at", "createdAt", "created_at", "modifiedAt", "modified_at", "layoutMode", "mirror", "mirrorRoot"]);
+  (function scan(v, key, depth) {
+    if (depth > 5 || v == null) return;
+    if (typeof v === "string") { if (IMG.test(v.trim()) || (/^https?:\/\//.test(v) && /image|img|photo|thumb|file/i.test(key || ""))) { const u = v.trim(); if (!seen.has(u)) { seen.add(u); out.push(u); } } return; }
+    if (Array.isArray(v)) { v.forEach(x => scan(x, key, depth + 1)); return; }
+    if (typeof v === "object") {
+      if (typeof v.url === "string" && /^image\//i.test(v.mimeType || v.mime_type || v.type || "")) { if (!seen.has(v.url)) { seen.add(v.url); out.push(v.url); } return; }
+      for (const k of Object.keys(v)) { if (depth === 0 && STD.has(k)) continue; scan(v[k], k, depth + 1); }
+    }
+  })(n, "", 0);
+  return out;
 }
 // {lbl:x} を持つ行（ミラーの元）を探す
 function mirrorSource(label) {
@@ -5385,7 +5430,7 @@ function revealInView(line) {
 // 表示 → 編集欄（クリック）。リンク・番号・編集欄の中、文字を選んだとき、修飾キー付きは除く
 function viewClickToEditor(e) {
   if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
-  if (e.target.closest(".inline-edit,a,button,input,select,textarea,[data-exline],[data-target],[data-fn],.mir-mark,.xref")) return;
+  if (e.target.closest(".inline-edit,a,button,input,select,textarea,[data-exline],[data-target],[data-fn],.mir-mark,.xref,.img-handle") || Date.now() - imgJustResized < 400) return;
   const s = window.getSelection && window.getSelection(); if (s && !s.isCollapsed) return;
   const ln = e.target.closest("[data-ln]");
   let line = ln ? +ln.dataset.ln : NaN;
@@ -5484,6 +5529,65 @@ $("win-pop").addEventListener("click", e => {
   const a = e.target.closest("[data-arr]"), o = e.target.closest("[data-open]");
   if (a) { arrangeWindows(+a.dataset.arr); $("win-pop").hidden = true; }
   if (o) { const [role, mode, main] = o.dataset.open.split(","); if (!openWin(role, mode, main === "1")) toast("ポップアップが止められました。このサイトのポップアップを許可してください"); $("win-pop").hidden = true; }
+});
+// 画像の大きさをドラッグで変える（表示・ページの両方）
+function imgResizeStart(e) {
+  const hd = e.target.closest(".img-handle"); if (!hd) return;
+  e.preventDefault(); e.stopPropagation();
+  const wrap = hd.closest(".img-wrap"), box = wrap.parentElement.closest("p,li,div,td,blockquote,h1,h2,h3,h4,figure") || wrap.parentElement;
+  const full = box.clientWidth || 1, x0 = e.clientX, w0 = wrap.getBoundingClientRect().width;
+  let pct = null;
+  const mv = ev => { pct = Math.max(5, Math.min(100, Math.round((w0 + ev.clientX - x0) / full * 100))); wrap.style.width = pct + "%"; wrap.classList.add("sized"); };
+  const up = () => {
+    document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up);
+    imgJustResized = Date.now();
+    if (pct !== null) imgCommitWidth(wrap, pct);
+  };
+  document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up);
+}
+let imgJustResized = 0;
+function imgCommitWidth(wrap, pct) {
+  const url = wrap.dataset.url, kind = wrap.dataset.kind;
+  if (kind === "wfimg") {
+    if (pct === null) delete imgWidths[url]; else imgWidths[url] = pct;
+    store.set("thync.imgw", JSON.stringify(imgWidths)); keepScroll(render); return;
+  }
+  const ln = wrap.closest("[data-ln]"); if (!ln) return;
+  const li = +ln.dataset.ln, le = +(ln.dataset.le ?? li), L = srcLines();
+  for (let k = li; k <= le && k < L.length; k++) {
+    const i = L[k].indexOf("{img:" + url);
+    if (i < 0) continue;
+    const j = L[k].indexOf("}", i);
+    const tok = "{img:" + url + (pct === null ? "" : " w=" + pct) + "}";
+    setSrcLine(k, L[k].slice(0, i) + tok + L[k].slice(j + 1));
+    keepScroll(render);
+    return;
+  }
+}
+for (const host of [paper, $("pages")]) {
+  host.addEventListener("mousedown", imgResizeStart, true);
+  host.addEventListener("dblclick", e => { const hd = e.target.closest(".img-handle"); if (!hd) return; e.preventDefault(); e.stopPropagation(); imgCommitWidth(hd.closest(".img-wrap"), null); }, true);
+}
+// Workflowyから届いたデータの形を調べる（画像の入り方を確かめるため。名前とノートは伏せる）
+$("wf-diag").addEventListener("click", () => {
+  const out = $("wf-diag-out");
+  if (!wfRawSeen.length) { out.hidden = false; out.value = "先に「読み込む」で文書を読み込んでください。"; return; }
+  const keys = new Map(), dkeys = new Map(), samples = [];
+  for (const n of wfRawSeen) {
+    for (const k of Object.keys(n)) keys.set(k, (keys.get(k) || 0) + 1);
+    if (n.data && typeof n.data === "object") for (const k of Object.keys(n.data)) dkeys.set(k, (dkeys.get(k) || 0) + 1);
+    const extra = Object.keys(n).filter(k => !["id", "name", "note", "parent_id", "priority", "completed", "createdAt", "modifiedAt", "completedAt"].includes(k));
+    const nameHasTag = /<(img|a|file)\b/i.test(n.name || "");
+    if ((extra.some(k => k !== "data" || (n.data && Object.keys(n.data).some(x => x !== "layoutMode"))) || nameHasTag) && samples.length < 8) {
+      const c = JSON.parse(JSON.stringify(n));
+      c.name = nameHasTag ? (n.name || "").replace(/>[^<]+</g, ">…<").slice(0, 400) : `（${(decodeText(n.name || "")).length}字）`;
+      if (c.note) c.note = `（${c.note.length}字）`;
+      samples.push(JSON.stringify(c, null, 1).slice(0, 1500));
+    }
+  }
+  out.hidden = false;
+  out.value = `ノード ${wfRawSeen.length} 件\nノードの項目: ${[...keys].map(([k, v]) => k + "×" + v).join(", ")}\ndata の項目: ${[...dkeys].map(([k, v]) => k + "×" + v).join(", ") || "なし"}\n画像として見つけたURL: ${wfRawSeen.reduce((s, n) => s + wfImagesOf(n).length, 0)} 件\n\n--- ふつうと違う項目を持つノードの例（名前・ノートは伏せています）---\n${samples.join("\n\n") || "なし"}`;
+  out.select();
 });
 src.value = store.get("thync.src") || SAMPLE;
 // 以前の版で原稿に入っていたWorkflowyのノートの行を外す（Workflowy側のノートはそのまま残る）
