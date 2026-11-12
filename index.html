@@ -183,13 +183,14 @@ textarea {
 }
 .pop[hidden], .drawer[hidden], .dr-body[hidden] { display: none; }
 .pop label { font-size: 12.5px; color: var(--muted); }
-.chars-btn { font-family: "Palatino Linotype", Palatino, serif; font-size: 15px; min-width: 2em; }
-.chars-pop { position: fixed; left: 12px; top: 52px; width: min(560px, calc(100vw - 24px)); max-height: 72vh; overflow: auto; display: block; z-index: 70; }
-.chars-pop .cp-head { display: flex; align-items: baseline; gap: 10px; position: sticky; top: 0; background: inherit; padding-bottom: 4px; font-weight: 600; font-size: 13px; }
-.chars-pop .cp-hint { font-weight: 400; font-size: 11.5px; color: var(--muted); flex: 1; }
-.chars-pop .cp-sec { font-size: 12px; color: var(--muted); margin: 8px 0 3px; }
-.chars-pop .cp-grid { display: flex; flex-wrap: wrap; gap: 3px; }
-.chars-pop .cp-grid button { min-width: 2.1em; height: 2.1em; padding: 0 4px; font: 17px/1 "Doulos SIL", "Charis SIL", "Gentium Plus", "Noto Serif", "Times New Roman", serif; border: 1px solid var(--rule); border-radius: 5px; background: #fff; cursor: pointer; }
+.ks-btn.chars-btn { top: calc(50% - 40px); font: 14px/1 "Palatino Linotype", Palatino, "Times New Roman", serif; }
+.chars-pop { position: fixed; right: 30px; top: 50%; transform: translateY(-50%); left: auto; width: min(800px, calc(100vw - 50px)); max-height: 92vh; overflow: auto; display: block; z-index: 70; padding: 6px 8px; font-size: 11px; }
+.chars-pop .cp-head { display: flex; align-items: baseline; gap: 8px; position: sticky; top: 0; background: inherit; padding-bottom: 2px; font-weight: 600; font-size: 11.5px; }
+.chars-pop .cp-head button { padding: 0 6px; font-size: 12px; }
+.chars-pop .cp-hint { font-weight: 400; font-size: 10.5px; color: var(--muted); flex: 1; }
+.chars-pop .cp-sec { font-size: 10.5px; color: var(--muted); margin: 4px 0 1px; }
+.chars-pop .cp-grid { display: flex; flex-wrap: wrap; gap: 1px; }
+.chars-pop .cp-grid button { min-width: 1.75em; height: 1.75em; padding: 0 2px; font: 13px/1 "Doulos SIL", "Charis SIL", "Gentium Plus", "Noto Serif", "Times New Roman", serif; border: 1px solid #e6e1d6; border-radius: 3px; background: #fff; cursor: pointer; }
 .chars-pop .cp-grid button:hover { background: #eef3fb; border-color: #8fb1e3; }
 .win-pop { width: 380px; grid-template-columns: auto 1fr; }
 .win-pop .wp-title, .win-pop .wp-sub { grid-column: 1 / -1; font-weight: 600; font-size: 13px; }
@@ -529,8 +530,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.20</div>
-    <button id="btn-chars" type="button" class="chars-btn" title="ギリシャ文字・IPAの一覧（押すとカーソルの場所に入れる。カーソルがなければコピー）" aria-expanded="false">α</button>
+    <div class="ver">v1.21</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -671,6 +671,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <div class="fp-row fp-opts"><label><input type="checkbox" id="fp-case"> 大文字・小文字を区別</label><label><input type="checkbox" id="fp-re"> 正規表現</label><label id="fp-zoom-wrap" hidden><input type="checkbox" id="fp-zoom" checked> ズーム中の部分だけ</label></div>
     <p class="fp-msg" id="fp-msg"></p>
   </div>
+  <button id="btn-chars" type="button" class="ks-btn chars-btn" title="ギリシャ文字・IPAの一覧（押すとカーソルの場所に入れる。カーソルがなければコピー）" aria-label="ギリシャ文字・IPAの一覧" aria-expanded="false">α</button>
   <button type="button" class="ks-btn" id="ks-btn" aria-expanded="false" title="自分で決めたショートカット" aria-label="自分で決めたショートカットを見る">
     <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 6.5h7v7l-2.4-2.4c-2.2 1.6-3.1 3.6-2.7 6.4H9.5c-.9-3.5.3-6.4 3-8.6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
   </button>
@@ -6166,11 +6167,12 @@ const CHAR_SETS = [
   ["IPA 子音（非肺気流）", "ʘǀǃǂǁɓɗʄɠʛʼ"],
   ["IPA その他の記号", "ʍwɥʜʢʡɕʑɺɧ"],
   ["IPA 母音", "iyɨʉɯuɪʏʊeøɘɵɤoəɛœɜɞʌɔæɐaɶɑɒɚɝ"],
+  ...[["鋭アクセント（´）", "\u0301"], ["重アクセント（`）", "\u0300"], ["カロン（ˇ）", "\u030C"], ["長音符（¯）", "\u0304"]].map(([n, m]) => ["IPA 母音＋" + n, Array.from("iyɨʉɯuɪʏʊeøɘɵɤoəɛœɜɞʌɔæɐaɶɑɒ").map(v => (v + m).normalize("NFC"))]),
   ["IPA 超分節", ["ˈ", "ˌ", "ː", "ˑ", "̆", "|", "‖", ".", "‿"]],
   ["IPA 声調", ["˥", "˦", "˧", "˨", "˩", "↗", "↘", "ꜛ", "ꜜ", "̋", "́", "̄", "̀", "̏", "̌", "̂"]],
   ["IPA 補助記号", ["̥", "̊", "̬", "ʰ", "̹", "̜", "̟", "̠", "̈", "̽", "̩", "̍", "̯", "˞", "̤", "̰", "̼", "ʷ", "ʲ", "ˠ", "ˤ", "̴", "̝", "̞", "̘", "̙", "̪", "̺", "̻", "̃", "ⁿ", "ˡ", "̚", "͡", "͜"]]
 ];
-const isMark = ch => /\p{M}/u.test(ch);
+const isMark = ch => /^\p{M}/u.test(ch);
 $("chars-body").innerHTML = CHAR_SETS.map(([name, chars]) => `<div class="cp-sec">${esc(name)}</div><div class="cp-grid">` +
   [...(Array.isArray(chars) ? chars : Array.from(chars))].map(ch => `<button type="button" data-ch="${esc(ch)}" title="U+${ch.codePointAt(0).toString(16).toUpperCase().padStart(4, "0")}${isMark(ch) ? "（前の文字に付く記号）" : ""}">${isMark(ch) ? "◌" + ch : esc(ch)}</button>`).join("") + `</div>`).join("");
 let charsTarget = null;   // 一覧を開く前にカーソルがあった欄
