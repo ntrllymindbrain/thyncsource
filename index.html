@@ -521,7 +521,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.18</div>
+    <div class="ver">v1.19</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1168,7 +1168,9 @@ function compileOne(tree, opts) {
         blocks.push({ type: "list", ordered: inf.tags.has("olist"), lead: inf.text, items, min: c.line, max: subEnd(c) });
         continue;
       }
-      const tm = inf.text.match(/^\{toc(?:-(n|[1-5]))?\}$/i);
+      // 目次：{toc} と書いても、#toc とタグで付けてもよい（#toc-n、#toc-1〜#toc-5 も同じ）
+      const tagToc = [...inf.tags].map(t => t.match(/^toc(?:-(n|[1-5]))?$/)).find(Boolean);
+      const tm = inf.text.match(/^\{toc(?:-(n|[1-5]))?\}$/i) || (tagToc && !inf.text.trim() ? tagToc : null);
       if (tm) {
         flush();
         // {toc}：文書全体。{toc-n}：置かれた節より下の見出しすべて。{toc-1}〜{toc-5}：置かれた節より下の、その階層まで
@@ -4362,7 +4364,7 @@ renderMemos();
 renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
-const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid", "evenly"]);
+const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid", "evenly", "toc", "toc-n", "toc-1", "toc-2", "toc-3", "toc-4", "toc-5"]);
 const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 function hlRest(s) {
   let out = "", last = 0;
