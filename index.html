@@ -521,7 +521,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.14</div>
+    <div class="ver">v1.15</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1717,10 +1717,16 @@ function richHTML(v) {
     if (!m[1]) { stack.push({ t, at: out.length }); out += `<${t} data-rt="${t}">`; }
     else {
       const k = stack.map(x => x.t).lastIndexOf(t);
-      if (k !== stack.length - 1) { out += `<span class="hl-html">${esc(m[0])}</span>`; continue; }  // 入れ違い・対のない閉じタグはそのまま
+      if (k < 0) { out += `<span class="hl-html">${esc(m[0])}</span>`; continue; }  // 対のない閉じタグはそのまま
+      // 入れ違い（<u><b>…</u></b>）：内側を一度閉じて、閉じたあとで開き直す
+      const reopen = [];
+      while (stack.length - 1 > k) { const x = stack.pop(); out += `</${x.t}>`; reopen.unshift(x.t); }
       const op = stack.pop();
-      if (out.length === op.at + `<${t} data-rt="${t}">`.length) out += "​";
-      out += `</${t}>`;
+      if (out.length === op.at + `<${t} data-rt="${t}">`.length) {
+        if (op.re) { out = out.slice(0, op.at); }   // 開き直しただけで中身がない：なかったことにする
+        else { out += "\u200b"; out += `</${t}>`; }
+      } else out += `</${t}>`;
+      for (const r of reopen) { stack.push({ t: r, at: out.length, re: true }); out += `<${r} data-rt="${r}">`; }
     }
   }
   out += seg(v.slice(last));
@@ -2161,8 +2167,61 @@ function wrapLines(ta, open, close) {
   replaceRange(ta, ls, le, out);
   ta.setSelectionRange(ls, ls + out.length);
 }
+// 選んだ範囲が、すでに同じ書式（<b>…</b> など）の中にあるか。あれば [開き始め, 開き終わり, 閉じ始め, 閉じ終わり]
+function enclosingPair(v, s, e, t) {
+  const re = new RegExp("<(/?)" + t + ">", "gi"), st = [];
+  let m, best = null;
+  while ((m = re.exec(v))) {
+    if (!m[1]) st.push([m.index, m.index + m[0].length]);
+    else if (st.length) { const [os, oe] = st.pop(); const cs = m.index, ce = cs + m[0].length; if (oe <= s && e <= cs && (!best || os > best[0])) best = [os, oe, cs, ce]; }
+  }
+  return best;
+}
+// 隣り合った同じ書式（</b><b>）をつなぐ。選択の位置はずらして保つ
+function mergeAdjacentFmt(ta) {
+  const v = ta.value, s = ta.selectionStart, e = ta.selectionEnd;
+  const re = /<\/(b|i|u|s|code)><\1>/g;
+  let m, out = "", last = 0, ns = s, ne = e;
+  while ((m = re.exec(v))) {
+    out += v.slice(last, m.index); last = m.index + m[0].length;
+    const L = m[0].length;
+    if (m.index < s) ns -= Math.min(L, s - m.index);
+    if (m.index < e) ne -= Math.min(L, e - m.index);
+  }
+  if (!last) return;
+  out += v.slice(last);
+  let a = 0; while (a < v.length && v[a] === out[a]) a++;
+  let z = 0; while (z < v.length - a && z < out.length - a && v[v.length - 1 - z] === out[out.length - 1 - z]) z++;
+  replaceRange(ta, a, v.length - z, out.slice(a, out.length - z));
+  ta.setSelectionRange(ns, ne);
+}
 function wrapSel(ta, open, close) {
+  wrapSel0(ta, open, close);
+  if (/^<(b|i|u|s|code)>$/.test(open)) mergeAdjacentFmt(ta);
+}
+function wrapSel0(ta, open, close) {
+  if (/^<(b|i|u|s|code)>$/.test(open)) mergeAdjacentFmt(ta);
   const s = ta.selectionStart, e = ta.selectionEnd;
+  const t = (open.match(/^<([a-z]+)>$/i) || [])[1];
+  if (t && s !== e && !ta.value.slice(s, e).includes("\n")) {
+    const v = ta.value, pr = enclosingPair(v, s, e, t);
+    if (pr) {
+      // すでにその書式の中：選んだところだけ書式を外す（前後は書式のまま）
+      const [os, oe, cs, ce] = pr, left = v.slice(oe, s), mid = v.slice(s, e), right = v.slice(e, cs);
+      const L = left ? `<${t}>${left}</${t}>` : "", Rr = right ? `<${t}>${right}</${t}>` : "";
+      replaceRange(ta, os, ce, L + mid + Rr);
+      ta.setSelectionRange(os + L.length, os + L.length + mid.length);
+      return;
+    }
+    // 選んだ中に同じ書式が釣り合って入っているなら、それを外してから全体を囲む（入れ子にしない）
+    const mid = v.slice(s, e), opens = (mid.match(new RegExp("<" + t + ">", "gi")) || []).length, closes = (mid.match(new RegExp("</" + t + ">", "gi")) || []).length;
+    if (opens && opens === closes) {
+      const inner = mid.replace(new RegExp("</?" + t + ">", "gi"), "");
+      replaceRange(ta, s, e, open + inner + close);
+      ta.setSelectionRange(s + open.length, s + open.length + inner.length);
+      return;
+    }
+  }
   if (!ta._rich && s !== e && ta.value.slice(s, e).includes("\n")) { wrapLines(ta, open, close); return; }
   const sel = ta.value.slice(s, e);
   if (sel && sel.startsWith(open) && sel.endsWith(close) && sel.length >= open.length + close.length) {
