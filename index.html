@@ -502,7 +502,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.4</div>
+    <div class="ver">v1.5</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -585,6 +585,8 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <input type="password" id="wf-key" autocomplete="off" spellcheck="false" placeholder="workflowy.com/api-key で発行">
     <label for="wf-relay">中継のURL</label>
     <input type="url" id="wf-relay" autocomplete="off" spellcheck="false" placeholder="https://thyncsource-relay.○○.workers.dev">
+    <label for="img-token">画像置き場の合言葉（中継の Worker に UPLOAD_TOKEN として入れたもの）</label>
+    <input type="password" id="img-token" autocomplete="off" spellcheck="false" placeholder="画像を貼る・落とすと、中継の画像置き場に上げて {img:URL} を書き込みます">
     <div class="wf-acts"><button type="button" id="wf-save">この端末に保存</button><button type="button" id="wf-test" class="primary">接続テスト</button><button type="button" id="wf-forget">キーを消す</button></div>
     <p class="hint">キーはこのブラウザの中だけに保存します。中継を使う場合、キーは中継を通ってWorkflowyに届きますが、中継には保存されません。共用のパソコンでは保存しないでください。</p>
     <p class="wf-status" id="wf-status" role="status"></p>
@@ -3555,7 +3557,8 @@ document.addEventListener("click", e => {
   const pop = $("wf-pop");
   if (!pop.hidden && !pop.contains(e.target) && e.target !== $("btn-wf")) { pop.hidden = true; $("btn-wf").setAttribute("aria-expanded", "false"); }
 });
-$("wf-save").addEventListener("click", () => { store.set("thync.wfkey", $("wf-key").value.trim()); store.set("thync.wfrelay", $("wf-relay").value.trim()); wfStatus("この端末に保存しました。"); });
+$("img-token").value = store.get("thync.imgtoken") || "";
+$("wf-save").addEventListener("click", () => { store.set("thync.wfkey", $("wf-key").value.trim()); store.set("thync.wfrelay", $("wf-relay").value.trim()); store.set("thync.imgtoken", $("img-token").value.trim()); wfStatus("この端末に保存しました。"); });
 $("wf-forget").addEventListener("click", () => { try { localStorage.removeItem("thync.wfkey"); } catch (e) {} $("wf-key").value = ""; wfStatus("キーを消しました。"); });
 $("wf-test").addEventListener("click", async () => {
   const key = $("wf-key").value.trim();
@@ -5610,6 +5613,56 @@ $("wf-diag").addEventListener("click", () => {
   out.value = `ノード ${wfRawSeen.length} 件\nノードの項目: ${[...keys].map(([k, v]) => k + "×" + v).join(", ")}\ndata の項目: ${[...dkeys].map(([k, v]) => k + "×" + v).join(", ") || "なし"}\n画像として見つけたURL: ${wfRawSeen.reduce((s, n) => s + wfImagesOf(n).length, 0)} 件\n\n--- ふつうと違う項目を持つノードの例（名前・ノートは伏せています）---\n${samples.join("\n\n") || "なし"}`;
   out.select();
 });
+/* ---------- 画像を上げる（中継の画像置き場へ） ---------- */
+function imgFilesOf(dt) { return dt ? [...(dt.files || [])].filter(f => /^image\//.test(f.type)) : []; }
+async function uploadImage(file) {
+  const relay = ($("wf-relay").value || store.get("thync.wfrelay") || "").trim().replace(/\/+$/, "");
+  const token = ($("img-token").value || store.get("thync.imgtoken") || "").trim();
+  if (!relay || !token) throw new Error("画像置き場の設定がまだです（「Workflowy接続」で中継のURLと画像置き場の合言葉を入れて保存してください）");
+  const r = await fetch(relay + "/img", { method: "POST", headers: { "Content-Type": file.type, "X-Upload-Token": token }, body: file });
+  let j = {}; try { j = await r.json(); } catch (_) {}
+  if (!r.ok || !j.url) throw new Error(j.message || `画像を上げられませんでした（${r.status}）`);
+  return j.url;
+}
+async function uploadImagesToText(files) {
+  const urls = [];
+  for (const f of files) { toast(`画像を上げています…（${f.name || "画像"}）`); urls.push(await uploadImage(f)); }
+  return urls.map(u => `{img:${u}}`);
+}
+// 箇条書きの欄・テキスト欄に、画像を貼る／落とす
+document.addEventListener("paste", async e => {
+  const files = imgFilesOf(e.clipboardData); if (!files.length) return;
+  const ta = document.activeElement; if (!isTA(ta) || !ta.closest(".app")) return;
+  // 文字も一緒に入っているとき（Wordなどからのコピー）は、文字の貼り付けにまかせる
+  if ((e.clipboardData.getData("text/plain") || "").trim()) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const s = ta.selectionStart, en = ta.selectionEnd;
+  try { const toks = await uploadImagesToText(files); replaceRange(ta, s, en, toks.join(" ")); toast("画像を入れました"); }
+  catch (err) { toast(err.message); }
+}, true);
+for (const host of [$("lp-ov"), src, zsrc]) {
+  host.addEventListener("dragover", e => { if (imgFilesOf(e.dataTransfer).length || [...(e.dataTransfer.items || [])].some(x => x.kind === "file" && /^image\//.test(x.type))) { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "copy"; } }, true);
+  host.addEventListener("drop", async e => {
+    const files = imgFilesOf(e.dataTransfer); if (!files.length) return;
+    e.preventDefault(); e.stopPropagation();
+    try {
+      const toks = await uploadImagesToText(files);
+      if (host === $("lp-ov")) {
+        const row = e.target.closest(".ov-row");
+        const ov = (row && row.closest(".ov") === lpOv.host) || !row ? lpOv : null;
+        if (lpOv.ta && lpOv.ta.contains(e.target)) { const ta = lpOv.ta; replaceRange(ta, ta.selectionStart, ta.selectionEnd, toks.join(" ")); }
+        else {
+          const i = row && ov ? +row.dataset.i : lpOv.items.length - 1;
+          const at = lpOv.end(Math.max(0, i)) + 1, lv = lpOv.items[Math.max(0, i)] ? lpOv.items[Math.max(0, i)].lv : 0;
+          lpOv.structural(() => { toks.forEach((t, k) => lpOv.items.splice(at + k, 0, { lv, text: t, note: "", done: false })); }, { i: at, c: 0 });
+        }
+      } else {
+        const ta = host; ta.focus(); insertText(ta, toks.join(" "));
+      }
+      toast("画像を入れました");
+    } catch (err) { toast(err.message); }
+  }, true);
+}
 src.value = store.get("thync.src") || SAMPLE;
 // 以前の版で原稿に入っていたWorkflowyのノートの行を外す（Workflowy側のノートはそのまま残る）
 if (wf && wf.base && wf.base.some(b => b.note)) {
