@@ -450,7 +450,10 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .hpop ol { list-style: none; margin: 0; padding: 4px; }
 .hpop li { padding: 6px 8px; border-radius: 6px; border: 1px solid transparent; }
 .hpop li.on { background: #e8f0fb; border-color: #8fb1e3; }
-.hpop .hp-when { font-size: 11px; color: #888; }
+.hpop .hp-when { font-size: 11px; color: #888; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.hpop .hp-copy { font-size: 11px; padding: 1px 8px; border: 1px solid #cfc8b8; border-radius: 4px; background: #fff; cursor: pointer; color: #555; }
+.hpop .hp-copy:hover { background: #eef3fb; }
+.hpop li { cursor: pointer; }
 .hpop .hp-text { white-space: pre-wrap; word-break: break-word; }
 .hpop .hp-diff { background: #fde7a7; }
 .hpop .hp-cut { color: #c0392b; font-weight: bold; }
@@ -510,7 +513,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.7</div>
+    <div class="ver">v1.8</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -657,7 +660,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
   <div class="keys-pop" id="keys-pop" hidden role="dialog" aria-label="ショートカット一覧">
     <div class="kp-head"><b>ショートカット（Mac）</b><button type="button" id="kp-close">閉じる</button></div>
     <div class="kp-body">
-      <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌘+クリック（タグの上）</kbd></td><td>そのタグを消す（#タグ・@タグ）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>複製</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>Backspace（行頭）</kbd></td><td>前の行につなぐ（子は前の行の子になる）</td></tr><tr><td><kbd>⇧+⌥+⌘+↑ ／ ↓</kbd></td><td>このbulletの変更履歴を選ぶ（キーを離すと差し替え・Escでやめる）</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
+      <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌘+クリック（タグの上）</kbd></td><td>そのタグを消す（#タグ・@タグ）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>複製</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>Backspace（行頭）</kbd></td><td>前の行につなぐ（子は前の行の子になる）</td></tr><tr><td><kbd>⇧+⌥+⌘+↑ ／ ↓</kbd></td><td>このbulletの変更履歴を開く（↑↓で選び Return で差し替え・Escで閉じる・各版を「コピー」できる）</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
       <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex {lbl:xxx}（xxx はまだ使っていない小文字3字。#ex {lbl:zzz} の子なら zzza, zzzb…）</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>段落の区切り #p を付けて次のbulletへ（文の途中なら付け外し）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>字下げなしの改行 #br を付けて次のbulletへ</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr></table>
     </div>
   </div>
@@ -2585,6 +2588,15 @@ class OutlineView {
     if (e.isComposing || e.keyCode === 229) return;
     const cmd = CMD(e), k = e.key, i = this.active, it = this.items[i];
     if (i < 0) return;
+    // 変更履歴の一覧が開いているあいだ：↑↓で選ぶ・Returnで差し替え・Escで閉じる（修飾キーを離しても閉じない）
+    if (this.hp) {
+      if (k === "ArrowUp" || k === "ArrowDown") { e.preventDefault(); this.histStep(k === "ArrowUp" ? -1 : 1); return; }
+      if (k === "Enter") { e.preventDefault(); this.histClose(true); return; }
+      if (k === "Escape") { e.preventDefault(); this.histClose(false); return; }
+      if (cmd && e.code === "KeyC" && ta.selectionStart === ta.selectionEnd) { e.preventDefault(); this.histCopy(this.hp.sel); return; }
+      if (["Shift", "Meta", "Alt", "Control"].includes(k)) return;
+      this.histClose(false);
+    }
     if (k === "Escape" && this.hp) { e.preventDefault(); this.histClose(false); return; }
     if (k === "Escape") { if (this.opts.onEsc) { e.preventDefault(); this.opts.onEsc(); } else { e.preventDefault(); ta.blur(); } return; }
     if (cmd && e.altKey && e.shiftKey && e.code === "KeyM") { e.preventDefault(); this.memo(i); return; }
@@ -2663,8 +2675,8 @@ class OutlineView {
       const vers = bulletVersions(li);
       if (vers.length < 2) { toast("このbulletの履歴はまだありません（⌘S や編集欄を閉じたときに記録されます）"); return; }
       this.hp = { i, li, mir: ms, vers, sel: vers.length - 1, box: null };
-      this.hpUp = e => { if (!this.hp) return; if (e.key === "Meta" || e.key === "Alt" || e.key === "Shift" || e.key === "Control" || !e.shiftKey || !e.altKey || !CMD(e)) this.histClose(true); };
-      document.addEventListener("keyup", this.hpUp, true);
+      this.hpOut = e => { if (this.hp && this.hp.box && !this.hp.box.contains(e.target) && e.target !== this.ta) this.histClose(false); };
+      document.addEventListener("mousedown", this.hpOut, true);
     }
     const hp = this.hp;
     hp.sel = Math.max(0, Math.min(hp.vers.length - 1, hp.sel + dir));
@@ -2672,14 +2684,22 @@ class OutlineView {
   }
   histDraw() {
     const hp = this.hp; if (!hp) return;
-    if (!hp.box) { hp.box = document.createElement("div"); hp.box.className = "hpop"; document.body.appendChild(hp.box); }
+    if (!hp.box) {
+      hp.box = document.createElement("div"); hp.box.className = "hpop"; document.body.appendChild(hp.box);
+      hp.box.addEventListener("mousedown", e => e.preventDefault());   // 欄からカーソルを外さない
+      hp.box.addEventListener("click", e => {
+        const c = e.target.closest("[data-copy]"); if (c) { this.histCopy(+c.dataset.copy); return; }
+        const li = e.target.closest("li[data-k]"); if (li && this.hp) { this.hp.sel = +li.dataset.k; this.histDraw(); }
+      });
+      hp.box.addEventListener("dblclick", e => { const li = e.target.closest("li[data-k]"); if (li && this.hp) { this.hp.sel = +li.dataset.k; this.histClose(true); } });
+    }
     const fmt = at => { const d = new Date(at); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
     const rows = hp.vers.map((v, k) => {
       const newer = hp.vers[k + 1];
       const body = newer ? diffMark(v.text, newer.text) : esc(v.text);
-      return `<li class="${k === hp.sel ? "on" : ""}" data-k="${k}"><div class="hp-when">${k === hp.vers.length - 1 ? "いまの文" : `${fmt(v.at)}　${esc(v.reason || "")}`}</div><div class="hp-text">${body || "<span class=\"hp-empty\">（空）</span>"}</div></li>`;
+      return `<li class="${k === hp.sel ? "on" : ""}" data-k="${k}"><div class="hp-when"><span>${k === hp.vers.length - 1 ? "いまの文" : `${fmt(v.at)}　${esc(v.reason || "")}`}</span><button type="button" class="hp-copy" data-copy="${k}" title="この版の文をクリップボードへ">コピー</button></div><div class="hp-text">${body || "<span class=\"hp-empty\">（空）</span>"}</div></li>`;
     }).join("");
-    hp.box.innerHTML = `<div class="hp-head">このbulletの履歴（${hp.vers.length - 1}版）　⇧⌥⌘ を押したまま ↑↓ で選び、離すと差し替え・Esc でやめる</div><ol>${rows}</ol>`;
+    hp.box.innerHTML = `<div class="hp-head">このbulletの履歴（${hp.vers.length - 1}版）　↑↓ で選び Return で差し替え ・ Esc で閉じる ・ ⌘C／「コピー」でその版をクリップボードへ</div><ol>${rows}</ol>`;
     const row = this.rowEl(hp.i), r = (row || this.host).getBoundingClientRect();
     const w = Math.min(560, window.innerWidth - 16);
     hp.box.style.width = w + "px";
@@ -2688,10 +2708,16 @@ class OutlineView {
     hp.box.style.top = (r.top - bh - 6 > 8 ? r.top - bh - 6 : Math.min(r.bottom + 6, window.innerHeight - bh - 8)) + "px";
     const on = hp.box.querySelector("li.on"); if (on) on.scrollIntoView({ block: "nearest" });
   }
+  histCopy(k) {
+    const hp = this.hp; if (!hp || !hp.vers[k]) return;
+    const t = hp.vers[k].text;
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("この版の文をコピーしました")).catch(() => toast("コピーできませんでした"));
+    if (typeof addClip === "function") addClip(t);
+  }
   histClose(commit) {
     const hp = this.hp; if (!hp) return;
     this.hp = null;
-    document.removeEventListener("keyup", this.hpUp, true);
+    document.removeEventListener("mousedown", this.hpOut, true);
     if (hp.box) hp.box.remove();
     if (!commit || hp.sel === hp.vers.length - 1) return;
     const text = hp.vers[hp.sel].text;
