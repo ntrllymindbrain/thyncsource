@@ -494,7 +494,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">プレビュー試作 v0.1</div>
+    <div class="ver">v1.0</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -2637,6 +2637,8 @@ class OutlineView {
     if (hp.box) hp.box.remove();
     if (!commit || hp.sel === hp.vers.length - 1) return;
     const text = hp.vers[hp.sel].text;
+    // 差し替える前の今の文も履歴に残す（もう一度 ⇧⌥⌘↑↓ で戻れるように）
+    recordHistory("bulletを履歴の版に差し替える前");
     if (hp.mir) {
       const ms = mirrorSource(hp.mir.label); if (!ms) return;
       setSrcLine(ms.li, ms.prefix + text); this.changed();
@@ -2644,7 +2646,8 @@ class OutlineView {
     } else {
       this.structural(() => { this.items[hp.i].text = text; }, { i: hp.i, c: text.length });
     }
-    toast("履歴の文に差し替えました（⌘Z で戻せます）");
+    recordHistory("bulletを履歴の版に差し替えた");
+    toast("履歴の文に差し替えました。差し替える前の文も履歴に残したので、⇧⌥⌘↑↓ や ⌘Z で戻せます");
   }
   // 上下の行へ。ミラーの中身（入れ子の欄）にも出入りする
   step(i, d) {
@@ -3355,11 +3358,11 @@ $("hist-list").addEventListener("click", e => {
   const b = e.target.closest('[data-act="restore"]'); if (!b) return;
   const entry = hist[+b.closest("[data-i]").dataset.i]; if (!entry) return;
   editors = [];
-  recordHistory("戻す前の状態");
+  recordHistory("戻す前の版（ここへ戻せば取り消し）");
   src.value = entry.text;
   recordHistory(`${stamp(entry.at)} の版に戻した`);
   keepScroll(render);
-  toast(`${stamp(entry.at)} の版に戻しました`);
+  toast(`${stamp(entry.at)} の版に戻しました。戻す前の版も履歴のいちばん上近くに残っています`);
 });
 $("hist-now").addEventListener("click", () => toast(recordHistory("記録ボタン") ? "履歴に記録しました" : "前の記録から変わっていません"));
 window.addEventListener("keydown", e => {
