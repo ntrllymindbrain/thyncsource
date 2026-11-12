@@ -513,7 +513,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.8</div>
+    <div class="ver">v1.9</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -2016,6 +2016,17 @@ function duplicateBlock(ta) {
   setLines(ta, nl, j + 1 + (cur.line - i), cur.col);
 }
 function toggleComplete(ta) {
+  // 何行にもまたがって選んでいるとき：選んだbulletをまとめて（全部完了なら戻す）
+  if (ta.selectionStart !== ta.selectionEnd && ta.value.slice(ta.selectionStart, ta.selectionEnd).includes("\n")) {
+    const v = ta.value, s = ta.selectionStart, e = ta.selectionEnd;
+    const ls = v.lastIndexOf("\n", s - 1) + 1; let le = v.indexOf("\n", Math.max(s, e - 1)); if (le < 0) le = v.length;
+    const lines = v.slice(ls, le).split("\n"), re = /^(\s*[-•]\s+)(\[(?:x|COMPLETE|COMPLETED)\]\s*)?/i;
+    const bl = lines.filter(l => re.test(l));
+    const allDone = bl.length && bl.every(l => l.match(re)[2]);
+    const out = lines.map(l => { const m = l.match(re); if (!m) return l; return allDone ? m[1] + l.slice(m[0].length) : (m[2] ? l : m[1] + "[x] " + l.slice(m[0].length)); }).join("\n");
+    replaceRange(ta, ls, le, out); ta.setSelectionRange(ls, ls + out.length);
+    return;
+  }
   const L = linesOf(ta); const cur = caretLC(ta);
   const i = ownerLine(L, cur.line);
   const m = L[i].match(/^(\s*[-•]\s+)(\[(?:x|COMPLETE|COMPLETED)\]\s*)?/i);
@@ -2065,9 +2076,58 @@ function addNote(ta) {
   ta.setSelectionRange(le, le);
   insertText(ta, "\n" + ws);
 }
+// bulletの文全体を書式で囲む／外す。前後の #タグ・@タグ・{lbl:…} は外側に残す（タグとして効くように）
+const FMT_EDGE = /^((?:\s*(?:[#@][\p{L}\p{N}_-]+|\{lbl:[^}]*\}|\[(?:x|COMPLETE|COMPLETED)\])(?=\s|$))*\s*)([\s\S]*?)((?:\s+(?:[#@][\p{L}\p{N}_-]+|\{lbl:[^}]*\}))*\s*)$/u;
+// 文全体を外側から包んでいる書式の重なり（<i><b>…</b></i> なら ["i","b"]）
+function fmtLayers(core) {
+  const layers = [];
+  for (;;) {
+    const m = core.match(/^<(b|i|u|s|code)>([\s\S]*)<\/\1>$/);
+    if (!m) break;
+    // 中身の同じタグが釣り合っているか（<b>a</b> x <b>b</b> を誤って外さないため）
+    const t = m[1], inner = m[2];
+    const opens = (inner.match(new RegExp("<" + t + ">", "g")) || []).length, closes = (inner.match(new RegExp("</" + t + ">", "g")) || []).length;
+    if (opens !== closes) break;
+    let depth = 0, ok = true;
+    for (const x of inner.matchAll(new RegExp("<(/?)" + t + ">", "g"))) { depth += x[1] ? -1 : 1; if (depth < 0) { ok = false; break; } }
+    if (!ok) break;
+    layers.push(t); core = inner;
+  }
+  return { layers, inner: core };
+}
+const tagOf = open => open.replace(/[<>]/g, "");
+function fmtIsWrapped(text, open, close) { const m = text.match(FMT_EDGE); const c = m ? m[2] : text; return fmtLayers(c).layers.includes(tagOf(open)); }
+function fmtApply(text, open, close, on) {
+  const m = text.match(FMT_EDGE); if (!m) return text;
+  let [, lead, core, trail] = m;
+  if (!core) return text;
+  const t = tagOf(open), { layers, inner } = fmtLayers(core);
+  const has = layers.includes(t);
+  if (on && !has) layers.unshift(t);
+  if (!on && has) layers.splice(layers.indexOf(t), 1);
+  core = layers.reduceRight((s, x) => `<${x}>${s}</${x}>`, inner);
+  return lead + core + trail;
+}
+// テキスト欄で何行にもまたがって選んでいるとき：各bulletの文をそれぞれ囲む（全部囲まれていれば外す）
+function wrapLines(ta, open, close) {
+  const v = ta.value, s = ta.selectionStart, e = ta.selectionEnd;
+  const ls = v.lastIndexOf("\n", s - 1) + 1; let le = v.indexOf("\n", Math.max(s, e - 1)); if (le < 0) le = v.length;
+  const lines = v.slice(ls, le).split("\n");
+  const re = /^(\s*[-•]\s+)(.*)$/;
+  const bodies = lines.map(l => { const m = l.match(re); return m ? m[2] : null; });
+  const on = !bodies.filter(b => b !== null && b.trim()).every(b => fmtIsWrapped(b, open, close));
+  const out = lines.map((l, k) => { const m = l.match(re); return m && m[2].trim() ? m[1] + fmtApply(m[2], open, close, on) : l; }).join("\n");
+  replaceRange(ta, ls, le, out);
+  ta.setSelectionRange(ls, ls + out.length);
+}
 function wrapSel(ta, open, close) {
   const s = ta.selectionStart, e = ta.selectionEnd;
+  if (!ta._rich && s !== e && ta.value.slice(s, e).includes("\n")) { wrapLines(ta, open, close); return; }
   const sel = ta.value.slice(s, e);
+  if (sel && sel.startsWith(open) && sel.endsWith(close) && sel.length >= open.length + close.length) {
+    replaceRange(ta, s, e, sel.slice(open.length, sel.length - close.length));
+    ta.setSelectionRange(s, e - open.length - close.length); return;
+  }
   replaceRange(ta, s, e, open + sel + close);
   if (sel) ta.setSelectionRange(s + open.length, s + open.length + sel.length);
   else ta.setSelectionRange(s + open.length, s + open.length);
@@ -2898,6 +2958,28 @@ class OutlineView {
     const a = Math.min(this.sel.a, this.sel.z), z = Math.max(this.end(this.sel.a), this.end(this.sel.z));
     const cmd = CMD(e);
     if (e.key === "Escape") { this.sel = null; this.render(); return; }
+    // ⌘Return：選んだbulletをまとめて完了／戻す（全部完了なら戻す）
+    if (cmd && e.key === "Enter" && !e.shiftKey && !e.altKey) {
+      e.preventDefault();
+      const roots = []; for (let k = a; k <= z; k = this.end(k) + 1) roots.push(k);
+      const allDone = roots.every(k => this.items[k].done);
+      const keep = { ...this.sel };
+      this.structural(() => { roots.forEach(k => { this.items[k].done = !allDone; }); });
+      this.sel = keep; this.showSel();
+      return;
+    }
+    // ⌘B／I／U、⌘⇧X（取り消し線）、⌘⇧C（コード）：選んだbullet（子も含む）の文全体に。全部ついていれば外す
+    const fmt = cmd && !e.altKey && (!e.shiftKey ? ({ KeyB: ["<b>", "</b>"], KeyI: ["<i>", "</i>"], KeyU: ["<u>", "</u>"] })[e.code] : ({ KeyX: ["<s>", "</s>"], KeyC: ["<code>", "</code>"] })[e.code]);
+    if (fmt) {
+      e.preventDefault();
+      const [o, c] = fmt, idx = [];
+      for (let k = a; k <= z; k++) if (this.items[k].text.trim() && !/^\{mirror:[^}]+\}$/.test(this.items[k].text.trim())) idx.push(k);
+      const on = !idx.every(k => fmtIsWrapped(this.items[k].text, o, c));
+      const keep = { ...this.sel };
+      this.structural(() => { idx.forEach(k => { this.items[k].text = fmtApply(this.items[k].text, o, c, on); }); });
+      this.sel = keep; this.showSel();
+      return;
+    }
     const up = e.key === "ArrowUp", down = e.key === "ArrowDown";
     // ⇧↑↓：選択を兄弟のbulletへ広げる・縮める
     if ((up || down) && e.shiftKey && !cmd && !e.altKey) {
