@@ -521,7 +521,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.17</div>
+    <div class="ver">v1.18</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -5243,6 +5243,17 @@ function stepScale(which, d) {
   toast(`${which === "paper" ? "表示" : "コード"}を ${Math.round(scales[which] * 100)}% にしました`);
 }
 document.addEventListener("mousedown", e => { if (e.target.closest("[data-scale]")) e.preventDefault(); });
+// トラックパッドのピンチ（Chromeでは ctrl 付きのホイールとして届く）：指の下の欄だけを拡大・縮小する
+window.addEventListener("wheel", e => {
+  if (!e.ctrlKey) return;
+  const inEdit = e.target.closest && e.target.closest(".pane-in"), inView = e.target.closest && e.target.closest(".pane-out, .side-pane, .row-bottom");
+  if (!inEdit && !inView) return;
+  e.preventDefault();
+  const which = inEdit ? "code" : "paper";
+  const f = Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.01));
+  scales[which] = Math.max(0.5, Math.min(2.5, Math.round(scales[which] * f * 1000) / 1000));
+  applyScales();
+}, { passive: false });
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-scale]");
   if (b) stepScale(b.dataset.scale, +b.dataset.d);
