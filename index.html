@@ -489,6 +489,9 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .ctx-menu hr { border: none; border-top: 1px solid #eee; margin: 4px 0; }
 .ctx-menu .ctx-note { font-size: 11.5px; color: #a0522d; padding: 4px 10px; }
 .diag-out { width: 100%; height: 220px; font: 11.5px/1.4 ui-monospace, Menlo, monospace; margin-top: 8px; }
+.hl-dup { color: #c62828 !important; background: #ffd9d6; border-radius: 3px; box-shadow: 0 0 0 1px #e57373 inset; }
+.paper a.xref.dup, .paged a.xref.dup { color: #c62828 !important; background: #ffd9d6 !important; border-radius: 2px; box-shadow: 0 0 0 1px #e57373; }
+@media print { .paper a.xref.dup, .paged a.xref.dup { color: inherit !important; background: none !important; box-shadow: none; } }
 .docsep { margin: 3em 0; border-top: 3px double var(--rule); }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent-soft); } }
@@ -513,7 +516,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.10</div>
+    <div class="ver">v1.11</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -869,7 +872,7 @@ function compileOne(tree, opts) {
     t = t.replace(/(^|\s)@([\p{L}\p{N}_-]+)/gu, (m, pre) => opts.showTags ? m : pre);
     t = t.replace(/\{lbl:([^}]*)\}/g, (m, l) => { if (l.trim()) labels.push(l.trim()); return ""; });
     t = t.replace(/[ \t　]{2,}/g, " ").trim();
-    const r = { tags, labels, text: t, hyp };
+    const r = { tags, labels, text: t, hyp, line: node.line };
     cache.set(node, r);
     return r;
   }
@@ -888,7 +891,7 @@ function compileOne(tree, opts) {
     const key = "h" + hypShow.size;
     const id = uid();
     hypShow.set(key, { shown, id });
-    inf.labels.forEach(l => defLabel(l, { kind: "hyp", shown, bare, id, ex }));
+    inf.labels.forEach(l => defLabel(l, { kind: "hyp", shown, bare, id, ex }, inf.line));
     return `{hyp:${key}} ` + text;
   }
 
@@ -920,9 +923,24 @@ function compileOne(tree, opts) {
   // ラベル
   const labels = new Map();
   const exPaths = new Map();
-  function defLabel(l, rec) {
-    if (labels.has(l)) warn(`ラベル「${l}」が2か所以上で使われています。`);
-    else labels.set(l, rec);
+  // 同じラベルが何か所にもあるとき：完了したbullet（とその中）のものは数えない。参照は上でいちばん近いものを使い、赤く出す
+  const labelDefs = new Map(), scan = labelScan();
+  function defLabel(l, rec, line) {
+    const done = line !== undefined && scan.doneLines.has(line);
+    if (!done) {
+      if (!labelDefs.has(l)) labelDefs.set(l, []);
+      labelDefs.get(l).push({ rec, line: line ?? -1 });
+      if (labelDefs.get(l).length === 2) warn(`ラベル「${l}」が2か所以上で使われています（編集欄で赤く出ています）。`);
+    }
+    if (!labels.has(l) || (!done && labels.get(l).__done)) labels.set(l, done ? { ...rec, __done: true } : rec);
+  }
+  let renderLine = -1;
+  function pickDup(key, r) {
+    const defs = labelDefs.get(key);
+    if (!r || !defs || defs.length < 2) return r;
+    let best = null;
+    for (const d of defs) if (d.line <= renderLine && (!best || d.line > best.line)) best = d;
+    return { ...(best || defs[0]).rec, dup: true };
   }
 
   const blocks = [];
@@ -989,7 +1007,7 @@ function compileOne(tree, opts) {
     const lines = [];
     nodes.forEach(k => {
       const ki = info(k);
-      if (!ki.hyp) ki.labels.forEach(l => defLabel(l, { kind: "ex", num: ref.num, sub: ref.sub, id: ref.id }));
+      if (!ki.hyp) ki.labels.forEach(l => defLabel(l, { kind: "ex", num: ref.num, sub: ref.sub, id: ref.id }, ki.line));
       let t = ki.text;
       if (first && !lines.length) t = stripManual(t);
       t = hypify(k, ki, t, ref);
@@ -1004,7 +1022,7 @@ function compileOne(tree, opts) {
   }
   function buildItem(k, num, path, id) {
     const ki = info(k);
-    if (!ki.hyp) ki.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: path, id }));
+    if (!ki.hyp) ki.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: path, id }, ki.line));
     exPaths.get(id).add(path.join(""));
     const kids = k.children.filter(visible);
     const fnKids = kids.filter(x => info(x).tags.has("fn"));
@@ -1039,7 +1057,7 @@ function compileOne(tree, opts) {
     const num = settings["ex-scope"] === "section" && chapter ? `${chapter}.${exCount}` : String(exCount);
     const id = uid();
     exPaths.set(id, new Set());
-    if (!inf.hyp) inf.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: [], id }));
+    if (!inf.hyp) inf.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: [], id }, inf.line));
     const kids = c.children.filter(visible);
     const fnKids = kids.filter(x => info(x).tags.has("fn"));
     const content = kids.filter(x => !info(x).tags.has("fn"));
@@ -1057,7 +1075,7 @@ function compileOne(tree, opts) {
     else if (content.length === 1 && info(content[0]).tags.has("gl")) {
       const k = content[0], ki = info(k);
       ex.header = hypify(c, inf, smartJoin([inf.text, ki.text].filter(Boolean)), exRef);
-      if (!ki.hyp) ki.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: [], id }));
+      if (!ki.hyp) ki.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: [], id }, ki.line));
       ex.single = { gloss: glossFrom(k.children.filter(visible), `(${num})`), line: k.line };
     }
     else {
@@ -1127,7 +1145,7 @@ function compileOne(tree, opts) {
         if (depth === 0) { chapter = secCounters[0]; if (settings["ex-scope"] === "section") exCount = 0; }
         const num = secCounters.slice(0, depth + 1).join(".");
         const b = { type: "h", level: depth + 1, num, text: inf.text, id: uid(), min: c.line, max: c.lastLine, end: subEnd(c) };
-        inf.labels.forEach(l => defLabel(l, { kind: "sec", display: num, id: b.id }));
+        inf.labels.forEach(l => defLabel(l, { kind: "sec", display: num, id: b.id }, inf.line));
         byId.set(b.id, b);
         blocks.push(b);
         secStack.push({ level: depth + 1, from: c.line, to: subEnd(c), id: b.id });
@@ -1187,12 +1205,12 @@ function compileOne(tree, opts) {
   /* --- 参照の解決 --- */
   function lookup(key) {
     key = key.trim();
-    if (labels.has(key)) return labels.get(key);
+    if (labels.has(key)) return pickDup(key, labels.get(key));
     const parts = key.split(".");
-    const base = labels.get(parts[0]);
+    const base = pickDup(parts[0], labels.get(parts[0]));
     if (base && base.kind === "ex" && parts.length > 1) {
       const sub = [...base.sub, ...parts.slice(1)];
-      if (exPaths.get(base.id) && exPaths.get(base.id).has(sub.join(""))) return { kind: "ex", num: base.num, sub, id: base.id };
+      if (exPaths.get(base.id) && exPaths.get(base.id).has(sub.join(""))) return { kind: "ex", num: base.num, sub, id: base.id, dup: base.dup };
       warn(`「${key}」に当たる下位例文がありません。`);
       return null;
     }
@@ -1200,7 +1218,7 @@ function compileOne(tree, opts) {
     return null;
   }
   const bad = key => `<span class="xref bad" title="未定義：${esc(key)}">(??)</span>`;
-  const link = (r, inner) => `<a class="xref" data-target="${r.sub && r.sub.length ? r.id + "-" + r.sub.join("") : r.id}">${inner}</a>`;
+  const link = (r, inner) => `<a class="xref${r.dup ? " dup" : ""}"${r.dup ? ` title="このラベルは何か所にもあります（上でいちばん近いものの番号を出しています）"` : ""} data-target="${r.sub && r.sub.length ? r.id + "-" + r.sub.join("") : r.id}">${inner}</a>`;
   const label = (r, bare, extra = "") => {
     if (r.kind === "sec") return esc(r.display);
     if (r.kind === "hyp") return esc(bare ? r.bare : r.shown);
@@ -1340,7 +1358,7 @@ function compileOne(tree, opts) {
       mark(k, closed);
     }
   })(tree, null);
-  const cAttr = line => (line === undefined ? "" : ` data-c="${colorSlot(line)}"` + lnAttr(line));
+  const cAttr = line => { if (line !== undefined) renderLine = line; return line === undefined ? "" : ` data-c="${colorSlot(line)}"` + lnAttr(line); };
   const fnHTML = fns => (fns || []).map(n => `<sup class="fnref"><a data-fn="${P}${n}">${n}</a></sup>`).join("");
   const isCJK = s => /[぀-ヿ㐀-鿿]/.test(s);
   function glossHTML(g) {
@@ -4257,7 +4275,9 @@ function hlRest(s) {
   let out = "", last = 0;
   s.replace(HL_RE, (m, lbl, ref, cmd, tag, html, br, off) => {
     out += esc(s.slice(last, off));
-    const cls = lbl ? "hl-lbl" : ref ? "hl-ref" : cmd ? "hl-cmd" : tag ? (tag[0] === "#" && KNOWN_TAG.has(tag.slice(1).toLowerCase()) || /^#H[BP]?([A-Za-z0-9]+-)?$/.test(tag) ? "hl-tag" : "hl-tag2") : html ? "hl-html" : "hl-br";
+    const dups = (lbl || ref) ? labelScan().dups : null;
+    const isDup = lbl ? dups.has(lbl.slice(5, -1).trim()) : ref ? ref.replace(/^\{[a-z]+:|\}$/g, "").split(/[,~]/).some(k => dups.has(k.trim().split(".")[0])) : false;
+    const cls = isDup ? (lbl ? "hl-lbl hl-dup" : "hl-ref hl-dup") : lbl ? "hl-lbl" : ref ? "hl-ref" : cmd ? "hl-cmd" : tag ? (tag[0] === "#" && KNOWN_TAG.has(tag.slice(1).toLowerCase()) || /^#H[BP]?([A-Za-z0-9]+-)?$/.test(tag) ? "hl-tag" : "hl-tag2") : html ? "hl-html" : "hl-br";
     out += `<span class="${cls}">${esc(m)}</span>`;
     last = off + m.length;
     return m;
@@ -4377,6 +4397,25 @@ function wfImagesOf(n) {
     }
   })(n, "", 0);
   return out;
+}
+// 入力全体のラベルを数える。完了したbullet（とその子孫）の中のものは数えない
+let labelScanCache = { v: null, r: null };
+function labelScan() {
+  const v = src.value;
+  if (labelScanCache.v === v) return labelScanCache.r;
+  const L = v.split("\n"), count = new Map(), doneLines = new Set();
+  let doneInd = -1;
+  for (let li = 0; li < L.length; li++) {
+    const l = L[li]; if (!l.trim()) continue;
+    const ind = indentOf(l);
+    if (doneInd >= 0 && ind <= doneInd) doneInd = -1;
+    if (doneInd < 0 && /^\s*[-•]\s+\[(?:x|COMPLETE|COMPLETED)\]/i.test(l)) doneInd = ind;
+    if (doneInd >= 0) { doneLines.add(li); continue; }
+    for (const m of l.matchAll(/\{lbl:([^}]*)\}/g)) { const k = m[1].trim(); if (k) count.set(k, (count.get(k) || 0) + 1); }
+  }
+  const dups = new Set([...count].filter(([, n]) => n > 1).map(([k]) => k));
+  labelScanCache = { v, r: { dups, doneLines } };
+  return labelScanCache.r;
 }
 // {lbl:x} を持つ行（ミラーの元）を探す
 function mirrorSource(label) {
