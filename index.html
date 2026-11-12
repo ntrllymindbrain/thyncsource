@@ -480,6 +480,11 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 @media print { .img-handle { display: none; } }
 .dbx-box { border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; margin: 10px 0; }
 .dbx-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.ctx-menu { position: fixed; z-index: 80; min-width: 240px; background: #fff; border: 1px solid #c9c2b3; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.18); padding: 4px; font-size: 13px; }
+.ctx-menu button { display: block; width: 100%; text-align: left; border: none; background: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; color: var(--ink); }
+.ctx-menu button:hover, .ctx-menu button:focus-visible { background: #e8f0fb; }
+.ctx-menu hr { border: none; border-top: 1px solid #eee; margin: 4px 0; }
+.ctx-menu .ctx-note { font-size: 11.5px; color: #a0522d; padding: 4px 10px; }
 .diag-out { width: 100%; height: 220px; font: 11.5px/1.4 ui-monospace, Menlo, monospace; margin-top: 8px; }
 .docsep { margin: 3em 0; border-top: 3px double var(--rule); }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
@@ -505,7 +510,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.6</div>
+    <div class="ver">v1.7</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -5792,6 +5797,62 @@ for (const host of [$("lp-ov"), src, zsrc]) {
     } catch (err) { toast(err.message); }
   }, true);
 }
+/* ---------- 右クリックのメニュー（箇条書きの欄） ---------- */
+// 入力全体の li 行目のbulletが、Workflowyのどのbulletか（未保存の新しいbulletなら、いちばん近い保存済みの親）
+function wfIdsForSource() {
+  if (!wf || !wf.base) return null;
+  const items = sourceToItems(src.value); if (!items.length) return null;
+  const ids = matchItems(wf.base, items); ids[0] = wf.rootId;
+  const L = src.value.replace(/\r\n?/g, "\n").split("\n"), lineToItem = [];
+  let k = 0; for (let li = 0; li < L.length; li++) { lineToItem[li] = L[li].trim() ? k++ : -1; }
+  return { items, ids, lineToItem };
+}
+function wfIdAt(line, up = 0) {
+  const m = wfIdsForSource(); if (!m) return { id: null };
+  let k = m.lineToItem[line]; if (k == null || k < 0) return { id: null };
+  let exact = true;
+  // up 段だけ親へ
+  const parentOf = j => { const ind = m.items[j].ind; for (let q = j - 1; q >= 0; q--) if (m.items[q].ind < ind) return q; return -1; };
+  for (let s = 0; s < up && k > 0; s++) { const p = parentOf(k); if (p < 0) break; k = p; }
+  while (k >= 0 && !m.ids[k]) { exact = false; k = parentOf(k); }
+  return { id: k >= 0 ? m.ids[k] : null, exact };
+}
+function openInWorkflowy(id, note) {
+  if (!id) { toast("Workflowyでの場所が分かりません（Workflowyから読み込んだ文書でないか、まだ保存していません）"); return; }
+  const short = id.replace(/-/g, "").slice(-12);
+  const w = window.open("https://workflowy.com/#/" + short, "thync-workflowy");
+  if (!w) toast("ポップアップが止められました。このサイトのポップアップを許可してください");
+  else if (note) toast(note);
+}
+let ctxMenu = null;
+function closeCtx() { if (ctxMenu) { ctxMenu.remove(); ctxMenu = null; } }
+document.addEventListener("contextmenu", e => {
+  const row = e.target.closest && e.target.closest(".ov-row");
+  if (!row || row.dataset.line === undefined || !e.target.closest(".app")) return;
+  if (e.shiftKey) return;   // ⇧+右クリックはブラウザのメニュー
+  e.preventDefault(); closeCtx();
+  const line = +row.dataset.line;
+  const dirty = wf && wfDirty();
+  const items = [
+    ["このbulletをWorkflowyで開く", () => { const r = wfIdAt(line); openInWorkflowy(r.id, r.exact ? "" : "このbulletはまだ保存していないので、いちばん近い保存済みの親を開きました"); }],
+    ["親を開く（このbulletが並んで見える位置）", () => { const r = wfIdAt(line, 1); openInWorkflowy(r.id, "Workflowyでは、親にズームした中にこのbulletが見えます"); }],
+    ["いまのズームと同じ位置で開く", () => { const r = zoom ? wfIdAt(zoom.line) : { id: wf && wf.rootId, exact: true }; openInWorkflowy(r.id); }],
+    null,
+    ["表示でこの場所へ", () => revealInView(line)],
+    ["このbulletにズーム", () => zoomTo(line)]
+  ];
+  const m = document.createElement("div"); m.className = "ctx-menu"; m.setAttribute("role", "menu");
+  m.innerHTML = items.map((it, k) => it ? `<button type="button" role="menuitem" data-k="${k}">${esc(it[0])}</button>` : `<hr>`).join("") +
+    (dirty ? `<div class="ctx-note">未保存の変更があります。Workflowy側はまだ古い内容です</div>` : "") + (!wf ? `<div class="ctx-note">Workflowyにつないでいません</div>` : "");
+  document.body.appendChild(m); ctxMenu = m;
+  const r = m.getBoundingClientRect();
+  m.style.left = Math.min(e.clientX, innerWidth - r.width - 6) + "px";
+  m.style.top = Math.min(e.clientY, innerHeight - r.height - 6) + "px";
+  m.addEventListener("click", ev => { const b = ev.target.closest("[data-k]"); if (!b) return; closeCtx(); items[+b.dataset.k][1](); });
+}, true);
+document.addEventListener("mousedown", e => { if (ctxMenu && !ctxMenu.contains(e.target)) closeCtx(); }, true);
+document.addEventListener("keydown", e => { if (ctxMenu && e.key === "Escape") closeCtx(); }, true);
+window.addEventListener("blur", closeCtx);
 src.value = store.get("thync.src") || SAMPLE;
 // 以前の版で原稿に入っていたWorkflowyのノートの行を外す（Workflowy側のノートはそのまま残る）
 if (wf && wf.base && wf.base.some(b => b.note)) {
