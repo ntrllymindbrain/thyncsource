@@ -521,7 +521,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.13</div>
+    <div class="ver">v1.14</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1115,7 +1115,7 @@ function compileOne(tree, opts) {
       if (inf.tags.has("table")) {
         flush();
         const rows = c.children.filter(visible).map(r => ({ line: r.line, cells: r.children.filter(visible).map(k => ({ line: k.line, text: collectText(k) })) }));
-        blocks.push({ type: "table", caption: inf.text, rows, grid: inf.tags.has("grid"), min: c.line, max: c.lastLine });
+        blocks.push({ type: "table", caption: inf.text, rows, grid: inf.tags.has("grid"), evenly: inf.tags.has("evenly"), min: c.line, max: c.lastLine });
         continue;
       }
       // 見出しの大きさだけを指定する（番号なし）
@@ -1448,7 +1448,7 @@ function compileOne(tree, opts) {
       const cell = (tag, c) => `<${tag}${c ? cAttr(c.line) : ""}>${c ? R(c.text) : ""}</${tag}>`;
       const tr = (r, tag) => `<tr>${Array.from({ length: nc }, (_, k) => cell(tag, r.cells[k])).join("")}</tr>`;
       const [head, ...body] = b.rows;
-      html += `<div class="wft-wrap"${at}><table class="wft${b.grid ? " grid" : ""}">` + (b.caption ? `<caption${cAttr(b.min)}>${R(b.caption)}</caption>` : "") +
+      html += `<div class="wft-wrap"${at}><table class="wft${b.grid ? " grid" : ""}${b.evenly ? " evenly" : ""}">` + (b.caption ? `<caption${cAttr(b.min)}>${R(b.caption)}</caption>` : "") +
         (head ? `<thead>${tr(head, "th")}</thead>` : "") + `<tbody>${body.map(r => tr(r, "td")).join("")}</tbody></table></div>`;
     } else if (b.type === "ph") {
       const s = !starUsed && star && b.cls === "title" ? (starUsed = true, star) : "";
@@ -1558,6 +1558,7 @@ function renderInner() {
   paper.innerHTML = res.html;
   lastFullHTML = res.html; lastHeads = res.heads || [];
   applyZoomView();
+  equalizeTables(paper);
   lastPaperHTML = paper.innerHTML;
   lastDocSettings = res.settings || {};
   mountEditors();
@@ -4278,7 +4279,7 @@ renderMemos();
 renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
-const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid"]);
+const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid", "evenly"]);
 const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 function hlRest(s) {
   let out = "", last = 0;
@@ -4406,6 +4407,24 @@ function wfImagesOf(n) {
     }
   })(n, "", 0);
   return out;
+}
+// #evenly の表：列の幅を、いちばん広い列にそろえる（em で持つので、ページ表示・文字の大きさが変わっても合う）
+function equalizeTables(root) {
+  root.querySelectorAll("table.wft.evenly").forEach(t => {
+    if (!t.offsetWidth) return;
+    t.querySelectorAll("colgroup.eq").forEach(c => c.remove());
+    t.style.tableLayout = ""; t.style.width = "";
+    const rows = [...t.rows]; if (!rows.length) return;
+    const nc = Math.max(...rows.map(r => r.cells.length)); if (nc < 2) return;
+    const w = new Array(nc).fill(0);
+    rows.forEach(r => [...r.cells].forEach((c, k) => { w[k] = Math.max(w[k], c.getBoundingClientRect().width); }));
+    const fs = parseFloat(getComputedStyle(t).fontSize) || 16, m = Math.max(...w) / fs;
+    const cg = document.createElement("colgroup"); cg.className = "eq";
+    for (let k = 0; k < nc; k++) { const col = document.createElement("col"); col.style.width = (100 / nc).toFixed(4) + "%"; cg.appendChild(col); }
+    t.insertBefore(cg, t.tBodies[0] || t.tHead || null);
+    t.style.tableLayout = "fixed";
+    t.style.width = `min(100%, ${(m * nc + 0.1).toFixed(3)}em)`;
+  });
 }
 // 入力全体のラベルを数える。完了したbullet（とその子孫）の中のものは数えない
 let labelScanCache = { v: null, r: null };
