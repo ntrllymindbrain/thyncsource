@@ -521,7 +521,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.16</div>
+    <div class="ver">v1.17</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -5493,6 +5493,7 @@ async function renderPagesNow(token, force) {
     pagesKey = key;
     numberPages();
     $("page-count").textContent = `全 ${flow.total || (flow.pages && flow.pages.length) || host.querySelectorAll(".pagedjs_page").length} ページ`;
+    if (typeof posAfterPages === "function") posAfterPages();
   } catch (e) {
     $("page-count").textContent = "";
     host.innerHTML = `<div class="empty">ページに割り付けられませんでした（${esc(e.message || String(e))}）。</div>`;
@@ -6146,6 +6147,62 @@ applySplit();
 applyColor();
 recordHistory("開いたときの状態");
 applyWinRole();
+/* ---------- 読み込み直しても、同じ場所から ----------
+   左（箇条書き／テキスト）と右（表示／ページ）のスクロール位置、編集中の行とカーソルを覚えておき、開いたときに戻す。
+   位置は「いちばん上に見えている行」で覚えるので、原稿が少し変わっていてもずれにくい。ウィンドウの役割ごとに別々に覚える。 */
+const POS_KEY = "thync.pos." + (winRole ? winRole + (WIN.get("mode") || "") : "main");
+function scrollBoxOf(el) { return el && (el.scrollHeight > el.clientHeight + 1 ? el : scrollBox(el)); }
+function topVisible(container, sel, attr) {
+  const box = scrollBoxOf(container); if (!box) return null;
+  const top = box.getBoundingClientRect().top;
+  for (const el of container.querySelectorAll(sel)) { const r = el.getBoundingClientRect(); if (r.bottom > top + 2) return { line: +el.getAttribute(attr), off: r.top - top }; }
+  return null;
+}
+function savePos() {
+  const p = {};
+  try {
+    if (lpMode === "outline") { p.lp = topVisible($("lp-ov"), ":scope > .ov-row", "data-line"); if (lpOv.active >= 0) { p.act = lpOv.lineOf(lpOv.active); p.caret = lpOv.ta ? lpOv.ta.selectionStart : null; } }
+    else if (lpMode === "text") { const ta = zoom ? zsrc : src; p.lpText = ta.scrollTop; }
+    if (viewMode === "page") { const b = scrollBoxOf($("pages")) || $("pane-out"); p.pagesTop = b ? b.scrollTop : 0; }
+    else p.out = topVisible(paper, "[data-ln]", "data-ln");
+    p.view = viewMode; p.lpMode = lpMode;
+    store.set(POS_KEY, JSON.stringify(p));
+  } catch (_) {}
+}
+let posSaveT = null;
+const posSaveSoon = () => { clearTimeout(posSaveT); posSaveT = setTimeout(savePos, 300); };
+let posPending = null;
+function restorePos() {
+  let p = null; try { p = JSON.parse(store.get(POS_KEY) || "null"); } catch (_) {}
+  if (!p) return;
+  const toLine = (container, sel, attr, a) => {
+    if (!a) return;
+    const els = [...container.querySelectorAll(sel)];
+    let el = els.find(x => +x.getAttribute(attr) >= a.line) || els[els.length - 1]; if (!el) return;
+    const box = scrollBoxOf(container); if (!box) return;
+    box.scrollTop += el.getBoundingClientRect().top - box.getBoundingClientRect().top - (a.off || 0);
+  };
+  if (p.lpMode === lpMode) {
+    if (lpMode === "outline") {
+      toLine($("lp-ov"), ":scope > .ov-row", "data-line", p.lp);
+      if (p.act != null) { const hit = lpOv.itemAtLine(p.act); if (hit) { const sc = scrollBoxOf($("lp-ov")), keep = sc ? sc.scrollTop : 0; lpOv.edit(hit.i, p.caret); if (sc) sc.scrollTop = keep; } }
+    } else if (lpMode === "text" && p.lpText) (zoom ? zsrc : src).scrollTop = p.lpText;
+  }
+  if (viewMode === "page") posPending = p.pagesTop || 0;
+  else toLine(paper, "[data-ln]", "data-ln", p.out);
+}
+function posAfterPages() {
+  if (posPending === null) return;
+  const b = scrollBoxOf($("pages")) || $("pane-out"); if (b) b.scrollTop = posPending;
+  posPending = null;
+}
+for (const el of [$("lp-ov"), $("pane-out"), src, zsrc, $("pages")]) el && el.addEventListener("scroll", posSaveSoon, { passive: true, capture: true });
+document.addEventListener("scroll", posSaveSoon, { passive: true, capture: true });
+document.addEventListener("selectionchange", posSaveSoon);
+window.addEventListener("pagehide", savePos);
+window.addEventListener("beforeunload", savePos);
+requestAnimationFrame(() => setTimeout(() => { restorePos(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!posRestoredTwice) { posRestoredTwice = true; restorePos(); } }); }, 50));
+let posRestoredTwice = false;
 </script>
 </body>
 </html>
