@@ -494,7 +494,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.1</div>
+    <div class="ver">v1.2</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -655,8 +655,9 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
       <ul class="cards" id="memo-list"></ul>
     </div>
     <div class="dr-body" id="dr-hist" hidden>
-      <p class="hint">編集欄を閉じたときと ⌘+S を押したときに記録します。この試作では文書全体の版として残し、変わった行を一覧します（Workflowyにつないだあとはbulletごとの履歴になります）。</p>
-      <div><button type="button" id="hist-now">いまの状態を記録</button></div>
+      <p class="hint">編集欄を閉じたとき、⌘+S を押したとき、直してから10秒止まったときに、文書全体の版として記録し、変わった行を一覧します。</p>
+      <div><button type="button" id="hist-now">いまの状態を記録</button> <button type="button" id="hist-more">Workflowyの古い履歴も読む</button></div>
+      <p class="hint">手元には新しい40件を置き、記録はWorkflowyの「thyncSource 履歴」にも送っています（差分を圧縮して入れるので、Workflowyの検索には出ません）。</p>
       <ul class="cards" id="hist-list"></ul>
     </div>
   </aside>
@@ -1451,8 +1452,21 @@ const $ = id => document.getElementById(id);
 const src = $("src"), paper = $("paper"), warnsEl = $("warns"), chip = $("warn-chip"), stats = $("stats"), main = $("main"), pane = $("pane-out");
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  set(k, v) {
+    try { localStorage.setItem(k, v); return true; }
+    catch (e) {
+      // 容量があふれたら：手元の履歴を減らして、原稿をもう一度保存する。それでもだめなら知らせる
+      if (k !== "thync.hist" && typeof hist !== "undefined" && hist.length > 5) {
+        hist = hist.slice(0, 5);
+        try { localStorage.setItem("thync.hist", JSON.stringify(hist)); localStorage.setItem(k, v); quotaWarn("ブラウザの保存場所がいっぱいになったので、手元の履歴を新しい5件に減らしました（Workflowyに送った履歴は残っています）"); return true; } catch (_) {}
+      }
+      quotaWarn(k === "thync.src" ? "ブラウザの保存場所がいっぱいで、書きかけの原稿を保存できませんでした。Workflowyへ保存（⌘S）してください" : "ブラウザの保存場所がいっぱいで、一部の設定・記録を保存できませんでした");
+      return false;
+    }
+  }
 };
+let quotaWarnAt = 0;
+function quotaWarn(msg) { if (Date.now() - quotaWarnAt < 20000) return; quotaWarnAt = Date.now(); setTimeout(() => (typeof toast === "function" ? toast(msg) : alert(msg)), 0); }
 
 /* 編集欄の状態 */
 let editors = [];      // { min, max, base, box, ta }
@@ -3335,13 +3349,128 @@ $("memo-list").addEventListener("click", async e => {
 /* ---------- 変更履歴：編集欄を閉じたときと ⌘+S で記録 ---------- */
 let hist = [];
 try { hist = JSON.parse(store.get("thync.hist") || "[]"); } catch (e) { hist = []; }
-const saveHist = () => store.set("thync.hist", JSON.stringify(hist.slice(0, 100)));
+// 手元（ブラウザ）には新しい40件だけ。それより前はWorkflowyの「thyncSource 履歴」に送ってある
+const HIST_LOCAL = 40;
+const saveHist = () => store.set("thync.hist", JSON.stringify(hist.filter(x => !x.remote).slice(0, HIST_LOCAL)));
 function recordHistory(reason) {
   if (hist[0] && hist[0].text === src.value) return false;
-  hist.unshift({ at: new Date().toISOString(), reason, text: src.value });
-  hist = hist.slice(0, 100);
+  const entry = { at: new Date().toISOString(), reason, text: src.value };
+  hist.unshift(entry);
+  hist = hist.slice(0, Math.max(HIST_LOCAL, hist.length > 400 ? 400 : hist.length));
   saveHist(); renderHist();
+  histEnqueue(entry);
   return true;
+}
+/* ---------- 履歴をWorkflowyに送る ----------
+   Workflowyのいちばん上に「thyncSource 履歴」、その下に文書ごとのbullet、その下に1記録1bullet。
+   名前は日時と理由。ノートに、前の記録からの差分（25件ごとに全文）を圧縮して入れる（Workflowyの検索に出ないように）。 */
+const HQ_KEY = "thync.histq", HL_KEY = "thync.histlast";
+async function zpack(obj) {
+  const data = new TextEncoder().encode(JSON.stringify(obj));
+  const cs = new Blob([data]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  const buf = new Uint8Array(await new Response(cs).arrayBuffer());
+  let s = ""; for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+  return "tsh1:" + btoa(s);
+}
+async function zunpack(str) {
+  const b = atob(str.replace(/^tsh1:/, "").trim());
+  const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+  const ds = new Blob([u]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  return JSON.parse(await new Response(ds).text());
+}
+// 1か所の差分：前後で同じ行を除いた真ん中だけ
+function lineHunk(a, b) {
+  const A = a.split("\n"), B = b.split("\n");
+  let p = 0; while (p < A.length && p < B.length && A[p] === B[p]) p++;
+  let s = 0; while (s < A.length - p && s < B.length - p && A[A.length - 1 - s] === B[B.length - 1 - s]) s++;
+  return { p, s, ins: B.slice(p, B.length - s), n: A.length };
+}
+function applyHunk(a, d) { const A = a.split("\n"); return [...A.slice(0, d.p), ...d.ins, ...A.slice(A.length - d.s)].join("\n"); }
+function histEnqueue(entry) {
+  if (typeof wf === "undefined" || !wf || !wf.rootId) return;
+  let last = null; try { last = JSON.parse(store.get(HL_KEY) || "null"); } catch (_) {}
+  if (last && last.root !== wf.rootId) last = null;
+  const seq = last ? last.seq + 1 : 0;
+  const rec = { v: 1, at: entry.at, reason: entry.reason, root: wf.rootId, seq };
+  const d = last ? lineHunk(last.text, entry.text) : null;
+  if (!last || seq % 25 === 0 || !d || d.ins.length > 400) rec.full = entry.text; else rec.d = d;
+  let q = []; try { q = JSON.parse(store.get(HQ_KEY) || "[]"); } catch (_) {}
+  q.push(rec);
+  store.set(HQ_KEY, JSON.stringify(q.slice(-2000)));
+  store.set(HL_KEY, JSON.stringify({ root: wf.rootId, seq, text: entry.text }));
+  histFlushSoon();
+}
+let histFlushing = false, histFlushT = null;
+function histFlushSoon() { clearTimeout(histFlushT); histFlushT = setTimeout(histFlush, 1500); }
+async function ensureHistTop() {
+  let id = store.get("thync.wfhist");
+  if (id) { try { await wfFetch("/nodes/" + id); return id; } catch (e) { id = null; } }
+  const top = await wfFetch("/nodes?parent_id=None");
+  const found = (top.nodes || []).find(n => decodeText(n.name).trim() === "thyncSource 履歴");
+  id = found ? found.id : (await wfFetch("/nodes", { method: "POST", body: { parent_id: "None", name: "thyncSource 履歴", position: "bottom" } })).item_id;
+  store.set("thync.wfhist", id);
+  return id;
+}
+async function ensureHistDoc(root) {
+  let map = {}; try { map = JSON.parse(store.get("thync.wfhistdoc") || "{}"); } catch (_) {}
+  if (map[root]) { try { await wfFetch("/nodes/" + map[root]); return map[root]; } catch (_) {} }
+  const top = await ensureHistTop();
+  const tag = `[${root.slice(0, 8)}]`;
+  const kids = await wfFetch("/nodes?parent_id=" + encodeURIComponent(top));
+  const found = (kids.nodes || []).find(n => decodeText(n.name).includes(tag));
+  const title = (currentTitle || "文書").replace(/[<>&]/g, "");
+  const id = found ? found.id : (await wfFetch("/nodes", { method: "POST", body: { parent_id: top, name: `${title} ${tag}`, position: "bottom" } })).item_id;
+  map[root] = id; store.set("thync.wfhistdoc", JSON.stringify(map));
+  return id;
+}
+async function histFlush() {
+  if (histFlushing || typeof wf === "undefined" || !wf || !navigator.onLine) return;
+  let q = []; try { q = JSON.parse(store.get(HQ_KEY) || "[]"); } catch (_) {}
+  if (!q.length) return;
+  histFlushing = true;
+  try {
+    while (q.length) {
+      const rec = q[0];
+      const parent = await ensureHistDoc(rec.root);
+      const note = await zpack(rec);
+      const made = await wfFetch("/nodes", { method: "POST", body: { parent_id: parent, name: `${stamp(rec.at)} ${rec.reason}`, position: "bottom" } });
+      // ノートは作ったあとで入れる（作成時の書式の読み替えを避けるため）
+      await wfFetch("/nodes/" + made.item_id, { method: "POST", body: { note } });
+      q.shift();
+      let cur = []; try { cur = JSON.parse(store.get(HQ_KEY) || "[]"); } catch (_) {}
+      cur.shift(); store.set(HQ_KEY, JSON.stringify(cur)); q = cur;
+    }
+  } catch (e) {
+    // 送れなかった分は手元に残し、あとでまた送る
+  } finally { histFlushing = false; }
+}
+setInterval(histFlush, 60000);
+window.addEventListener("online", histFlushSoon);
+// Workflowyから、この文書の古い履歴を読み込む
+async function histLoadRemote() {
+  if (!wf) { toast("Workflowyにつないでいないので、古い履歴は読めません"); return; }
+  const btn = $("hist-more"); btn.disabled = true; btn.textContent = "読み込み中…";
+  try {
+    const parent = await ensureHistDoc(wf.rootId);
+    const res = await wfFetch("/nodes?parent_id=" + encodeURIComponent(parent));
+    const nodes = (res.nodes || []).slice().sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+    const recs = [];
+    for (const n of nodes) { if (!n.note || !/^tsh1:/.test(n.note.trim())) continue; try { recs.push(await zunpack(decodeText(n.note))); } catch (_) {} }
+    recs.sort((a, b) => a.seq - b.seq || (a.at < b.at ? -1 : 1));
+    const out = []; let text = null;
+    for (const r of recs) {
+      if (r.full !== undefined) text = r.full;
+      else if (text !== null && r.d) text = applyHunk(text, r.d);
+      else continue;
+      out.push({ at: r.at, reason: r.reason, text, remote: true });
+    }
+    const have = new Set(hist.map(x => x.at + "|" + x.text.length));
+    const add = out.reverse().filter(x => !have.has(x.at + "|" + x.text.length));
+    hist = hist.concat(add).sort((a, b) => (a.at < b.at ? 1 : -1));
+    renderHist();
+    toast(add.length ? `Workflowyから古い履歴を ${add.length} 件読み込みました` : "手元にない古い履歴はありませんでした");
+  } catch (e) { toast("履歴を読み込めませんでした：" + (e.message || e)); }
+  finally { btn.disabled = false; btn.textContent = "Workflowyの古い履歴も読む"; }
 }
 function changedLines(newer, older) {
   const norm = s => s.split("\n").map(l => l.trim()).filter(Boolean);
@@ -3379,6 +3508,7 @@ $("hist-list").addEventListener("click", e => {
   keepScroll(render);
   toast(`${stamp(entry.at)} の版に戻しました。戻す前の版も履歴のいちばん上近くに残っています`);
 });
+$("hist-more").addEventListener("click", histLoadRemote);
 $("hist-now").addEventListener("click", () => toast(recordHistory("記録ボタン") ? "履歴に記録しました" : "前の記録から変わっていません"));
 window.addEventListener("keydown", e => {
   if (CMD(e) && !e.altKey && !e.shiftKey && e.code === "KeyO") {
