@@ -520,7 +520,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
   </header>
   <div class="pop win-pop" id="win-pop" hidden>
     <div class="wp-title">ウィンドウを分ける</div>
-    <button type="button" data-arr="3">3画面に並べる</button><span class="wp-note">中央：編集（メイン）／左：表示 Web（メイン）／右：表示 ページ（連動なし）</span>
+    <button type="button" data-arr="3">3画面に並べる</button><span class="wp-note">中央：編集（メイン）／右：表示 Web（メイン・連動）／左：表示 ページ（連動なし）</span>
     <button type="button" data-arr="2">2画面に並べる</button><span class="wp-note">この画面：編集（メイン）／もう1台：表示 Web（メイン）</span>
     <div class="wp-sub">別ウィンドウを1つ開く</div>
     <button type="button" data-open="edit,,1">編集（メイン）</button><span class="wp-note">箇条書きだけの画面</span>
@@ -5312,8 +5312,8 @@ async function arrangeWindows(n) {
   const cur = { left: screen.availLeft || 0, top: screen.availTop || 0, width: screen.availWidth, height: screen.availHeight };
   const tile = k => ({ left: cur.left + cur.width * k / n, top: cur.top, width: cur.width / n, height: cur.height });
   let rects, note = "";
-  const plan = n === 3 ? [["view", "web", true, "thync-viewL"], ["edit", "", true, "thync-edit"], ["view", "page", false, "thync-viewR"]]
-                       : [["edit", "", true, "thync-edit"], ["view", "web", true, "thync-viewL"]];
+  const plan = n === 3 ? [["view", "page", false, "thync-viewL"], ["edit", "", true, "thync-edit"], ["view", "web", true, "thync-viewR"]]
+                       : [["edit", "", true, "thync-edit"], ["view", "web", true, "thync-viewR"]];
   if (screens && screens.length >= n) {
     if (n === 3) { const mid = Math.floor((screens.length - 1) / 2); rects = [screens[mid - 1], screens[mid], screens[mid + 1]].map(rectOf); }
     else {
