@@ -556,7 +556,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.29</div>
+    <div class="ver">v1.30</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1833,6 +1833,16 @@ function richSerialize(el) {
   })(el);
   return s.replace(/\n/g, " ");
 }
+// 位置 pos の文字が、入力欄の最初（up）／最後の表示行にあるか
+function onEdgeLine(el, pos, up) {
+  try {
+    const rect = p => { const q = richPoint(el, p), r = document.createRange(); r.setStart(q.node, q.off); r.collapse(true); const rs = r.getClientRects(); return rs.length ? rs[rs.length - 1] : (q.node.nodeType === 1 && q.node.getBoundingClientRect ? q.node.getBoundingClientRect() : r.getBoundingClientRect()); };
+    const a = rect(pos), b = rect(up ? 0 : richSerialize(el).length);
+    if (!a || !b || (!a.height && !b.height)) return false;
+    const h = Math.max(a.height, b.height, 8);
+    return Math.abs((a.top + a.bottom) / 2 - (b.top + b.bottom) / 2) < h * 0.6;
+  } catch (_) { return false; }
+}
 function richPos(el, node, off) {
   let s = 0, done = false;
   const tl = d => d.replace(/​/g, "").length;
@@ -2965,6 +2975,8 @@ class OutlineView {
     if (bare && e.shiftKey && (k === "ArrowUp" || k === "ArrowDown") && !e.isComposing) {
       const up = k === "ArrowUp", s0 = ta.selectionStart, e0 = ta.selectionEnd, L = ta.value.length;
       if ((up && s0 === 0) || (!up && e0 === L)) { e.preventDefault(); this.startSel(i); return; }
+      // 文字の選択の端が、もう最初（最後）の行にある：ブラウザに行末まで選ばせず、すぐbullet全体の選択へ
+      if (ta._rich && onEdgeLine(ta, up ? s0 : e0, up)) { e.preventDefault(); this.startSel(i); return; }
       setTimeout(() => { if (this.ta === ta && ta.selectionStart === s0 && ta.selectionEnd === e0) this.startSel(i); }, 0);
       return;
     }
