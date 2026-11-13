@@ -508,6 +508,18 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .ctx-menu button:hover, .ctx-menu button:focus-visible { background: #e8f0fb; }
 .ctx-menu hr { border: none; border-top: 1px solid #eee; margin: 4px 0; }
 .ctx-menu .ctx-note { font-size: 11.5px; color: #a0522d; padding: 4px 10px; }
+.at-bar { display: flex; flex-wrap: nowrap; gap: 4px; overflow: hidden; min-height: 22px; align-items: center; }
+.at-bar button { flex: 0 0 auto; font-size: 12px; padding: 1px 8px; border-radius: 11px; border: 1px solid #d8cdea; background: #f6f1fc; color: #6b3fa0; cursor: pointer; white-space: nowrap; }
+.at-bar button:hover { background: #ece2f8; }
+.at-pop { position: fixed; z-index: 75; width: 360px; max-height: 50vh; display: flex; flex-direction: column; background: #fff; border: 1px solid #cfc6dd; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.16); font-size: 12.5px; }
+.at-pop .ap-head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid #eee; font-weight: 600; color: #6b3fa0; }
+.at-pop .ap-head span { flex: 1; }
+.at-pop .ap-head button { border: none; background: none; cursor: pointer; font-size: 14px; color: #777; }
+.at-pop ol { list-style: none; margin: 0; padding: 4px; overflow: auto; }
+.at-pop li { padding: 5px 8px; border-radius: 5px; cursor: pointer; line-height: 1.45; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.at-pop li:hover, .at-pop li.on { background: #eef3fb; }
+.at-pop li .ap-ln { color: #aaa; font-size: 10.5px; margin-right: 6px; }
+.at-pop li mark { background: #efe3fb; color: #6b3fa0; border-radius: 3px; }
 .diag-out { width: 100%; height: 220px; font: 11.5px/1.4 ui-monospace, Menlo, monospace; margin-top: 8px; }
 .hl-dup { color: #c62828 !important; background: #ffd9d6; border-radius: 3px; box-shadow: 0 0 0 1px #e57373 inset; }
 .paper a.xref.dup, .paged a.xref.dup { color: #c62828 !important; background: #ffd9d6 !important; border-radius: 2px; box-shadow: 0 0 0 1px #e57373; }
@@ -536,7 +548,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.23</div>
+    <div class="ver">v1.24</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -582,6 +594,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
         <div class="seg" role="group" aria-label="左の欄の見せ方"><button type="button" data-lp="outline">箇条書き</button><button type="button" data-lp="text">テキスト</button><button type="button" data-lp="view">表示</button></div>
         <div class="scalebar"><span>コードの大きさ</span><button type="button" data-scale="code" data-d="-1" aria-label="コードを小さく">−</button><button type="button" class="scale-val" data-scale="code" data-d="0" id="code-scale-val" title="100%に戻す">100%</button><button type="button" data-scale="code" data-d="1" aria-label="コードを大きく">＋</button></div></div>
       <p class="hint">黒丸をクリックするとズーム、ドラッグで移動、左の▾で開閉します。「テキスト」にすると、全体をそのまま書き換えたり、Workflowyからコピーしたものを貼り付けたりできます。太字・斜体・リンクも、Workflowyが書式付きで渡してくれる場合は保たれます。ここで直接書き直しても構いません（行頭の「- 」とインデントが階層です）。仕様書のショートカット（⌘+Opt+Shift+R など）もここで使えます。</p>
+      <div class="at-bar" id="at-bar" hidden aria-label="よく押す @タグ"></div>
       <div class="zoom-label" id="zoom-label" hidden></div>
       <textarea id="src" spellcheck="false" autocomplete="off"></textarea>
       <textarea id="zsrc" spellcheck="false" autocomplete="off" aria-label="ズーム中の部分"></textarea>
@@ -6231,6 +6244,60 @@ $("vsplit").addEventListener("mousedown", e => {
 $("vsplit").addEventListener("dblclick", () => { localStorage.removeItem("thync.leftw"); applyLeftW(); keepScroll(render); });
 window.addEventListener("resize", applyLeftW);
 applyLeftW();
+/* ---------- @タグ：押すと、そのタグを含む行の一覧を小さく出し、選んだ行へ跳ぶ ----------
+   押した @タグは新しい順に20個まで覚え、編集欄の上に並べる（ワンクリックで同じ一覧を出す） */
+let atHist = []; try { atHist = JSON.parse(store.get("thync.attags") || "[]"); } catch (_) {}
+function renderAtBar() {
+  const bar = $("at-bar");
+  bar.hidden = !atHist.length;
+  bar.innerHTML = atHist.map(t => `<button type="button" data-at="${esc(t)}" title="${esc(t)} を含む行の一覧">${esc(t)}</button>`).join("");
+}
+function rememberAt(tag) { atHist = [tag, ...atHist.filter(x => x !== tag)].slice(0, 20); store.set("thync.attags", JSON.stringify(atHist)); renderAtBar(); }
+function atLines(tag) {
+  const re = new RegExp("(^|\\s)" + tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?=\\s|$)", "u");
+  const out = [];
+  srcLines().forEach((l, li) => { const m = l.match(/^\s*[-•]\s?(?:\[(?:x|COMPLETE|COMPLETED)\]\s*)?(.*)$/i); if (m && re.test(m[1])) out.push({ li, text: m[1] }); });
+  return out;
+}
+function jumpToLine(li) {
+  revealInEditor(li);
+  // 表示側も：同じ画面なら表示欄を、分けたウィンドウならメインの表示ウィンドウを動かす
+  if (winRole === "edit") winSend({ t: "view", line: li }); else revealInView(li);
+}
+let atPop = null;
+function closeAtPop() { if (atPop) { atPop.remove(); atPop = null; } }
+function openAtPop(tag, x, y) {
+  closeAtPop(); rememberAt(tag);
+  const rows = atLines(tag);
+  const plain = s => s.replace(/<[^>]+>/g, "").replace(/\{lbl:[^}]*\}/g, "").replace(/\s{2,}/g, " ").trim();
+  const mk = s => esc(plain(s)).replace(new RegExp(esc(tag).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), m => `<mark>${m}</mark>`);
+  const p = document.createElement("div"); p.className = "at-pop"; p.setAttribute("role", "dialog");
+  p.innerHTML = `<div class="ap-head"><span>${esc(tag)}　${rows.length} 件</span><button type="button" data-close aria-label="閉じる">×</button></div><ol>` +
+    (rows.length ? rows.map(r => `<li data-li="${r.li}"><span class="ap-ln">${r.li + 1}</span>${mk(r.text) || "（空）"}</li>`).join("") : `<li>このタグの行はありません</li>`) + `</ol>`;
+  document.body.appendChild(p); atPop = p;
+  const r = p.getBoundingClientRect();
+  p.style.left = Math.max(6, Math.min(x, innerWidth - r.width - 6)) + "px";
+  p.style.top = Math.max(6, Math.min(y + 8, innerHeight - r.height - 6)) + "px";
+  p.addEventListener("mousedown", e => e.preventDefault());
+  p.addEventListener("click", e => {
+    if (e.target.closest("[data-close]")) { closeAtPop(); return; }
+    const li = e.target.closest("li[data-li]"); if (!li) return;
+    p.querySelectorAll("li.on").forEach(x => x.classList.remove("on")); li.classList.add("on");
+    jumpToLine(+li.dataset.li);
+  });
+}
+document.addEventListener("mousedown", e => { if (atPop && !atPop.contains(e.target) && !e.target.closest("#at-bar,.hl-tag2")) closeAtPop(); }, true);
+document.addEventListener("keydown", e => { if (atPop && e.key === "Escape") closeAtPop(); });
+// 箇条書きの欄で、編集していない行の @タグをクリック（⌘クリックは今までどおりタグを消す）
+$("lp-ov").addEventListener("mousedown", e => {
+  const t = e.target.closest(".hl-tag2"); if (!t || CMD(e) || e.shiftKey || e.altKey || e.button !== 0) return;
+  if (!/^@/.test(t.textContent) || t.closest(".ov-rich")) return;
+  e.preventDefault(); e.stopPropagation();
+  lpOv.exploded = true;   // 続く click で編集を始めない
+  openAtPop(t.textContent, e.clientX, e.clientY);
+}, true);
+$("at-bar").addEventListener("click", e => { const b = e.target.closest("[data-at]"); if (!b) return; const r = b.getBoundingClientRect(); openAtPop(b.dataset.at, r.left, r.bottom); });
+renderAtBar();
 src.value = store.get("thync.src") || SAMPLE;
 // 以前の版で原稿に入っていたWorkflowyのノートの行を外す（Workflowy側のノートはそのまま残る）
 if (wf && wf.base && wf.base.some(b => b.note)) {
