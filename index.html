@@ -530,7 +530,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.21</div>
+    <div class="ver">v1.22</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1204,6 +1204,18 @@ function compileOne(tree, opts) {
       }
       const rm = inf.text.match(/^\{rep:([^}]+)\}$/);
       if (rm) { flush(); blocks.push({ type: "rep", label: rm[1].trim(), min: c.line, max: c.lastLine }); continue; }
+      // {repn:x}：同じ例文を、新しい番号で出す（このbulletに {lbl:y} を付ければ、その新しい番号を参照できる）
+      const rnm = inf.text.match(/^\{repn:([^}]+)\}$/);
+      if (rnm) {
+        flush();
+        exCount++; exTotal++;
+        const num = settings["ex-scope"] === "section" && chapter ? `${chapter}.${exCount}` : String(exCount);
+        const id = uid();
+        exPaths.set(id, new Set());
+        inf.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: [], id }, inf.line));
+        blocks.push({ type: "rep", label: rnm[1].trim(), newNum: num, newId: id, newLabel: inf.labels[0] || "", min: c.line, max: c.lastLine });
+        continue;
+      }
       if (inf.tags.has("fn")) {
         if (para && para.parts.length) { para.parts[para.parts.length - 1].fns.push(addFn(c)); touch(para, c.line, subEnd(c)); }
         else warn("脚注（#fn）の付け先になる文が見つかりません。");
@@ -1277,7 +1289,7 @@ function compileOne(tree, opts) {
   }
 
   /* --- 文中の記法 --- */
-  const RAW = new Set(["ref", "refn", "rep", "lbl", "j", "cite", "mirror", "hyp", "exref", "img", "wfimg"]);
+  const RAW = new Set(["ref", "refn", "rep", "repn", "lbl", "j", "cite", "mirror", "hyp", "exref", "img", "wfimg"]);
   // #hfill：その位置から後ろを、その行の右端へ寄せる（TeX の \hfill）
   function R(s) {
     s = String(s).replace(/\s*[\uE001\uE002]\s*/g, "\uE003");
@@ -1361,7 +1373,7 @@ function compileOne(tree, opts) {
     function raw(name, arg) {
       switch (name) {
         case "img": case "wfimg": return imgHTML(name, arg);
-        case "ref": case "rep": return refHTML(arg, false).replace(/<a class="xref"/g, `<a class="xref" draggable="true" data-code="${esc("{ref:" + arg + "}")}"`);
+        case "ref": case "rep": case "repn": return refHTML(arg, false).replace(/<a class="xref"/g, `<a class="xref" draggable="true" data-code="${esc("{ref:" + arg + "}")}"`);
         case "refn": return refHTML(arg, true).replace(/<a class="xref"/g, `<a class="xref" draggable="true" data-code="${esc("{refn:" + arg + "}")}"`);
         case "lbl": return "";
         case "j": return esc(arg);
@@ -1487,11 +1499,14 @@ function compileOne(tree, opts) {
     } else if (b.type === "rep") {
       const r = labels.get(b.label);
       if (r && r.kind === "ex" && byId.has(r.id)) {
-        let x = exHTML(byId.get(r.id), true, at).replace(/ data-ln="\d+" data-le="\d+"/g, "").replace('<div class="ex"', '<div class="ex' + (b.mirror !== undefined ? " mir-ex" : "") + '"' + lnAttr(b.min));
+        const src0 = byId.get(r.id);
+        // 新しい番号で出すとき：番号と飛び先・下位例文の道筋を、この場所のものにする
+        if (b.newNum) { const p0 = exPaths.get(src0.id); if (p0) exPaths.set(b.newId, new Set(p0)); }
+        let x = exHTML(b.newNum ? { ...src0, num: b.newNum, id: b.newId, label: b.newLabel } : src0, !b.newNum, at).replace(/ data-ln="\d+" data-le="\d+"/g, "").replace('<div class="ex"', '<div class="ex' + (b.mirror !== undefined ? " mir-ex" : "") + '"' + lnAttr(b.min));
         if (b.mirror !== undefined) x = x.replace(/(<div class="ex mir-ex"[^>]*>)/, `$1<button type="button" class="mir-mark mir-ex-mark" data-mirror-src="${b.mirror}" title="ミラー：押すと元の場所へ">◇</button>`);
         html += x;
       }
-      else { warn(`再掲 {rep:${b.label}} の例文が見つかりません。`); html += `<p${at}>${bad(b.label)}</p>`; }
+      else { warn(`再掲 {${b.newNum ? "repn" : "rep"}:${b.label}} の例文が見つかりません。`); html += `<p${at}>${bad(b.label)}</p>`; }
     } else if (b.type === "pagebreak") {
       html += `<div class="pagebreak" aria-hidden="true"><span>改ページ</span></div>`;
     } else if (b.type === "pnstart") {
@@ -4381,7 +4396,7 @@ renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
 const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid", "evenly", "toc", "toc-n", "toc-1", "toc-2", "toc-3", "toc-4", "toc-5"]);
-const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
+const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|repn|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 function hlRest(s) {
   let out = "", last = 0;
   s.replace(HL_RE, (m, lbl, ref, cmd, tag, html, br, off) => {
