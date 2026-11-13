@@ -73,7 +73,13 @@ button:focus-visible, textarea:focus-visible, .chk:focus-within { outline: 2px s
 .tabs button[aria-selected="true"] { background: var(--accent); color: var(--paper); border-color: var(--accent); }
 
 main { min-height: 0; display: flex; flex-direction: column; }
-.row-top { flex: 1 1 auto; min-height: 120px; display: grid; grid-template-columns: minmax(320px, 40%) 1fr; }
+.row-top { flex: 1 1 auto; min-height: 120px; display: grid; grid-template-columns: var(--left-w, minmax(320px, 40%)) 1fr; position: relative; }
+/* 左右の境目：ドラッグで幅を変える（ダブルクリックで元に戻す） */
+.vsplit { position: absolute; top: 0; bottom: 0; left: var(--left-w-px, 40%); width: 9px; margin-left: -5px; cursor: col-resize; z-index: 6; }
+.vsplit::after { content: ""; position: absolute; top: 0; bottom: 0; left: 4px; width: 1px; background: transparent; transition: background .12s; }
+.vsplit:hover::after, .vsplit.drag::after { background: var(--accent); width: 2px; left: 3px; }
+body.vsplitting { cursor: col-resize; user-select: none; }
+body[data-role] .vsplit { display: none; }
 main.split .row-top { flex: 0 0 var(--top-h, 62%); }
 .hsplit { flex: 0 0 8px; cursor: row-resize; background: var(--panel); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); position: relative; touch-action: none; }
 .hsplit::after { content: ""; position: absolute; left: 50%; top: 2px; width: 44px; height: 2px; margin-left: -22px; border-radius: 1px; background: var(--muted); opacity: .5; }
@@ -512,7 +518,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 
 @media (max-width: 820px) {
   .row-top { grid-template-columns: 1fr; }
-  #btn-split, .hsplit, .row-bottom { display: none !important; }
+  #btn-split, .hsplit, .row-bottom, .vsplit { display: none !important; }
   .tabs { display: flex; }
   main[data-view="in"] .pane-out, main[data-view="out"] .pane-in { display: none; }
   .pane-in { border-right: none; }
@@ -530,7 +536,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.22</div>
+    <div class="ver">v1.23</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -584,6 +590,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
       <div class="stats" id="stats"></div>
       <ul class="warns" id="warns"></ul>
     </section>
+    <div class="vsplit" id="vsplit" title="ドラッグで左右の幅を変える（ダブルクリックで元に戻す）" role="separator" aria-orientation="vertical"></div>
     <section class="pane-out" id="pane-out" data-pane="main">
       <div class="viewbar">
         <div class="seg" role="group" aria-label="表示の形"><button type="button" data-vm="web">Web</button><button type="button" data-vm="page">ページ</button></div>
@@ -6205,6 +6212,25 @@ $("chars-pop").addEventListener("click", e => {
   if (typeof addClip === "function") addClip(ch);
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("chars-pop").hidden && !isTA(document.activeElement)) { $("chars-pop").hidden = true; } });
+/* ---------- 左右の幅（境目をドラッグ） ---------- */
+function applyLeftW() {
+  const row = document.querySelector(".row-top"), v = $("vsplit");
+  const w = +store.get("thync.leftw") || 0;
+  const rs = document.documentElement.style;
+  if (w > 0) { const W = row.clientWidth || innerWidth, px = Math.max(240, Math.min(W - 280, w * W)); rs.setProperty("--left-w", px + "px"); rs.setProperty("--left-w-px", px + "px"); }
+  else { rs.removeProperty("--left-w"); rs.setProperty("--left-w-px", (document.querySelector(".pane-in").getBoundingClientRect().width || 0) + "px"); }
+}
+$("vsplit").addEventListener("mousedown", e => {
+  e.preventDefault();
+  const row = document.querySelector(".row-top"), r = row.getBoundingClientRect();
+  $("vsplit").classList.add("drag"); document.body.classList.add("vsplitting");
+  const mv = ev => { const frac = Math.max(0.15, Math.min(0.85, (ev.clientX - r.left) / r.width)); store.set("thync.leftw", String(frac)); applyLeftW(); };
+  const up = () => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); $("vsplit").classList.remove("drag"); document.body.classList.remove("vsplitting"); if (typeof equalizeTables === "function") keepScroll(render); };
+  document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up);
+});
+$("vsplit").addEventListener("dblclick", () => { localStorage.removeItem("thync.leftw"); applyLeftW(); keepScroll(render); });
+window.addEventListener("resize", applyLeftW);
+applyLeftW();
 src.value = store.get("thync.src") || SAMPLE;
 // 以前の版で原稿に入っていたWorkflowyのノートの行を外す（Workflowy側のノートはそのまま残る）
 if (wf && wf.base && wf.base.some(b => b.note)) {
