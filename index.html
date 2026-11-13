@@ -132,6 +132,10 @@ textarea {
 }
 .ex-num:hover, .ex-letter:hover { color: var(--accent); text-decoration: underline dotted; text-underline-offset: 3px; }
 .ex-item { scroll-margin-top: 40px; }
+/* 欄の位置を決めておく（ページをまたいで続きだけになったとき、番号や記号がなくても本文が正しい欄に入るように） */
+.ex > .ex-num { grid-column: 1; grid-row: 1; } .ex > .ex-body { grid-column: 2; grid-row: 1; }
+.ex-item > .ex-letter { grid-column: 1; grid-row: 1; } .ex-item > .judg { grid-column: 2; grid-row: 1; } .ex-item > .ex-text { grid-column: 3; grid-row: 1; }
+.ex-line > .judg { grid-column: 1; grid-row: 1; } .ex-line > .ex-text { grid-column: 2; grid-row: 1; }
 .ex-head { color: var(--ink); }
 .ex-line { display: grid; grid-template-columns: var(--ex-judg, 1.3em) 1fr; }
 .ex-item { display: grid; grid-template-columns: var(--ex-let, 1.75em) var(--ex-judg, 1.3em) 1fr; }
@@ -548,7 +552,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.25</div>
+    <div class="ver">v1.26</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
