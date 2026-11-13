@@ -321,6 +321,10 @@ kbd { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel)
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --hl-tag: #93b2e8; --hl-tag2: #c4a3ea; --hl-cmd: #5fd0bf; --hl-ref: #79b8f0; --hl-lbl: #f0a65c; --hl-html: #7d8696; --hl-j: #f08a80; --hl-mut: #7d8696; } }
 :root[data-theme="dark"] { --hl-tag: #93b2e8; --hl-tag2: #c4a3ea; --hl-cmd: #5fd0bf; --hl-ref: #79b8f0; --hl-lbl: #f0a65c; --hl-html: #7d8696; --hl-j: #f08a80; --hl-mut: #7d8696; }
 .hl-tag { color: var(--hl-tag); } .hl-tag2 { color: var(--hl-tag2); } .hl-cmd { color: var(--hl-cmd); }
+.code-ghost { position: fixed; z-index: 9999; pointer-events: none; padding: 1px 6px; border-radius: 4px; background: var(--paper, #fff); border: 1px solid var(--hl-ref); color: var(--hl-ref); font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,.18); white-space: nowrap; }
+.code-drop { position: fixed; z-index: 9998; pointer-events: none; width: 2px; background: var(--hl-ref); }
+body.code-dragging, body.code-dragging * { cursor: grabbing !important; user-select: none; }
+.ov .hl-lbl, .ov .hl-ref { cursor: grab; }
 .hl-ref { color: var(--hl-ref); } .hl-lbl { color: var(--hl-lbl); } .hl-html { color: var(--hl-html); }
 .hl-j { color: var(--hl-j); } .hl-bul, .hl-done, .hl-br { color: var(--hl-mut); } .hl-note { color: var(--hl-mut); font-style: italic; }
 .crumbs { max-width: 760px; margin: 0 auto 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: 12.5px; color: var(--muted); }
@@ -552,7 +556,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.28</div>
+    <div class="ver">v1.29</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -3131,7 +3135,106 @@ class OutlineView {
     if (e.target.closest(".ov-tog,.ov-bul")) { if (e.shiftKey) e.preventDefault(); return; }
     // ⌘+クリックでタグを消す（Workflowyの「explode」）
     const tg = CMD(e) && !e.shiftKey && !e.altKey && e.target.closest(".hl-tag,.hl-tag2,.hl-lbl,.hl-ref,.hl-cmd");
-    if (tg) { e.preventDefault(); this.explodeTag(tg); }
+    if (tg) { e.preventDefault(); this.explodeTag(tg); return; }
+    if (e.button === 0 && !e.shiftKey && !e.altKey && !CMD(e)) this.codeDragStart(e);
+  }
+  // {lbl:}・{ref:}・{rep:} などの記法：クリックはふつうの文字の編集、ドラッグはその記法を落とした場所へ移す
+  codeAt(span) {
+    const row = span.closest(".ov-row"); if (!row || span.closest(".ov-mirtxt")) return null;
+    const scope = span.closest(".ov-rich") || span.closest(".ov-text"); if (!scope) return null;
+    const i = +row.dataset.i, it = this.items[i]; if (!it || this.mirrorOf(i)) return null;
+    const token = span.textContent.trim();
+    if (span.classList.contains("hl-cmd") && !/^\{[a-z0-9-]+\}$/.test(token)) return null;
+    // 行の先頭の {lbl:} などは前に [x] や判定記号の分だけずれることがあるので、文の中を探して確かめる
+    let off = richPos(scope, span, 0);
+    const text = i === this.active && this.ta ? this.ta.value : it.text;
+    if (text.slice(off, off + token.length) !== token) {
+      const at = []; for (let k = text.indexOf(token); k >= 0; k = text.indexOf(token, k + 1)) at.push(k);
+      if (!at.length) return null;
+      off = at.reduce((b, k) => Math.abs(k - off) < Math.abs(b - off) ? k : b, at[0]);
+    }
+    return { i, off, token };
+  }
+  codeDragStart(e) {
+    const span = e.target.closest && e.target.closest(".hl-lbl,.hl-ref,.hl-cmd");
+    if (!span || !this.host.contains(span)) return;
+    const src = this.codeAt(span); if (!src) return;
+    const x0 = e.clientX, y0 = e.clientY;
+    let on = false, ghost = null, bar = null, drop = null;
+    const where = (x, y) => {
+      if (ghost) ghost.style.display = "none";
+      const rng = document.caretRangeFromPoint ? document.caretRangeFromPoint(x, y) : null;
+      if (ghost) ghost.style.display = "";
+      if (!rng) return null;
+      const n = rng.startContainer.nodeType === 1 ? rng.startContainer : rng.startContainer.parentNode;
+      const row = n && n.closest && n.closest(".ov-row");
+      if (!row || !this.host.contains(row) || row.closest(".ov") !== this.host) return null;
+      const scope = n.closest(".ov-rich") || n.closest(".ov-text"); if (!scope || n.closest(".ov-mirtxt")) return null;
+      const i = +row.dataset.i; if (!this.items[i] || this.mirrorOf(i)) return null;
+      const r = rng.getClientRects()[0] || rng.getBoundingClientRect();
+      return { i, c: richPos(scope, rng.startContainer, rng.startOffset), rect: r };
+    };
+    const move = ev => {
+      if (!on) {
+        if (Math.hypot(ev.clientX - x0, ev.clientY - y0) < 5) return;
+        on = true;
+        getSelection().removeAllRanges();
+        ghost = document.createElement("div"); ghost.className = "code-ghost"; ghost.textContent = src.token; document.body.appendChild(ghost);
+        bar = document.createElement("div"); bar.className = "code-drop"; document.body.appendChild(bar);
+        document.body.classList.add("code-dragging");
+      }
+      ev.preventDefault();
+      ghost.style.left = ev.clientX + 12 + "px"; ghost.style.top = ev.clientY + 8 + "px";
+      drop = where(ev.clientX, ev.clientY);
+      if (drop && drop.rect && drop.rect.height) { bar.hidden = false; bar.style.left = drop.rect.left - 1 + "px"; bar.style.top = drop.rect.top + "px"; bar.style.height = drop.rect.height + "px"; }
+      else bar.hidden = true;
+    };
+    const up = ev => {
+      removeEventListener("mousemove", move, true); removeEventListener("mouseup", up, true);
+      if (!on) return;
+      ev.preventDefault();
+      ghost.remove(); bar.remove(); document.body.classList.remove("code-dragging");
+      this.exploded = true;  // 続くクリックでカーソルを動かさない
+      setTimeout(() => { this.exploded = false; }, 50);
+      if (drop) this.moveCode(src, drop.i, drop.c);
+    };
+    addEventListener("mousemove", move, true); addEventListener("mouseup", up, true);
+  }
+  moveCode(src, ti, tc) {
+    const tok = src.token, from = src.i;
+    if (from === ti && tc >= src.off && tc <= src.off + tok.length) return;  // その場に落とした
+    const cut = t => {
+      let a = src.off, z = src.off + tok.length;
+      // 前後の空白を1つにまとめる
+      if (/\s/.test(t[z] || "") && (a === 0 || /\s/.test(t[a - 1]))) z++;
+      else if (z === t.length && /\s/.test(t[a - 1] || "")) a--;
+      return { text: t.slice(0, a) + t.slice(z), a, n: z - a };
+    };
+    const ins = (t, c) => {
+      let pre = "", post = "";
+      const L = t[c - 1] || "", Rr = t[c] || "";
+      if (L && /[A-Za-z0-9.,;:!?)\]}]/.test(L)) pre = " ";
+      if (Rr && /[A-Za-z0-9({\[]/.test(Rr)) post = " ";
+      return { text: t.slice(0, c) + pre + tok + post + t.slice(c), caret: c + pre.length + tok.length };
+    };
+    if (this.active >= 0 && this.ta && this.items[this.active] && !this.ta._mir) this.items[this.active].text = this.ta.value;
+    const before = this.items.map(x => x.text);
+    let focus = null;
+    this.structural(() => {
+      const fromText = this.items[from].text;
+      if (fromText.slice(src.off, src.off + tok.length) !== tok) return false;
+      const c1 = cut(fromText);
+      if (from === ti) {
+        let c = tc > src.off ? Math.max(c1.a, tc - c1.n) : tc;
+        const r = ins(c1.text, Math.min(c, c1.text.length));
+        this.items[from].text = r.text; focus = { i: ti, c: r.caret };
+      } else {
+        this.items[from].text = c1.text;
+        const r = ins(this.items[ti].text, Math.min(tc, this.items[ti].text.length));
+        this.items[ti].text = r.text; focus = { i: ti, c: r.caret };
+      }
+    });
+    if (focus && this.items.some((x, k) => x.text !== before[k])) this.edit(focus.i, focus.c);
   }
   explodeTag(span) {
     const row = span.closest(".ov-row"); if (!row) return;
