@@ -552,7 +552,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.27</div>
+    <div class="ver">v1.28</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1286,6 +1286,32 @@ function compileOne(tree, opts) {
     warn(`ラベル「${key}」が見つかりません。`);
     return null;
   }
+  // {reptext:x}：例文の中身を、番号・a. b.・判定記号を外した文としてだけ出す
+  function exPlain(x) {
+    if (!x) return "";
+    if (x.gloss) return x.gloss.words ? x.gloss.words.map(w => w[0]).filter(Boolean).join(" ").trim() : (x.gloss.plain || []).map(t => splitJudg(t).text).join(" ");
+    const head = x.lines ? smartJoin(x.lines.map(l => l.text).filter(Boolean)) : (x.text || "");
+    const subs = x.subitems ? x.subitems.map(exPlain).filter(Boolean) : [];
+    return smartJoin([head, ...subs].filter(Boolean));
+  }
+  let repTextDepth = 0;
+  function repTextHTML(arg) {
+    const r = lookup(arg);
+    if (!r || r.kind !== "ex" || !byId.has(r.id)) return bad(arg);
+    const ex = byId.get(r.id);
+    let t;
+    if (r.sub && r.sub.length) {
+      let list = ex.items, it = null;
+      for (const L of r.sub) { it = (list || []).find(k => k.letter === L); if (!it) break; list = it.subitems; }
+      t = exPlain(it);
+    } else {
+      const head = ex.headLines ? smartJoin(ex.headLines.map(l => l.text).filter(Boolean)) : "";
+      t = smartJoin([head, ex.single ? exPlain(ex.single) : "", ...ex.items.map(exPlain)].filter(Boolean));
+    }
+    if (repTextDepth > 3) return esc(t);
+    repTextDepth++;
+    try { return `<span class="reptext" data-code="${esc("{reptext:" + arg + "}")}">${R0(t)}</span>`; } finally { repTextDepth--; }
+  }
   const bad = key => `<span class="xref bad" title="未定義：${esc(key)}">(??)</span>`;
   const link = (r, inner) => `<a class="xref${r.dup ? " dup" : ""}"${r.dup ? ` title="このラベルは何か所にもあります（上でいちばん近いものの番号を出しています）"` : ""} data-target="${r.sub && r.sub.length ? r.id + "-" + r.sub.join("") : r.id}">${inner}</a>`;
   const label = (r, bare, extra = "") => {
@@ -1313,7 +1339,7 @@ function compileOne(tree, opts) {
   }
 
   /* --- 文中の記法 --- */
-  const RAW = new Set(["ref", "refn", "rep", "repn", "lbl", "j", "cite", "mirror", "hyp", "exref", "img", "wfimg"]);
+  const RAW = new Set(["ref", "refn", "rep", "repn", "reptext", "lbl", "j", "cite", "mirror", "hyp", "exref", "img", "wfimg"]);
   // #hfill：その位置から後ろを、その行の右端へ寄せる（TeX の \hfill）
   function R(s) {
     s = String(s).replace(/\s*[\uE001\uE002]\s*/g, "\uE003");
@@ -1399,6 +1425,7 @@ function compileOne(tree, opts) {
         case "img": case "wfimg": return imgHTML(name, arg);
         case "ref": case "rep": case "repn": return refHTML(arg, false).replace(/<a class="xref"/g, `<a class="xref" draggable="true" data-code="${esc("{ref:" + arg + "}")}"`);
         case "refn": return refHTML(arg, true).replace(/<a class="xref"/g, `<a class="xref" draggable="true" data-code="${esc("{refn:" + arg + "}")}"`);
+        case "reptext": return repTextHTML(arg);
         case "lbl": return "";
         case "j": return esc(arg);
         case "cite": return `<span class="cite">[${esc(arg)}]</span>`;
@@ -4473,7 +4500,7 @@ renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
 const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid", "evenly", "toc", "toc-n", "toc-1", "toc-2", "toc-3", "toc-4", "toc-5"]);
-const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|repn|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
+const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|repn|reptext|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 function hlRest(s) {
   let out = "", last = 0;
   s.replace(HL_RE, (m, lbl, ref, cmd, tag, html, br, off) => {
