@@ -552,7 +552,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.26</div>
+    <div class="ver">v1.27</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1845,6 +1845,13 @@ function richPoint(el, pos) {
   })(el);
   return res || endOf(el);
 }
+// 文 a が b に変わったとき、b の中で変わった部分の終わりの位置
+function textDiffEnd(a, b) {
+  let p = 0; const n = Math.min(a.length, b.length);
+  while (p < n && a[p] === b[p]) p++;
+  let q = 0; while (q < n - p && a[a.length - 1 - q] === b[b.length - 1 - q]) q++;
+  return Math.max(p, b.length - q);
+}
 function makeRichEditor(value) {
   const el = document.createElement("div");
   el.className = "ov-ta ov-rich";
@@ -1879,7 +1886,7 @@ function makeRichEditor(value) {
   // 自前の取り消し（中身を描き直すので、ブラウザの取り消しは使えない）
   const R = el._rich = {
     hist: [], redo: [], prev: value, prevSel: [value.length, value.length], t: 0, composing: false,
-    push(force) { const now = Date.now(); if (force || now - R.t > 700 || !R.hist.length) { R.hist.push({ v: R.prev, c: R.prevSel }); if (R.hist.length > 200) R.hist.shift(); } R.t = now; R.redo = []; },
+    push(force) { const now = Date.now(); if (force || now - R.t > 700 || !R.hist.length) { R.hist.push({ v: R.prev, c: R.prevSel }); if (R.hist.length > 500) R.hist.shift(); } R.t = now; R.redo = []; },
     after() { R.prev = el.value; R.prevSel = getSel(); },
     replace(s, e, text) {
       R.push(true); R.t = 0;
@@ -1887,7 +1894,7 @@ function makeRichEditor(value) {
       el.focus({ preventScroll: true }); setSel(s + text.length, s + text.length);
       el.dispatchEvent(new InputEvent("input", { inputType: "insertText", data: text }));
     },
-    restore(st) { el.value = st.v; setSel(st.c[0], st.c[1]); R.prev = st.v; R.prevSel = st.c; el.dispatchEvent(new InputEvent("input", { inputType: "historyUndo" })); },
+    restore(st) { const old = el.value; el.value = st.v; const at = textDiffEnd(old, st.v); setSel(at, at); R.prev = st.v; R.prevSel = [at, at]; el.dispatchEvent(new InputEvent("input", { inputType: "historyUndo" })); },
     undo() { if (!R.hist.length) return false; R.redo.push({ v: el.value, c: getSel() }); R.restore(R.hist.pop()); return true; },
     redoOne() { if (!R.redo.length) return false; R.hist.push({ v: el.value, c: getSel() }); R.restore(R.redo.pop()); return true; },
     // 色付け（タグ・参照など）を打ち込んだあとで付け直す
@@ -2586,14 +2593,49 @@ class OutlineView {
     if (a >= 0 && a < this.items.length && focused) this.edit(a, c);
   }
   changed() { this.opts.onChange && this.opts.onChange(); }
-  snapshot() { this.undo.push({ items: this.items.map(x => ({ ...x })), active: this.active, caret: this.ta ? this.ta.selectionStart : 0 }); if (this.undo.length > 100) this.undo.shift(); this.typed = false; }
-  restoreUndo() {
-    const s = this.undo.pop(); if (!s) return false;
+  // 取り消し・やり直し（全体の形を500回分）。戻した後は変わった所に文字カーソルを置く
+  snapState(textOverride) {
+    const items = this.items.map(x => ({ ...x }));
+    if (textOverride !== undefined && this.active >= 0 && items[this.active]) items[this.active].text = textOverride;
+    return { items, active: this.active, caret: this.ta ? this.ta.selectionStart : 0 };
+  }
+  snapshot(textOverride) {
+    this.undo.push(this.snapState(textOverride)); if (this.undo.length > 500) this.undo.shift();
+    this.redoStack = []; this.typed = false;
+  }
+  sameItems(a, b) { return a.length === b.length && a.every((x, k) => x.lv === b[k].lv && x.text === b[k].text && !!x.done === !!b[k].done && (x.note || "") === (b[k].note || "")); }
+  // 前の形 a から 後の形 b へ：b の中で変わった所（行番号と文字位置）
+  diffPlace(a, b) {
+    const same = (x, y) => x && y && x.lv === y.lv && x.text === y.text && !!x.done === !!y.done && (x.note || "") === (y.note || "");
+    let p = 0; while (p < a.length && p < b.length && same(a[p], b[p])) p++;
+    if (p === a.length && p === b.length) return null;
+    let q = 0; while (q < a.length - p && q < b.length - p && same(a[a.length - 1 - q], b[b.length - 1 - q])) q++;
+    const nb = b.length - p - q, na = a.length - p - q;
+    if (nb <= 0) { // 行が消えた：その位置（前の行の末尾）
+      if (!b.length) return null;
+      if (p < b.length) return { i: p, c: 0 };
+      return { i: b.length - 1, c: b[b.length - 1].text.length };
+    }
+    const i = p + nb - 1, ot = na > 0 ? a[a.length - 1 - q].text : "";
+    if (nb === 1 && na === 1) return { i, c: textDiffEnd(ot, b[i].text) };
+    return { i, c: b[i].text.length };
+  }
+  restoreUndo() { return this.stepHistory(this.undo, this.redoStack || (this.redoStack = [])); }
+  redoUndo() { return this.stepHistory(this.redoStack || (this.redoStack = []), this.undo); }
+  stepHistory(from, to) {
+    const cur = this.snapState();
+    let s = from.pop();
+    while (s && this.sameItems(s.items, cur.items)) { to.push(s); s = from.pop(); }
+    if (!s) return false;
+    to.push(cur); if (to.length > 500) to.shift();
+    this.deactivate();
     this.items = s.items; this.render(); this.changed();
-    if (s.active >= 0 && s.active < this.items.length) this.edit(s.active, s.caret);
+    this.typed = false;
+    const at = this.diffPlace(cur.items, this.items);
+    if (at && at.i >= 0 && at.i < this.items.length) this.edit(at.i, at.c);
+    else if (s.active >= 0 && s.active < this.items.length) this.edit(s.active, s.caret);
     return true;
   }
-  // ---- 1行の編集 ----
   edit(i, caret = null) {
     if (i < 0 || i >= this.items.length) return;
     // 閉じた親の中なら開く
@@ -2609,7 +2651,7 @@ class OutlineView {
     if (ms) ta.classList.add("ov-ta-mir");
     ta.setAttribute("aria-label", "bulletの文");
     div.replaceWith(ta);
-    this.active = i; this.ta = ta; this.lastActive = i;
+    this.active = i; this.ta = ta; this.lastActive = i; this.typed = false;
     ta._abs = () => this.lineOf(this.active);
     ta._ov = this;
     ta.focus({ preventScroll: true });
@@ -2628,7 +2670,12 @@ class OutlineView {
       this.items[this.active].text = ta.value;
       // {mirror:…} を貼った・書き終えたら、すぐミラーとして表示する
       if (/^\{mirror:[^}]+\}$/.test(ta.value.trim()) && this.mirrorOf(this.active)) { this.changed(); const a = this.active; setTimeout(() => { if (this.items[a]) { this.render(); this.edit(a, null); } }, 0); return; }
-      this.typed = true;
+      if (!this.typed && e.inputType !== "historyUndo" && ta._rich && ta._rich.prev !== undefined) {
+        // この行で打ち始めた：打つ前の形を全体の取り消しに残す（行を離れた後も戻せる）
+        const before = ta._rich.hist.length ? ta._rich.hist[ta._rich.hist.length - 1].v : null;
+        this.snapshot(before !== null ? before : undefined);
+      }
+      if (e.inputType !== "historyUndo") { this.typed = true; this.redoStack = []; }
       this.fit(); this.changed();
       if (e.inputType && /^insert/.test(e.inputType)) {
         const p = ta.selectionStart, two = ta.value.slice(p - 2, p);
@@ -2829,13 +2876,18 @@ class OutlineView {
     if (k === "Escape") { if (this.opts.onEsc) { e.preventDefault(); this.opts.onEsc(); } else { e.preventDefault(); ta.blur(); } return; }
     if (cmd && e.altKey && e.shiftKey && e.code === "KeyM") { e.preventDefault(); this.memo(i); return; }
     if (handleInlineKeys(e, ta)) return;
-    if (ta._rich && cmd && !e.altKey && (e.code === "KeyZ" || (e.code === "KeyY" && !e.shiftKey))) {
+    if (cmd && !e.altKey && (e.code === "KeyZ" || (e.code === "KeyY" && !e.shiftKey))) {
+      e.preventDefault();
       const redo = e.shiftKey || e.code === "KeyY";
-      if (redo) { e.preventDefault(); ta._rich.redoOne(); return; }
-      if (this.typed || !this.undo.length) { e.preventDefault(); if (!ta._rich.undo()) { this.typed = false; if (this.undo.length) this.restoreUndo(); } return; }
+      if (redo) { if (!(ta._rich && ta._rich.redoOne())) this.redoUndo(); return; }
+      if (!(ta._rich && ta._rich.undo())) {
+        // この行の中で戻し切った：行の中のやり直し分を全体のやり直しに引き継ぐ
+        if (ta._rich && ta._rich.redo.length) { (this.redoStack || (this.redoStack = [])).push(this.snapState(ta._rich.redo[0].v)); }
+        this.restoreUndo();
+      }
+      return;
     }
     if (wantPlainPaste(e)) { this.plainKey(ta); }
-    if (cmd && !e.shiftKey && !e.altKey && e.code === "KeyZ" && !this.typed && this.undo.length) { e.preventDefault(); this.restoreUndo(); return; }
     const bare = !e.metaKey && !e.ctrlKey && !e.altKey;
     if (k === "Enter" && bare && !e.shiftKey && ta._mir && this.subOf(i) && ta.selectionStart === ta.value.length) {
       e.preventDefault(); const s = this.subOf(i), lv0 = s.items[0].lv;
@@ -3137,6 +3189,7 @@ class OutlineView {
     if (!this.sel || e.target !== this.host) return;
     const a = Math.min(this.sel.a, this.sel.z), z = Math.max(this.end(this.sel.a), this.end(this.sel.z));
     const cmd = CMD(e);
+    if (cmd && !e.altKey && (e.code === "KeyZ" || (e.code === "KeyY" && !e.shiftKey))) { e.preventDefault(); this.sel = null; if (e.shiftKey || e.code === "KeyY") this.redoUndo(); else this.restoreUndo(); return; }
     if (e.key === "Escape") { this.sel = null; this.render(); return; }
     // ⌘Return：選んだbulletをまとめて完了／戻す（全部完了なら戻す）
     if (cmd && e.key === "Enter" && !e.shiftKey && !e.altKey) {
