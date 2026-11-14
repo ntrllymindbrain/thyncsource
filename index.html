@@ -18,6 +18,7 @@
   --rule: #d3d8df;
   --accent: #2d4f86;
   --accent-soft: #e3eaf5;
+  --sel-bg: #7ea3e6; --sel-bar: #1f4fb8; --sel-ink: #0b1a3a;
   --warn: #9a5800;
   --warn-soft: #fbf0df;
   --bad: #b3261e;
@@ -32,13 +33,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --desk: #11141a; --panel: #171b22; --paper: #1d222b; --ink: #e6e9ef; --muted: #9aa3b2;
-    --rule: #2e3540; --accent: #93b2e8; --accent-soft: #233149; --warn: #e5a74c; --warn-soft: #33281a; --bad: #f08a80;
+    --rule: #2e3540; --accent: #93b2e8; --accent-soft: #233149; --sel-bg: #2f58a8; --sel-bar: #8fb4ff; --sel-ink: #f2f6ff; --warn: #e5a74c; --warn-soft: #33281a; --bad: #f08a80;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --desk: #11141a; --panel: #171b22; --paper: #1d222b; --ink: #e6e9ef; --muted: #9aa3b2;
-  --rule: #2e3540; --accent: #93b2e8; --accent-soft: #233149; --warn: #e5a74c; --warn-soft: #33281a; --bad: #f08a80;
+  --rule: #2e3540; --accent: #93b2e8; --accent-soft: #233149; --sel-bg: #2f58a8; --sel-bar: #8fb4ff; --sel-ink: #f2f6ff; --warn: #e5a74c; --warn-soft: #33281a; --bad: #f08a80;
   color-scheme: dark;
 }
 
@@ -386,7 +387,10 @@ div.ov-rich { display: block; width: 100%; min-height: 1.6em; outline: none; pad
 textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; border-radius: 0; outline: none; resize: none; padding: 0; margin: 0; font: inherit; line-height: inherit; background: transparent; color: var(--ink); overflow: hidden; flex: none; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ov-note, textarea.ov-note-ta { color: var(--muted); font-size: .86em; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ov-row.done > .ov-main > .ov-text { text-decoration: line-through; color: var(--muted); }
-.ov-row.sel { background: var(--accent-soft); }
+/* bulletの範囲選択：色分けの淡い色と紛れない、はっきりした青（左に濃い帯） */
+.ov-row.sel, .colorize .ov-row.sel[data-c] { background: var(--sel-bg) !important; box-shadow: inset 4px 0 0 var(--sel-bar), inset 0 1px 0 var(--sel-bar), inset 0 -1px 0 var(--sel-bar); }
+.ov-row.sel + .ov-row.sel { box-shadow: inset 4px 0 0 var(--sel-bar), inset 0 -1px 0 var(--sel-bar); }
+.ov-row.sel .ov-text, .ov-row.sel .ov-text * { color: var(--sel-ink) !important; }
 .ov-row.drop-top::after, .ov-row.drop-bottom::after { content: ""; position: absolute; left: calc(var(--drop-lv) * 1.45em + 2.1em); right: 0; height: 2px; background: var(--accent); border-radius: 1px; }
 .ov-row.drop-top::after { top: -1px; } .ov-row.drop-bottom::after { bottom: -1px; }
 .inline-edit .ie-ov { max-height: 70vh; overflow: auto; }
@@ -559,7 +563,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.39</div>
+    <div class="ver">v1.40</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
