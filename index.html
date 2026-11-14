@@ -563,7 +563,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.40</div>
+    <div class="ver">v1.41</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -2567,8 +2567,25 @@ class OutlineView {
   prevSib(i) { const lv = this.items[i].lv; let k = i - 1; while (k >= 0 && this.items[k].lv > lv) k--; return k >= 0 && this.items[k].lv === lv ? k : -1; }
   nextSib(i) { const k = this.end(i) + 1; return k < this.items.length && this.items[k].lv === this.items[i].lv ? k : -1; }
   // bulletの選択を始める（文字の選択から ⇧↑↓ で抜けたとき）
-  startSel(i) { this.sel = { a: i, z: i }; this.deactivate(); this.render(); this.host.focus({ preventScroll: true }); }
-  showSel() { const z = this.sel.z; this.render(); this.host.focus({ preventScroll: true }); const r = this.rowEl(z); if (r) r.scrollIntoView({ block: "nearest" }); }
+  // 範囲選択の出し入れで、画面を勝手に送らない（上下の箱のスクロール位置をそのまま保つ）
+  scrollState(saved) {
+    if (saved) { for (const [el, t, l] of saved) { if (el.scrollTop !== t) el.scrollTop = t; if (el.scrollLeft !== l) el.scrollLeft = l; } return; }
+    const boxes = []; for (let el = this.host; el; el = el.parentElement) if (el.scrollHeight > el.clientHeight + 1) boxes.push([el, el.scrollTop, el.scrollLeft]);
+    const se = document.scrollingElement; if (se && !boxes.some(b => b[0] === se)) boxes.push([se, se.scrollTop, se.scrollLeft]);
+    return boxes;
+  }
+  holdScroll(fn) { const st = this.scrollState(); try { fn(); } finally { this.scrollState(st); } }
+  // 行が見えている箱の外に出そうなときだけ、最小限だけ送る
+  revealRow(r) {
+    if (!r) return;
+    const box = scrollBox(r) || document.scrollingElement; if (!box) return;
+    const br = box === document.scrollingElement ? { top: 0, bottom: innerHeight } : box.getBoundingClientRect();
+    const rr = r.getBoundingClientRect(), m = 8;
+    if (rr.bottom > br.bottom - m) box.scrollTop += rr.bottom - (br.bottom - m);
+    else if (rr.top < br.top + m) box.scrollTop -= (br.top + m) - rr.top;
+  }
+  startSel(i) { this.holdScroll(() => { this.sel = { a: i, z: i }; this.deactivate(); this.render(); this.host.focus({ preventScroll: true }); }); }
+  showSel() { const z = this.sel.z; this.holdScroll(() => { this.render(); this.host.focus({ preventScroll: true }); }); this.revealRow(this.rowEl(z)); }
   rowEl(i) { return this.host.querySelector(`:scope > .ov-row[data-i="${i}"]`); }
   subOf(i) { return this.subs.find(s => s.mirIndex === i) || null; }
   mirKids(i) { const ms = this.mirrorOf(i); return ms ? ms.kids : 0; }
@@ -3045,7 +3062,8 @@ class OutlineView {
       if ((up && s0 === 0) || (!up && e0 === L)) { e.preventDefault(); this.startSel(i); return; }
       // 文字の選択の端が、もう最初（最後）の行にある：ブラウザに行末まで選ばせず、すぐbullet全体の選択へ
       if (ta._rich && onEdgeLine(ta, up ? s0 : e0, up)) { e.preventDefault(); this.startSel(i); return; }
-      setTimeout(() => { if (this.ta === ta && ta.selectionStart === s0 && ta.selectionEnd === e0) this.startSel(i); }, 0);
+      const keep = this.scrollState();
+      setTimeout(() => { if (this.ta === ta && ta.selectionStart === s0 && ta.selectionEnd === e0) { this.startSel(i); this.scrollState(keep); } }, 0);
       return;
     }
     // ⌥↑↓：横の位置をそのままに、上下の行（折り返しの行・隣のbullet）へ移る
