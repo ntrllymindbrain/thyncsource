@@ -569,7 +569,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.42</div>
+    <div class="ver">v1.43</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -3082,6 +3082,8 @@ class OutlineView {
       const up = k === "ArrowUp", pos = ta.selectionStart;
       const go = () => this.step(i, up ? -1 : 1);
       if ((up && pos === 0) || (!up && pos === ta.value.length)) { e.preventDefault(); go(); return; }
+      // 文頭にいて下にもう行がない（↓）／文末にいて上にもう行がない（↑）：いったん行末・行頭に寄らず、すぐ隣のbulletへ
+      if (ta._rich && ta.selectionEnd === pos && ((!up && pos === 0) || (up && pos === ta.value.length)) && onEdgeLine(ta, pos, up)) { e.preventDefault(); go(); return; }
       setTimeout(() => { if (this.ta === ta && ta.selectionStart === pos) go(); }, 0);
       return;
     }
@@ -6603,6 +6605,20 @@ $("vsplit").addEventListener("mousedown", e => {
 });
 $("vsplit").addEventListener("dblclick", () => { localStorage.removeItem("thync.leftw"); applyLeftW(); keepScroll(render); });
 window.addEventListener("resize", applyLeftW);
+// 解像度の違うディスプレイへ窓を移したとき：描き直しを促す（Chromeが古い倍率のまま描き続けるのを避ける）
+(function watchDpr() {
+  let mq = null;
+  const arm = () => {
+    if (mq) mq.removeEventListener("change", onChange);
+    mq = matchMedia(`(resolution: ${devicePixelRatio}dppx)`); mq.addEventListener("change", onChange);
+  };
+  const onChange = () => {
+    const b = document.body; b.style.transform = "translateZ(0)"; void b.offsetHeight;
+    requestAnimationFrame(() => { b.style.transform = ""; applyLeftW(); });
+    arm();
+  };
+  try { arm(); } catch (_) {}
+})();
 applyLeftW();
 /* ---------- @タグ：押すと、そのタグを含む行の一覧を小さく出し、選んだ行へ跳ぶ ----------
    押した @タグは新しい順に20個まで覚え、編集欄の上に並べる（ワンクリックで同じ一覧を出す） */
