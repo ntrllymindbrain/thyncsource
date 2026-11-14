@@ -422,6 +422,17 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .pg-checks { display: grid; gap: 4px; font-size: 12.5px; }
 .pg-checks label { display: flex; gap: 6px; align-items: center; }
 #pages[hidden] { display: none; }
+/* 今のページ／全ページ・語数（表示欄の右下にじゃまにならないように） */
+.pg-ind { position: fixed; z-index: 8; padding: 4px 9px; border-radius: 8px; background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--rule); color: var(--muted); font: 11.5px/1.45 var(--font-ui); font-variant-numeric: tabular-nums; text-align: right; pointer-events: none; box-shadow: 0 2px 8px rgba(20,30,50,.08); }
+.pg-ind[hidden] { display: none; }
+.pg-ind-p { font-size: 13px; color: var(--ink); font-weight: 600; } .pg-ind-p:empty { display: none; }
+/* ページの余白を折りたたむ（Word の「余白を表示しない」）：上下の余白とページ間を詰める */
+#pages.pg-tight .pagedjs_pages { gap: 0; }
+#pages.pg-tight .pagedjs_page { box-shadow: none; border-bottom: 1px dashed #b9c1cc; height: auto !important; }
+#pages.pg-tight .pagedjs_sheet { height: auto !important; grid-template-rows: 0 auto 0 !important; }
+#pages.pg-tight .pagedjs_pagebox { height: auto !important; grid-template-rows: 0 auto 0 !important; padding: 12px 0; }
+#pages.pg-tight .pagedjs_margin-top, #pages.pg-tight .pagedjs_margin-bottom, #pages.pg-tight [class*="pagedjs_margin-top-"], #pages.pg-tight [class*="pagedjs_margin-bottom-"] { display: none !important; }
+#pages.pg-tight .pagedjs_bleed-top, #pages.pg-tight .pagedjs_bleed-bottom { display: none !important; }
 #pages { zoom: var(--paper-scale, 1); --ink: #1c2230; --muted: #5d6676; --rule: #d3d8df; --accent: #2d4f86; --accent-soft: #e3eaf5; --paper: #fff; color-scheme: light; }
 #pages .pagedjs_pages { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 4px 0 48px; }
 #pages .pagedjs_page { background: #fff; color: #111; box-shadow: 0 1px 3px rgba(20,30,50,.14), 0 8px 26px rgba(20,30,50,.10); }
@@ -585,7 +596,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.50</div>
+    <div class="ver">v1.51</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -617,6 +628,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <button type="button" data-open="edit,,1">編集（メイン）</button><span class="wp-note">箇条書きだけの画面</span>
     <button type="button" data-open="view,web,1">表示 Web（メイン）</button><span class="wp-note">編集（メイン）と連動して動く</span>
     <button type="button" data-open="view,web,0">表示 Web（連動なし）</button><span class="wp-note">自分でスクロールする</span>
+    <button type="button" data-open="view,page,1">表示 ページ（メイン）</button><span class="wp-note">ページ割りのまま、編集（メイン）と連動</span>
     <button type="button" data-open="view,page,0">表示 ページ（連動なし）</button><span class="wp-note">ページ・PDFの確認用</span>
     <p class="hint">「メイン」の編集ウィンドウでbulletをクリックすると、「メイン」の表示ウィンドウがそこへ動きます（逆も同じ）。メインのウィンドウは青い枠で囲まれます。並べるときは、初回だけChromeが「ウィンドウの管理」の許可と、ポップアップの許可を求めます。</p>
   </div>
@@ -654,6 +666,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
       <p class="out-hint">段落・例文・見出しをダブルクリック（スマホはダブルタップ）すると、その部分が箇条書きの編集欄になります（いくつでも開けます）。スマホでは、文字を選んでからダブルタップすると選んだ範囲をまとめて開きます。文字を選んで ⌘+Opt+E でもまとめて開けます。例文番号をクリックすると参照が入り、本文の参照をクリックするとその例文へ飛びます。</p>
       <article class="paper" id="paper"></article>
       <div id="pages" hidden></div>
+      <div class="pg-ind" id="pg-ind" hidden aria-live="off"><div class="pg-ind-p" id="pg-ind-p"></div><div class="pg-ind-w" id="pg-ind-w"></div></div>
     </section>
    </div>
    <div class="hsplit" id="hsplit" role="separator" aria-orientation="horizontal" aria-label="上下の境目（ドラッグで動かす）" tabindex="0" hidden></div>
@@ -1750,6 +1763,7 @@ function renderInner() {
   equalizeTables(paper);
   lastPaperHTML = paper.innerHTML;
   placeFootnotesInline(paper);
+  try { if (viewMode !== "page") updateInd(true); } catch (_) {}
   lastDocSettings = res.settings || {};
   mountEditors();
   if (src._paint) src._paint();
@@ -6048,6 +6062,7 @@ async function renderPagesNow(token, force) {
     numberPages();
     $("page-count").textContent = `全 ${flow.total || (flow.pages && flow.pages.length) || host.querySelectorAll(".pagedjs_page").length} ページ`;
     if (typeof posAfterPages === "function") posAfterPages();
+    updateInd(true);
   } catch (e) {
     $("page-count").textContent = "";
     host.innerHTML = `<div class="empty">ページに割り付けられませんでした（${esc(e.message || String(e))}）。</div>`;
@@ -6074,6 +6089,63 @@ function numberPages() {
     s.title = `通し番号 ${k + 1}（PDF出力のページ指定はこの番号）`;
   });
 }
+/* ---------- 今のページ・語数の表示と、余白の折りたたみ ---------- */
+// 印刷に出る本文だけを数える：ページ表示ならページの本文の枠（ヘッダー・ページ番号・通し番号は除く）、Web表示なら紙面
+function countPrinted() {
+  const page = viewMode === "page";
+  let roots = page ? [...$("pages").querySelectorAll(".pagedjs_area")] : [paper];
+  let text = "";
+  for (const r of roots) {
+    const c = r.cloneNode(true);
+    c.querySelectorAll(".pg-serial, .inline-edit, .empty, .img-handle, .mir-mark, script, style").forEach(x => x.remove());
+    text += " " + c.textContent;
+  }
+  const words = (text.match(/[A-Za-z0-9\u00C0-\u024F]+(?:['’\-][A-Za-z0-9\u00C0-\u024F]+)*/g) || []).length;
+  const ja = (text.match(/[^\s\x00-\x7F\u00C0-\u024F\u00A0]/gu) || []).length;
+  return { words, ja };
+}
+let indTimer = 0;
+function updateInd(recount) {
+  const ind = $("pg-ind"), pane = $("pane-out");
+  const hidden = !pane || pane.offsetParent === null || (typeof winRole !== "undefined" && winRole === "edit");
+  ind.hidden = hidden; if (hidden) return;
+  const r = pane.getBoundingClientRect();
+  ind.style.right = Math.max(8, innerWidth - r.right + 18) + "px";
+  ind.style.bottom = Math.max(8, innerHeight - r.bottom + 12) + "px";
+  const pp = $("pg-ind-p");
+  if (viewMode === "page") {
+    const pages = [...$("pages").querySelectorAll(".pagedjs_page")];
+    if (pages.length) {
+      const mid = r.top + Math.min(r.height, innerHeight - r.top) * 0.35;
+      let cur = 1;
+      for (let k = 0; k < pages.length; k++) { const b = pages[k].getBoundingClientRect(); if (b.top <= mid) cur = k + 1; else break; }
+      pp.textContent = `${cur} / ${pages.length}`;
+    } else pp.textContent = "";
+  } else pp.textContent = "";
+  if (recount) {
+    clearTimeout(indTimer);
+    indTimer = setTimeout(() => {
+      const c = countPrinted(), parts = [];
+      if (c.words) parts.push(`${c.words.toLocaleString()} 語`);
+      if (c.ja) parts.push(`${c.ja.toLocaleString()} 字`);
+      $("pg-ind-w").textContent = parts.join(" ・ ") || "0 語";
+      $("pg-ind-w").title = "印刷に出る本文だけ（ヘッダー・ページ番号・タグは除く）。語＝英語などの語数、字＝日本語などの文字数（句読点を含む・空白を除く）";
+    }, 250);
+  }
+}
+document.addEventListener("scroll", e => { if (e.target === $("pane-out") || e.target === document) updateInd(false); }, true);
+window.addEventListener("resize", () => updateInd(false));
+// ページ表示：余白やページの間をダブルクリックすると、上下の余白を折りたたむ／戻す
+$("pages").addEventListener("dblclick", e => {
+  if (e.target.closest(".pagedjs_area")) return;
+  e.preventDefault(); e.stopPropagation();
+  const on = !$("pages").classList.contains("pg-tight");
+  $("pages").classList.toggle("pg-tight", on); store.set("thync.pgtight", on ? "1" : "0");
+  getSelection().removeAllRanges();
+  toast(on ? "ページの余白を折りたたみました（もう一度ダブルクリックで戻す）" : "ページの余白を戻しました");
+  updateInd(false);
+}, true);
+if (store.get("thync.pgtight") === "1") $("pages").classList.add("pg-tight");
 function applyViewMode() {
   for (const b of document.querySelectorAll("[data-vm]")) b.setAttribute("aria-pressed", String(b.dataset.vm === viewMode));
   const page = viewMode === "page";
@@ -6082,6 +6154,7 @@ function applyViewMode() {
   $("page-count").textContent = "";
   if (page) { editors = []; renderPages(); }
   else { pagesToken++; }
+  updateInd(true);
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-vm]"); if (!b) return;
