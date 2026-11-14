@@ -152,6 +152,12 @@ textarea {
 .gl-src { }
 .gl-tr { }
 .sc { font-variant: small-caps; letter-spacing: .02em; }
+/* 傍点：{boten:…}。横書きでは字の上、縦書きでは右に「﹅」 */
+.boten { -webkit-text-emphasis: filled sesame; text-emphasis: filled sesame; -webkit-text-emphasis-position: over right; text-emphasis-position: over right; }
+/* 編集欄でも見た目どおりに（{sc:…} は小型大文字、{boten:…} は傍点） */
+.wy-sc { font-variant: small-caps; letter-spacing: .02em; }
+.ta-back .wy-sc { font-variant: normal; letter-spacing: normal; }  /* テキスト欄の下絵は字幅を変えない（カーソルとずれないように） */
+.wy-bt { -webkit-text-emphasis: filled sesame; text-emphasis: filled sesame; -webkit-text-emphasis-position: over right; text-emphasis-position: over right; }
 .xref { color: var(--accent); text-decoration: none; cursor: pointer; }
 .xref:hover { text-decoration: underline; }
 .xref.bad { color: var(--bad); font-weight: 600; cursor: help; }
@@ -563,7 +569,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.41</div>
+    <div class="ver">v1.42</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -718,7 +724,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <div class="kp-head"><b>ショートカット（Mac）</b><button type="button" id="kp-close">閉じる</button></div>
     <div class="kp-body">
       <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌘+クリック（タグ・コードの上）</kbd></td><td>そのタグ・コードを消す（#タグ・@タグ・{lbl:…}・{ref:…} など。{sc:…} のような囲みは中身を残して外す）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌥+↑ ／ ↓</kbd></td><td>横の位置をそのままに、上／下の行へカーソルを移す（bulletをまたいでも）</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>bulletを子ごとすぐ下に複製（中の {lbl:…} は付け替える：zzzb のような連番なら zzzc と続け、それ以外はランダムの3字。範囲を選んでいるときはまとめて）</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>Backspace（行頭）</kbd></td><td>前の行につなぐ（子は前の行の子になる）</td></tr><tr><td><kbd>⇧+⌥+⌘+↑ ／ ↓</kbd></td><td>このbulletの変更履歴を開く（↑↓で選び Return で差し替え・Escで閉じる・各版を「コピー」できる）</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
-      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:xxx}（xxx はまだ使っていない小文字3字のランダム）</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex {lbl:xxx}（xxx はまだ使っていない小文字3字。#ex {lbl:zzz} の子なら zzza, zzzb…）</td></tr><tr><td><kbd>⇧+⌥+⌘+5</kbd></td><td>#ex {lbl:xxx}（xxx はいつもランダムの3字）</td></tr><tr><td><kbd>⇧+⌥+⌘+1</kbd></td><td>#sec {lbl:xxx}（xxx はランダムの3字）</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>カーソルの場所に #p（そこで段落を改める）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>カーソルの場所に #br（そこで字下げなしに改行）</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr><tr><td><kbd>{lbl:…}・{ref:…} などをドラッグ</kbd></td><td>その記法を落とした場所へ移す（クリックはふつうの文字の編集）</td></tr><tr><td><kbd>Shift+↑ ／ ↓</kbd></td><td>最初／最後の表示行で押すとbullet全体を選び、続けて押すと上下の兄弟を選択に加える</td></tr></table>
+      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:xxx}（xxx はまだ使っていない小文字3字のランダム）</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}（小型大文字。選んだ文字があれば囲む）</td></tr><tr><td><kbd>⌘+⌥+Shift+B</kbd></td><td>{boten:▮}（傍点。選んだ文字があれば囲む）</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex {lbl:xxx}（xxx はまだ使っていない小文字3字。#ex {lbl:zzz} の子なら zzza, zzzb…）</td></tr><tr><td><kbd>⇧+⌥+⌘+5</kbd></td><td>#ex {lbl:xxx}（xxx はいつもランダムの3字）</td></tr><tr><td><kbd>⇧+⌥+⌘+1</kbd></td><td>#sec {lbl:xxx}（xxx はランダムの3字）</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>カーソルの場所に #p（そこで段落を改める）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>カーソルの場所に #br（そこで字下げなしに改行）</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr><tr><td><kbd>{lbl:…}・{ref:…} などをドラッグ</kbd></td><td>その記法を落とした場所へ移す（クリックはふつうの文字の編集）</td></tr><tr><td><kbd>Shift+↑ ／ ↓</kbd></td><td>最初／最後の表示行で押すとbullet全体を選び、続けて押すと上下の兄弟を選択に加える</td></tr></table>
       <h4>覚え書き：[J-1] のような通し番号（仮説・一般化など）</h4><table><tr><td><kbd>#HBJ-</kbd></td><td>[J-1]、[J-2]… と角かっこで通し番号（B = bracket）</td></tr><tr><td><kbd>#HPJ-</kbd></td><td>(J-1)、(J-2)… と丸かっこで（P = parenthesis）</td></tr><tr><td><kbd>#HJ-</kbd></td><td>J-1、J-2… とかっこなしで</td></tr><tr><td><kbd>#HB</kbd></td><td>接頭辞なし：[1]、[2]…</td></tr><tr><td><kbd>#HBG- {lbl:x}</kbd></td><td>「J-」の部分は英数字＋「-」なら何でもよく、接頭辞ごとに別々に 1, 2, 3… と数える。{lbl:x} を付ければ {ref:x} で [G-1]、{refn:x} で G-1 と参照できる</td></tr></table>
     </div>
   </div>
@@ -1426,6 +1432,7 @@ function compileOne(tree, opts) {
     function wrap(name, inner) {
       switch (name) {
         case "sc": return `<span class="sc">${inner}</span>`;
+        case "boten": case "bt": return `<span class="boten">${inner}</span>`;
         case "sup": return `<sup>${inner}</sup>`;
         case "sub": return `<sub>${inner}</sub>`;
         case "t": return `t<sub>${inner}</sub>`;
@@ -2021,6 +2028,7 @@ const SHORTCUTS = [
   { mods: "cos", code: "KeyR", text: "{ref:▮}" },
   { mods: "cos", code: "KeyL", label: "{lbl:…}（ランダム）", text: () => `{lbl:${newExLabel(-1)}} ▮` },
   { mods: "cos", code: "KeyK", text: "{sc:▮}" },
+  { mods: "cos", code: "KeyB", text: "{boten:▮}" },
   { mods: "cos", code: "KeyD", text: "#draft ▮" },
   { mods: "co", code: "Digit1", text: "#sec ▮" },
   { mods: "cos", code: "Digit1", label: "#sec {lbl:…}（ランダム）", text: () => `#sec {lbl:${newExLabel(-1)}} ▮` },
@@ -4757,10 +4765,20 @@ renderHist();
 /* ---------- 入力欄の記法の色分け ---------- */
 const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid", "evenly", "toc", "toc-n", "toc-1", "toc-2", "toc-3", "toc-4", "toc-5"]);
 const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|repn|reptext|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
+const WY_CLASS = { sc: "wy-sc", boten: "wy-bt", bt: "wy-bt" };
 function hlRest(s) {
   let out = "", last = 0;
+  // {sc:…}・{boten:…} の中の文字は、編集欄でも小型大文字・傍点で見せる（入れ子も数える）
+  const open = [];
+  const plain = t => { if (!t) return ""; const cl = [...new Set(open.filter(Boolean))].join(" "); return cl ? `<span class="${cl}">${esc(t)}</span>` : esc(t); };
   s.replace(HL_RE, (m, lbl, ref, cmd, tag, html, br, off) => {
-    out += esc(s.slice(last, off));
+    out += plain(s.slice(last, off));
+    if (cmd) {
+      const op = m.match(/^\{([a-z]+):$/);
+      if (op) open.push(WY_CLASS[op[1]] || "");
+      else if (/^[_^]\{$/.test(m)) open.push("");
+      else if (m === "}" && open.length) open.pop();
+    }
     const dups = (lbl || ref) ? labelScan().dups : null;
     const isDup = lbl ? dups.has(lbl.slice(5, -1).trim()) : ref ? ref.replace(/^\{[a-z]+:|\}$/g, "").split(/[,~]/).some(k => dups.has(k.trim().split(".")[0])) : false;
     const cls = isDup ? (lbl ? "hl-lbl hl-dup" : "hl-ref hl-dup") : lbl ? "hl-lbl" : ref ? "hl-ref" : cmd ? "hl-cmd" : tag ? (tag[0] === "#" && KNOWN_TAG.has(tag.slice(1).toLowerCase()) || /^#H[BP]?([A-Za-z0-9]+-)?$/.test(tag) ? "hl-tag" : "hl-tag2") : html ? "hl-html" : "hl-br";
@@ -4768,7 +4786,7 @@ function hlRest(s) {
     last = off + m.length;
     return m;
   });
-  return out + esc(s.slice(last));
+  return out + plain(s.slice(last));
 }
 function hlLine(l) {
   const m = l.match(/^(\s*)([-•](?:\s|$))?/);
