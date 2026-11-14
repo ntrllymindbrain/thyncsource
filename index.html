@@ -502,6 +502,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .paper p[data-env="abstract"] { text-indent: 1em; }
 .ref-entry { text-indent: -2em !important; padding-left: 2em; margin: 0 0 .35em; text-align: left; }
 .fns li.fn-star { list-style: none; }
+.hyp-b { font-weight: 700; }
 sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 .03em; color: var(--accent); }
 /* 全角の閉じかっこの右の空きを、その書体の半角の形で詰める（書体が対応していなければそのまま） */
 .jp-halt { font-feature-settings: "halt" 1; }
@@ -600,7 +601,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.55</div>
+    <div class="ver">v1.56</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -760,7 +761,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
       <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:xxx}（xxx はまだ使っていない小文字3字のランダム）</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}（小型大文字。選んだ文字があれば囲む）</td></tr><tr><td><kbd>⌘+⌥+Shift+B</kbd></td><td>{boten:▮}（傍点。選んだ文字があれば囲む）</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex {lbl:xxx}（xxx はまだ使っていない小文字3字。#ex {lbl:zzz} の子なら zzza, zzzb…）</td></tr><tr><td><kbd>⇧+⌥+⌘+5</kbd></td><td>#ex {lbl:xxx}（xxx はいつもランダムの3字）</td></tr><tr><td><kbd>⇧+⌥+⌘+1</kbd></td><td>#sec {lbl:xxx}（xxx はランダムの3字）</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>カーソルの場所に #p（そこで段落を改める）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>カーソルの場所に #br（そこで字下げなしに改行）</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr><tr><td><kbd>{lbl:…}・{ref:…} などをドラッグ</kbd></td><td>その記法を落とした場所へ移す（クリックはふつうの文字の編集）</td></tr><tr><td><kbd>Shift+↑ ／ ↓</kbd></td><td>最初／最後の表示行で押すとbullet全体を選び、続けて押すと上下の兄弟を選択に加える</td></tr></table>
       <p style="font-size:12px;color:var(--muted)">自分用のショートカット（このブラウザだけに保存）は、右端のショートカットのアイコン →「＋ 自分用を追加」で登録できます。</p>
       <h4>覚え書き：脚注</h4><table><tr><td><kbd>- 本文の文。<br>&nbsp;&nbsp;- 脚注の中身 #fn</kbd></td><td>子のbulletに #fn を付けると脚注になり、親の文の末尾に番号が付く（例文の行の子でも同じ）</td></tr><tr><td><kbd>#fnmark（#footnotemark）</kbd></td><td>文の好きな位置に番号だけを置く（例文の中でも）。中身は書かない</td></tr><tr><td><kbd>#fntext（#footnotetext）</kbd></td><td>そのbulletの中身が、まだ中身のない #fnmark の脚注になる（前から順に1つずつ対応。本文には出ない）。置き場所はどこでもよい</td></tr><tr><td><kbd>#acknowledgmentsfn</kbd></td><td>謝辞を「*」の脚注にする（タイトルに付く）</td></tr></table>
-      <h4>覚え書き：[J-1] のような通し番号（仮説・一般化など）</h4><table><tr><td><kbd>#HBJ-</kbd></td><td>[J-1]、[J-2]… と角かっこで通し番号（B = bracket）</td></tr><tr><td><kbd>#HPJ-</kbd></td><td>(J-1)、(J-2)… と丸かっこで（P = parenthesis）</td></tr><tr><td><kbd>#HJ-</kbd></td><td>J-1、J-2… とかっこなしで</td></tr><tr><td><kbd>#HB</kbd></td><td>接頭辞なし：[1]、[2]…</td></tr><tr><td><kbd>#HBG- {lbl:x}</kbd></td><td>「J-」の部分は英数字＋「-」なら何でもよく、接頭辞ごとに別々に 1, 2, 3… と数える。{lbl:x} を付ければ {ref:x} で [G-1]、{refn:x} で G-1 と参照できる</td></tr></table>
+      <h4>覚え書き：[J-1] のような通し番号（仮説・一般化など）</h4><table><tr><td><kbd>#HBJ-</kbd></td><td>[J-1]、[J-2]… と角かっこで通し番号（B = bracket）</td></tr><tr><td><kbd>#HPJ-</kbd></td><td>(J-1)、(J-2)… と丸かっこで（P = parenthesis）</td></tr><tr><td><kbd>#HJ-</kbd></td><td>J-1、J-2… とかっこなしで</td></tr><tr><td><kbd>#HB</kbd></td><td>接頭辞なし：[1]、[2]…</td></tr><tr><td><kbd>#HBBJ- ／ #HPBJ-</kbd></td><td>かっこの印の後ろにもう1つ B を足すと、番号を太字で：<b>[J-1]</b>、<b>(J-1)</b>（数は #HBJ- と通しで数える）</td></tr><tr><td><kbd>#HBG- {lbl:x}</kbd></td><td>「J-」の部分は英数字＋「-」なら何でもよく、接頭辞ごとに別々に 1, 2, 3… と数える。{lbl:x} を付ければ {ref:x} で [G-1]、{refn:x} で G-1 と参照できる</td></tr></table>
     </div>
   </div>
   <div class="clip-dock" id="clip-dock">
@@ -960,8 +961,9 @@ function compileOne(tree, opts) {
     const tags = new Set(), labels = [];
     let t = node.name || "";
     // 仮説などの通し番号：#H（そのまま）・#HB（[ ]）・#HP（( )）、後ろに「J-」などの接頭辞
-    const hm = t.match(/(?:^|\s)#H([BP]?)((?:[A-Za-z0-9]+-)?)(?=\s|$)/);
-    const hyp = hm ? { style: hm[1] || "", prefix: hm[2] || "" } : null;
+    // #HBJ- など。かっこの印（B=[ ]・P=( )）の後ろにもう1つ B があれば番号を太字に（#HBBJ- → [J-1] を太字）
+    const hm = t.match(/(?:^|\s)#H([BP]?)(B?)((?:[A-Za-z0-9]+-)?)(?=\s|$)/);
+    const hyp = hm ? { style: hm[1] || "", bold: !!hm[2], prefix: hm[3] || "" } : null;
     t = t.replace(/(^|\s)#hfill(?=\s|$)/gi, (m, pre) => { tags.add("hfill"); return pre + "\uE000 "; });
     // 脚注の印だけ（#fnmark・#footnotemark）：その場所に脚注番号。中身は後ろの #fntext から（LaTeX の \footnotemark／\footnotetext）
     { let k = 0; const nums = fnMarkNums.get(node) || []; t = t.replace(/(^|\s)#(?:fnmark|footnotemark)(?=\s|$)/gi, (m, pre) => pre.replace(/\s$/, "") + `\uE005${nums[k++] || 0}\uE006`); }
@@ -970,7 +972,7 @@ function compileOne(tree, opts) {
     // 文の途中の #p（段落を改める）・#br（字下げなしの改行）は、その場所の印にする。行末のものはこれまでどおりタグとして
     t = t.replace(/(^|\s)#(p|br)(?=\s)(?!\s*(?:#[\p{L}\p{N}_-]+\s*)*$)/giu, (m, pre, w) => pre + (w.toLowerCase() === "p" ? "\uE001 " : "\uE002 "));
     // タグ：記法のタグ（#sec など）はいつも外す。それ以外の #タグ・@タグは「タグを表示」のときだけ残す
-    t = t.replace(/(^|\s)#([\p{L}\p{N}_-]+)/gu, (m, pre, tag) => { const low = tag.toLowerCase(); tags.add(low); return opts.showTags && !KNOWN_TAG.has(low) && !/^H[BP]?([A-Za-z0-9]+-)?$/.test(tag) ? m : pre; });
+    t = t.replace(/(^|\s)#([\p{L}\p{N}_-]+)/gu, (m, pre, tag) => { const low = tag.toLowerCase(); tags.add(low); return opts.showTags && !KNOWN_TAG.has(low) && !/^H[BP]?B?([A-Za-z0-9]+-)?$/.test(tag) ? m : pre; });
     t = t.replace(/(^|\s)@([\p{L}\p{N}_-]+)/gu, (m, pre) => opts.showTags ? m : pre);
     t = t.replace(/\{lbl:([^}]*)\}/g, (m, l) => { if (l.trim()) labels.push(l.trim()); return ""; });
     t = t.replace(/[ \t　]{2,}/g, " ").trim();
@@ -1006,13 +1008,13 @@ function compileOne(tree, opts) {
   const hypCount = new Map(), hypShow = new Map();
   function hypify(node, inf, text, ex) {
     if (!inf.hyp) return text;
-    const { style, prefix } = inf.hyp;
+    const { style, prefix, bold } = inf.hyp;
     const n = (hypCount.get(prefix) || 0) + 1; hypCount.set(prefix, n);
     const bare = prefix + n;
     const shown = style === "B" ? `[${bare}]` : style === "P" ? `(${bare})` : bare;
     const key = "h" + hypShow.size;
     const id = uid();
-    hypShow.set(key, { shown, id });
+    hypShow.set(key, { shown, id, bold });
     inf.labels.forEach(l => defLabel(l, { kind: "hyp", shown, bare, id, ex }, inf.line));
     return `{hyp:${key}} ` + text;
   }
@@ -1532,7 +1534,7 @@ function compileOne(tree, opts) {
         case "j": return esc(arg);
         case "cite": return `<span class="cite">[${esc(arg)}]</span>`;
         case "mirror": return `<span class="mir" title="ミラー：${esc(arg)}">◇</span>`;
-        case "hyp": { const hs = hypShow.get(arg); return hs ? `<span class="hyp" id="${hs.id}">${esc(hs.shown)}</span>` : ""; }
+        case "hyp": { const hs = hypShow.get(arg); return hs ? `<span class="hyp${hs.bold ? " hyp-b" : ""}" id="${hs.id}">${esc(hs.shown)}</span>` : ""; }
         case "exref": {
           const r = labels.get(arg.trim());
           if (r && r.kind === "hyp") { if (!r.ex) { warn(`「${arg.trim()}」は例文の中にありません。`); return bad(arg); } return link({ id: r.ex.id, sub: r.ex.sub }, esc(fmt(r.ex.num + r.ex.sub.join("")))); }
