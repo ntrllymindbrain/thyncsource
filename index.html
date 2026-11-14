@@ -559,7 +559,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.38</div>
+    <div class="ver">v1.39</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -3032,6 +3032,12 @@ class OutlineView {
     // ⇧↑↓：文字の選択が端まで来たら、そのbullet全体の選択に切り替える（Workflowyと同じ）
     if (bare && e.shiftKey && (k === "ArrowUp" || k === "ArrowDown") && !e.isComposing) {
       const up = k === "ArrowUp", s0 = ta.selectionStart, e0 = ta.selectionEnd, L = ta.value.length;
+      // 文字がもう全部選ばれている：そのbulletは選んだものとみなし、1打で隣のbulletまで選択を広げる
+      if (L > 0 && s0 === 0 && e0 === L) {
+        e.preventDefault(); this.startSel(i);
+        if (this.sel) this.host.dispatchEvent(new KeyboardEvent("keydown", { key: k, code: k, shiftKey: true, bubbles: true, cancelable: true }));
+        return;
+      }
       if ((up && s0 === 0) || (!up && e0 === L)) { e.preventDefault(); this.startSel(i); return; }
       // 文字の選択の端が、もう最初（最後）の行にある：ブラウザに行末まで選ばせず、すぐbullet全体の選択へ
       if (ta._rich && onEdgeLine(ta, up ? s0 : e0, up)) { e.preventDefault(); this.startSel(i); return; }
