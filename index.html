@@ -569,7 +569,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.43</div>
+    <div class="ver">v1.44</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1313,7 +1313,8 @@ function compileOne(tree, opts) {
     return smartJoin([head, ...subs].filter(Boolean));
   }
   let repTextDepth = 0;
-  function repTextHTML(arg) {
+  // cut：末尾から外す文字数（{reptext-2:x} なら 2。句点や「// (日本語)」のような文末を外したいとき）
+  function repTextHTML(arg, cut = 0) {
     const r = lookup(arg);
     if (!r || r.kind !== "ex" || !byId.has(r.id)) return bad(arg);
     const ex = byId.get(r.id);
@@ -1326,9 +1327,13 @@ function compileOne(tree, opts) {
       const head = ex.headLines ? smartJoin(ex.headLines.map(l => l.text).filter(Boolean)) : "";
       t = smartJoin([head, ex.single ? exPlain(ex.single) : "", ...ex.items.map(exPlain)].filter(Boolean));
     }
+    if (cut > 0) {
+      if (cut > 20) { warn(`{reptext-${cut}:…} は20字までです。20字だけ外します。`); cut = 20; }
+      const cs = Array.from(t); t = cs.slice(0, Math.max(0, cs.length - cut)).join("").replace(/\s+$/, "");
+    }
     if (repTextDepth > 3) return esc(t);
     repTextDepth++;
-    try { return `<span class="reptext" data-code="${esc("{reptext:" + arg + "}")}">${R0(t)}</span>`; } finally { repTextDepth--; }
+    try { return `<span class="reptext" data-code="${esc("{reptext" + (cut ? "-" + cut : "") + ":" + arg + "}")}">${R0(t)}</span>`; } finally { repTextDepth--; }
   }
   const bad = key => `<span class="xref bad" title="未定義：${esc(key)}">(??)</span>`;
   const link = (r, inner) => `<a class="xref${r.dup ? " dup" : ""}"${r.dup ? ` title="このラベルは何か所にもあります（上でいちばん近いものの番号を出しています）"` : ""} data-target="${r.sub && r.sub.length ? r.id + "-" + r.sub.join("") : r.id}">${inner}</a>`;
@@ -1373,12 +1378,12 @@ function compileOne(tree, opts) {
         const ch = s[i];
         if (ch === "}" && inBrace) { i++; return out; }
         if (ch === "{") {
-          const m = s.slice(i).match(/^\{([a-z]+|#|@|\/\/)(:|\})/);
+          const m = s.slice(i).match(/^\{(reptext-\d{1,2}|[a-z]+|#|@|\/\/)(:|\})/);
           if (!m) { out += "{"; i++; continue; }
           const name = m[1];
           i += m[0].length;
           if (m[2] === "}") { out += simple(name); continue; }
-          if (RAW.has(name)) {
+          if (RAW.has(name) || /^reptext-\d+$/.test(name)) {
             const end = s.indexOf("}", i);
             const arg = end < 0 ? s.slice(i) : s.slice(i, end);
             i = end < 0 ? s.length : end + 1;
@@ -1440,6 +1445,7 @@ function compileOne(tree, opts) {
       }
     }
     function raw(name, arg) {
+      if (/^reptext-\d+$/.test(name)) return repTextHTML(arg, +name.slice(8));
       switch (name) {
         case "img": case "wfimg": return imgHTML(name, arg);
         case "ref": case "rep": case "repn": return refHTML(arg, false).replace(/<a class="xref"/g, `<a class="xref" draggable="true" data-code="${esc("{ref:" + arg + "}")}"`);
@@ -4766,7 +4772,7 @@ renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
 const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid", "evenly", "toc", "toc-n", "toc-1", "toc-2", "toc-3", "toc-4", "toc-5"]);
-const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|repn|reptext|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
+const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|repn|reptext(?:-\d{1,2})?|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 const WY_CLASS = { sc: "wy-sc", boten: "wy-bt", bt: "wy-bt" };
 function hlRest(s) {
   let out = "", last = 0;
