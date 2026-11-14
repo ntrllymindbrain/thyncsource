@@ -600,7 +600,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.53</div>
+    <div class="ver">v1.54</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -6013,6 +6013,15 @@ ${c.indent ? "" : ".paper.paged p { text-indent: 0; }"}
 /* 例文はふつうにページをまたいでよい。グロス（原文・グロス・訳）のまとまりと、1行ぶんの中身だけは分けない */
 .paper.paged .toc-i, .paper.paged .gl-block, .paper.paged .gl-words, .paper.paged .gl-w { break-inside: avoid; }
 .paper.paged .ex-num { break-after: avoid; }
+/* ページ表示では、例文を格子（grid）でなく普通の流れで組む。番号・a.・判定記号は左に置くだけにして、
+   ページの切れ目で本文が丸ごと次のページへ送られないようにする（格子の中は途中で分けにくいため） */
+.paper.paged .ex { display: block; position: relative; padding-left: var(--ex-num, 2.75em); }
+.paper.paged .ex > .ex-num { position: absolute; left: 0; top: 0; }
+.paper.paged .ex-item { display: block; position: relative; padding-left: calc(var(--ex-let, 1.75em) + var(--jw, 0px)); }
+.paper.paged .ex-item > .ex-letter { position: absolute; left: 0; top: 0; }
+.paper.paged .ex-item > .judg { position: absolute; left: calc(var(--ex-let, 1.75em) + var(--jw, 0px)); top: 0; width: 0; }
+.paper.paged .ex-line { display: block; position: relative; padding-left: var(--jw, 0px); }
+.paper.paged .ex-line > .judg { position: absolute; left: var(--jw, 0px); top: 0; width: 0; }
 .paper.paged .pagebreak { break-before: page; height: 0; margin: 0; border: 0; }
 .paper.paged .pagebreak span, .paper.paged .pnstart span { display: none; }
 .paper.paged .pnstart { height: 0; margin: 0; }
