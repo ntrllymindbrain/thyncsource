@@ -578,7 +578,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.48</div>
+    <div class="ver">v1.49</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -735,6 +735,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
       <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌘+クリック（タグ・コードの上）</kbd></td><td>そのタグ・コードを消す（#タグ・@タグ・{lbl:…}・{ref:…} など。{sc:…} のような囲みは中身を残して外す）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌥+↑ ／ ↓</kbd></td><td>横の位置をそのままに、上／下の行へカーソルを移す（bulletをまたいでも）</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>bulletを子ごとすぐ下に複製（中の {lbl:…} は付け替える：zzzb のような連番なら zzzc と続け、それ以外はランダムの3字。範囲を選んでいるときはまとめて）</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>Backspace（行頭）</kbd></td><td>前の行につなぐ（子は前の行の子になる）</td></tr><tr><td><kbd>⇧+⌥+⌘+↑ ／ ↓</kbd></td><td>このbulletの変更履歴を開く（↑↓で選び Return で差し替え・Escで閉じる・各版を「コピー」できる）</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
       <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:xxx}（xxx はまだ使っていない小文字3字のランダム）</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}（小型大文字。選んだ文字があれば囲む）</td></tr><tr><td><kbd>⌘+⌥+Shift+B</kbd></td><td>{boten:▮}（傍点。選んだ文字があれば囲む）</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex {lbl:xxx}（xxx はまだ使っていない小文字3字。#ex {lbl:zzz} の子なら zzza, zzzb…）</td></tr><tr><td><kbd>⇧+⌥+⌘+5</kbd></td><td>#ex {lbl:xxx}（xxx はいつもランダムの3字）</td></tr><tr><td><kbd>⇧+⌥+⌘+1</kbd></td><td>#sec {lbl:xxx}（xxx はランダムの3字）</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>カーソルの場所に #p（そこで段落を改める）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>カーソルの場所に #br（そこで字下げなしに改行）</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr><tr><td><kbd>{lbl:…}・{ref:…} などをドラッグ</kbd></td><td>その記法を落とした場所へ移す（クリックはふつうの文字の編集）</td></tr><tr><td><kbd>Shift+↑ ／ ↓</kbd></td><td>最初／最後の表示行で押すとbullet全体を選び、続けて押すと上下の兄弟を選択に加える</td></tr></table>
       <p style="font-size:12px;color:var(--muted)">自分用のショートカット（このブラウザだけに保存）は、右端のショートカットのアイコン →「＋ 自分用を追加」で登録できます。</p>
+      <h4>覚え書き：脚注</h4><table><tr><td><kbd>- 本文の文。<br>&nbsp;&nbsp;- 脚注の中身 #fn</kbd></td><td>子のbulletに #fn を付けると脚注になり、親の文の末尾に番号が付く（例文の行の子でも同じ）</td></tr><tr><td><kbd>#fnmark（#footnotemark）</kbd></td><td>文の好きな位置に番号だけを置く（例文の中でも）。中身は書かない</td></tr><tr><td><kbd>#fntext（#footnotetext）</kbd></td><td>そのbulletの中身が、まだ中身のない #fnmark の脚注になる（前から順に1つずつ対応。本文には出ない）。置き場所はどこでもよい</td></tr><tr><td><kbd>#acknowledgmentsfn</kbd></td><td>謝辞を「*」の脚注にする（タイトルに付く）</td></tr></table>
       <h4>覚え書き：[J-1] のような通し番号（仮説・一般化など）</h4><table><tr><td><kbd>#HBJ-</kbd></td><td>[J-1]、[J-2]… と角かっこで通し番号（B = bracket）</td></tr><tr><td><kbd>#HPJ-</kbd></td><td>(J-1)、(J-2)… と丸かっこで（P = parenthesis）</td></tr><tr><td><kbd>#HJ-</kbd></td><td>J-1、J-2… とかっこなしで</td></tr><tr><td><kbd>#HB</kbd></td><td>接頭辞なし：[1]、[2]…</td></tr><tr><td><kbd>#HBG- {lbl:x}</kbd></td><td>「J-」の部分は英数字＋「-」なら何でもよく、接頭辞ごとに別々に 1, 2, 3… と数える。{lbl:x} を付ければ {ref:x} で [G-1]、{refn:x} で G-1 と参照できる</td></tr></table>
     </div>
   </div>
@@ -938,6 +939,8 @@ function compileOne(tree, opts) {
     const hm = t.match(/(?:^|\s)#H([BP]?)((?:[A-Za-z0-9]+-)?)(?=\s|$)/);
     const hyp = hm ? { style: hm[1] || "", prefix: hm[2] || "" } : null;
     t = t.replace(/(^|\s)#hfill(?=\s|$)/gi, (m, pre) => { tags.add("hfill"); return pre + "\uE000 "; });
+    // 脚注の印だけ（#fnmark・#footnotemark）：その場所に脚注番号。中身は後ろの #fntext から（LaTeX の \footnotemark／\footnotetext）
+    { let k = 0; const nums = fnMarkNums.get(node) || []; t = t.replace(/(^|\s)#(?:fnmark|footnotemark)(?=\s|$)/gi, (m, pre) => pre.replace(/\s$/, "") + `\uE005${nums[k++] || 0}\uE006`); }
     // 右寄せの部分の全角スペースは、行末でも消さずに残す（「(英語)　」のように幅をそろえるため）
     if (tags.has("hfill")) { const k = t.indexOf("\uE000"); t = t.slice(0, k) + t.slice(k).replace(/\u3000/g, "\uE004"); }
     // 文の途中の #p（段落を改める）・#br（字下げなしの改行）は、その場所の印にする。行末のものはこれまでどおりタグとして
@@ -948,8 +951,28 @@ function compileOne(tree, opts) {
     t = t.replace(/\{lbl:([^}]*)\}/g, (m, l) => { if (l.trim()) labels.push(l.trim()); return ""; });
     t = t.replace(/[ \t　]{2,}/g, " ").trim();
     const r = { tags, labels, text: t, hyp, line: node.line };
+    if (tags.has("fntext") || tags.has("footnotetext")) { r.fntext = true; tags.add("fn"); }  // 本文には出さない（脚注の中身だけ）
     cache.set(node, r);
     return r;
+  }
+  // 脚注の番号を、文書の順に前もって決めておく（#fn と #fnmark が混ざっても順番どおりになるように）
+  // 順：その行の #fnmark → その行の #fn の子 → ほかの子
+  const fnNum = new Map(), fnMarkNums = new Map(), fnMarkSlots = [], fnTextQ = [];
+  {
+    const rawVis = n => !(opts.hideCompleted && n.completed) && !/(^|\s)#(draft|d)(?=\s|$)/i.test(n.name || "");
+    const isFn = n => /(^|\s)#fn(?=\s|$)/i.test(n.name || ""), isFt = n => /(^|\s)#(fntext|footnotetext)(?=\s|$)/i.test(n.name || "");
+    const marksIn = n => ((n.name || "").match(/(^|\s)#(?:fnmark|footnotemark)(?=\s|$)/gi) || []).length;
+    let N = 0;
+    (function f(n) {
+      for (const c of n.children) {
+        if (!rawVis(c)) continue;
+        if (isFt(c)) { fnTextQ.push(c); continue; }
+        const m = marksIn(c); if (m) { const a = []; for (let k = 0; k < m; k++) { a.push(++N); fnMarkSlots.push(N); } fnMarkNums.set(c, a); }
+        if (isFn(c)) { fnNum.set(c, ++N); continue; }
+        for (const k of c.children) if (rawVis(k) && isFn(k) && !isFt(k)) fnNum.set(k, ++N);
+        f({ children: c.children.filter(k => !isFn(k)) });
+      }
+    })(tree);
   }
   const visible = n => !(opts.hideCompleted && n.completed) && !info(n).tags.has("draft") && !info(n).tags.has("d");
   // ミラー用：ラベル → ノード
@@ -1044,7 +1067,12 @@ function compileOne(tree, opts) {
     for (const k of node.children) if (visible(k)) parts.push(collectText(k));
     return smartJoin(parts.filter(Boolean));
   }
-  const addFn = node => { footnotes.push({ text: collectText(node), line: node.line }); return footnotes.length; };
+  const addFn = node => {
+    if (info(node).fntext) return null;
+    const n = fnNum.get(node);
+    if (n) { footnotes[n - 1] = { text: collectText(node), line: node.line }; return n; }
+    footnotes.push({ text: collectText(node), line: node.line }); return footnotes.length;
+  };
 
   function splitJudg(t) {
     const m = t.match(/^(\?\?\?|\?\?\*|\?\*|\?\?|\*\*|\*|\?|%|\{#\}|\{j:([^}]*)\})\s*/);
@@ -1270,6 +1298,7 @@ function compileOne(tree, opts) {
         blocks.push({ type: "rep", label: rnm[1].trim(), newNum: num, newId: id, newLabel: inf.labels[0] || "", min: c.line, max: c.lastLine });
         continue;
       }
+      if (inf.fntext) continue;
       if (inf.tags.has("fn")) {
         if (para && para.parts.length) { para.parts[para.parts.length - 1].fns.push(addFn(c)); touch(para, c.line, subEnd(c)); }
         else warn("脚注（#fn）の付け先になる文が見つかりません。");
@@ -1279,6 +1308,7 @@ function compileOne(tree, opts) {
       if (text === "//" || /\s\/\/$/.test(text)) { end = true; text = text.replace(/\s*\/\/$/, ""); if (!warnedSlash) { warnedSlash = true; warn("行末の「//」はやめました。段落の区切りは #p（⇧Return）に書き換えてください。"); } }
       const fnNodes = c.children.filter(k => visible(k) && info(k).tags.has("fn"));
       const fns = fnNodes.map(addFn);
+      let fnPlaced = false;
       if (text) text = hypify(c, inf, text, null);
       // 文の途中の #p：そこで段落を改める
       if (text && text.includes("\uE001")) {
@@ -1289,10 +1319,12 @@ function compileOne(tree, opts) {
         });
         text = "";
         if (fns.length && !segs[segs.length - 1] && para && para.parts.length) para.parts[para.parts.length - 1].fns.push(...fns);
+        fnPlaced = true;
       }
-      if (text) { addSentence(text, fns, c.line); if (c.completed) para.parts[para.parts.length - 1].done = true; }
+      if (text) { addSentence(text, fns, c.line); fnPlaced = true; if (c.completed) para.parts[para.parts.length - 1].done = true; }
       if (br && para && para.parts.length) para.parts[para.parts.length - 1].br = true;
-      else if (fns.length && para && para.parts.length) para.parts[para.parts.length - 1].fns.push(...fns);
+      // 文のない行の #fn：前の文に付ける（文があれば上で付け済み。二重に付けない）
+      if (!fnPlaced && fns.length && para && para.parts.length) para.parts[para.parts.length - 1].fns.push(...fns);
       if (para) { touch(para, c.line, c.lastLine); fnNodes.forEach(k => touch(para, k.line, subEnd(k))); }
       walk({ children: c.children.filter(k => !info(k).tags.has("fn")) }, depth);
       if (end) flush();
@@ -1339,6 +1371,7 @@ function compileOne(tree, opts) {
       const head = ex.headLines ? smartJoin(ex.headLines.map(l => l.text).filter(Boolean)) : "";
       t = smartJoin([head, ex.single ? exPlain(ex.single) : "", ...ex.items.map(exPlain)].filter(Boolean));
     }
+    t = t.replace(/\uE005\d+\uE006/g, "");
     if (cut > 0) {
       if (cut > 20) { warn(`{reptext-${cut}:…} は20字までです。20字だけ外します。`); cut = 20; }
       // #hfill の印（見えない）は数えない
@@ -1386,7 +1419,7 @@ function compileOne(tree, opts) {
   // #hfill：その位置から後ろを、その行の右端へ寄せる（TeX の \hfill）
   function R(s) {
     s = String(s).replace(/\s*[\uE001\uE002]\s*/g, "\uE003");
-    const html = R0(s).replace(/\uE003/g, "<br>"), k = html.indexOf("\uE000");
+    const html = R0(s).replace(/\uE003/g, "<br>").replace(/\uE005(\d+)\uE006/g, (m, n) => +n ? `<sup class="fnref"><a data-fn="${P}${n}">${n}</a></sup>` : ""), k = html.indexOf("\uE000");
     if (k < 0) return html;
     return html.slice(0, k).replace(/\s+$/, "") + `<span class="hfill">` + html.slice(k + 1).replace(/\uE000/g, "").replace(/^\s+/, "").replace(/\uE004/g, "\u3000") + `</span>`;
   }
@@ -1501,7 +1534,7 @@ function compileOne(tree, opts) {
     }
   })(tree, null);
   const cAttr = line => { if (line !== undefined) renderLine = line; return line === undefined ? "" : ` data-c="${colorSlot(line)}"` + lnAttr(line); };
-  const fnHTML = fns => (fns || []).map(n => `<sup class="fnref"><a data-fn="${P}${n}">${n}</a></sup>`).join("");
+  const fnHTML = fns => (fns || []).filter(Boolean).map(n => `<sup class="fnref"><a data-fn="${P}${n}">${n}</a></sup>`).join("");
   const isCJK = s => /[぀-ヿ㐀-鿿]/.test(s);
   function glossHTML(g) {
     if (g.plain) return g.plain.map((l, i) => `<div${cAttr(g.plainLines[i])}>${R(l)}</div>`).join("");
@@ -1635,6 +1668,20 @@ function compileOne(tree, opts) {
   }
   // 謝辞の脚注（*）：タイトルがなければ最初の見出しか段落に付ける
   if (star && !starUsed) { html = html.replace(/(<(?:h[1-4]|p)\b[^>]*>[\s\S]*?)(<\/(?:h[1-4]|p)>)/, `$1${star}$2`); }
+  // #fnmark の脚注の中身：#fntext を出てきた順に当てる
+  fnMarkSlots.forEach((n, j) => {
+    const ft = fnTextQ[j];
+    if (ft) footnotes[n - 1] = { text: collectText(ft), line: ft.line };
+    else { footnotes[n - 1] = { text: "", line: undefined }; warn("#fnmark に対応する #fntext が足りません（脚注の中身が空です）。"); }
+  });
+  if (fnTextQ.length > fnMarkSlots.length) warn("#fntext が #fnmark より多くあります。余った #fntext は使われていません。");
+  // 使われなかった番号があれば詰める
+  if (footnotes.length && [...footnotes.keys()].some(i => !footnotes[i])) {
+    const map = new Map(); let c = 0; footnotes.forEach((f, i) => { if (f) map.set(i + 1, ++c); });
+    const re = new RegExp(`data-fn="${P.replace(/[-]/g, "\\-")}(\\d+)">(\\d+)<`, "g");
+    html = html.replace(re, (m, a) => map.has(+a) ? `data-fn="${P}${map.get(+a)}">${map.get(+a)}<` : m);
+    footnotes.splice(0, footnotes.length, ...footnotes.filter(Boolean));
+  }
   if (footnotes.length || ackFn) html += `<ol class="fns">` +
     (ackFn ? `<li id="fn-${P}ack" class="fn-star" value="0"${cAttr(ackFn.line)}>${R(ackFn.text)}</li>` : "") +
     footnotes.map((f, i) => `<li id="fn-${P}${i + 1}"${cAttr(f.line)}${ackFn && i === 0 ? ` value="1"` : ""}>${R(f.text)}</li>`).join("") + `</ol>`;
@@ -4811,7 +4858,7 @@ renderMemos();
 renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
-const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid", "evenly", "toc", "toc-n", "toc-1", "toc-2", "toc-3", "toc-4", "toc-5"]);
+const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid", "evenly", "toc", "toc-n", "toc-1", "toc-2", "toc-3", "toc-4", "toc-5", "fnmark", "fntext", "footnotemark", "footnotetext"]);
 const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|repn|reptext(?:-\d{1,2})?|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 const WY_CLASS = { sc: "wy-sc", boten: "wy-bt", bt: "wy-bt" };
 function hlRest(s) {
