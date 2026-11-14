@@ -502,6 +502,10 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .paper p[data-env="abstract"] { text-indent: 1em; }
 .ref-entry { text-indent: -2em !important; padding-left: 2em; margin: 0 0 .35em; text-align: left; }
 .fns li.fn-star { list-style: none; }
+sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 .03em; color: var(--accent); }
+/* 全角の閉じかっこの右の空きを、その書体の半角の形で詰める（書体が対応していなければそのまま） */
+.jp-halt { font-feature-settings: "halt" 1; }
+.fn-keep { white-space: nowrap; }  /* かっこと番号の間で行が分かれないように */
 /* Web表示：脚注は、その番号を含む段落・例文のすぐ後ろに（短い罫線で区切る）。ページ表示ではページの下 */
 .fn-inline { margin: .5em 0 1.3em; font-size: .84em; line-height: 1.75; text-indent: 0; }
 .fn-inline::before { content: ""; display: block; width: 9em; border-top: 1px solid var(--rule); margin-bottom: .35em; }
@@ -596,7 +600,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.51</div>
+    <div class="ver">v1.52</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1702,6 +1706,7 @@ function compileOne(tree, opts) {
     html = html.replace(re, (m, a) => map.has(+a) ? `data-fn="${P}${map.get(+a)}">${map.get(+a)}<` : m);
     footnotes.splice(0, footnotes.length, ...footnotes.filter(Boolean));
   }
+  html = fnTypeset(html);
   if (footnotes.length || ackFn) html += `<ol class="fns">` +
     (ackFn ? `<li id="fn-${P}ack" class="fn-star" value="0"${cAttr(ackFn.line)}>${R(ackFn.text)}</li>` : "") +
     footnotes.map((f, i) => `<li id="fn-${P}${i + 1}"${cAttr(f.line)}${ackFn && i === 0 ? ` value="1"` : ""}>${R(f.text)}</li>`).join("") + `</ol>`;
@@ -4904,6 +4909,18 @@ renderHist();
 const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid", "evenly", "toc", "toc-n", "toc-1", "toc-2", "toc-3", "toc-4", "toc-5", "fnmark", "fntext", "footnotemark", "footnotetext"]);
 const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|repn|reptext(?:-\d{1,2})?|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 // 傍点：1字ずつ包んで、字の上に小さな黒丸を置く（text-emphasis は点の大きさを変えられないため）
+// 脚注番号の組み方
+// ・続く番号は上付きのカンマで区切る（¹,²）
+// ・日本語の句点「。」「．」の後ろに来た番号は、句点の前へ（…である¹。）
+// ・全角の閉じかっこ（）」』など）のすぐ後ろの番号は、かっこの右の空きの分だけ詰める
+function fnTypeset(html) {
+  const REF = '<sup class="fnref"[^>]*>(?:(?!</sup>)[\\s\\S])*</sup>';
+  html = html.replace(new RegExp(`(${REF})(?=<sup class="fnref")`, "g"), '$1<sup class="fn-sep">,</sup>');
+  const RUN = `(?:${REF}(?:<sup class="fn-sep">,</sup>)?)+`;
+  html = html.replace(new RegExp(`([。．])(${RUN})`, "g"), "$2$1");
+  html = html.replace(new RegExp(`([）」』】〕〉》］｝])(${RUN})`, "g"), '<span class="fn-keep"><span class="jp-halt">$1</span>$2</span>');
+  return html;
+}
 function botenChars(html) {
   return html.replace(/(^|>)([^<]+)/g, (m, gt, txt) => gt + txt.replace(/&[#\w]+;|[\s\S]/gu, ch => /^\s$/.test(ch) ? ch : `<span class="bt-c">${ch}</span>`));
 }
