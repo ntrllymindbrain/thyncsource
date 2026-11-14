@@ -448,6 +448,15 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
   background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; box-shadow: 0 8px 26px rgba(20,30,50,.14); font-size: 11.5px;
 }
 .ks-side[hidden] { display: none; }
+.ks-mine { cursor: pointer; } .ks-mine:hover { background: var(--accent-soft); }
+.ks-add { font-size: 11.5px; padding: 2px 8px; } .ks-none { color: var(--muted); }
+.mysc-pop { position: fixed; z-index: 60; right: 260px; top: 50%; transform: translateY(-50%); width: 340px; padding: 12px 14px; background: var(--paper); color: var(--ink); border: 1px solid var(--rule); border-radius: 10px; box-shadow: 0 12px 34px rgba(20,30,50,.22); font-size: 12.5px; display: flex; flex-direction: column; gap: 8px; }
+.mysc-h { font-weight: 600; font-size: 13px; }
+.mysc-pop label { display: flex; flex-direction: column; gap: 3px; color: var(--muted); }
+.mysc-pop input { font: inherit; font-size: 13.5px; padding: 5px 7px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.mysc-note { color: var(--muted); font-size: 11.5px; line-height: 1.5; }
+.mysc-warn { color: var(--warn); font-size: 11.5px; min-height: 1em; }
+.mysc-btns { display: flex; gap: 6px; }
 .ks-head { display: flex; align-items: center; padding: 6px 8px 6px 10px; border-bottom: 1px solid var(--rule); }
 .ks-head b { flex: 1; font-weight: 600; font-size: 12px; }
 .ks-head button { font-size: 12px; padding: 0 6px; border: none; background: none; color: var(--muted); }
@@ -569,7 +578,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.46</div>
+    <div class="ver">v1.47</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -725,6 +734,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
     <div class="kp-body">
       <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌘+クリック（タグ・コードの上）</kbd></td><td>そのタグ・コードを消す（#タグ・@タグ・{lbl:…}・{ref:…} など。{sc:…} のような囲みは中身を残して外す）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌥+↑ ／ ↓</kbd></td><td>横の位置をそのままに、上／下の行へカーソルを移す（bulletをまたいでも）</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>bulletを子ごとすぐ下に複製（中の {lbl:…} は付け替える：zzzb のような連番なら zzzc と続け、それ以外はランダムの3字。範囲を選んでいるときはまとめて）</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>Backspace（行頭）</kbd></td><td>前の行につなぐ（子は前の行の子になる）</td></tr><tr><td><kbd>⇧+⌥+⌘+↑ ／ ↓</kbd></td><td>このbulletの変更履歴を開く（↑↓で選び Return で差し替え・Escで閉じる・各版を「コピー」できる）</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
       <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:xxx}（xxx はまだ使っていない小文字3字のランダム）</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}（小型大文字。選んだ文字があれば囲む）</td></tr><tr><td><kbd>⌘+⌥+Shift+B</kbd></td><td>{boten:▮}（傍点。選んだ文字があれば囲む）</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex {lbl:xxx}（xxx はまだ使っていない小文字3字。#ex {lbl:zzz} の子なら zzza, zzzb…）</td></tr><tr><td><kbd>⇧+⌥+⌘+5</kbd></td><td>#ex {lbl:xxx}（xxx はいつもランダムの3字）</td></tr><tr><td><kbd>⇧+⌥+⌘+1</kbd></td><td>#sec {lbl:xxx}（xxx はランダムの3字）</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>カーソルの場所に #p（そこで段落を改める）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>カーソルの場所に #br（そこで字下げなしに改行）</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr><tr><td><kbd>{lbl:…}・{ref:…} などをドラッグ</kbd></td><td>その記法を落とした場所へ移す（クリックはふつうの文字の編集）</td></tr><tr><td><kbd>Shift+↑ ／ ↓</kbd></td><td>最初／最後の表示行で押すとbullet全体を選び、続けて押すと上下の兄弟を選択に加える</td></tr></table>
+      <p style="font-size:12px;color:var(--muted)">自分用のショートカット（このブラウザだけに保存）は、右端のショートカットのアイコン →「＋ 自分用を追加」で登録できます。</p>
       <h4>覚え書き：[J-1] のような通し番号（仮説・一般化など）</h4><table><tr><td><kbd>#HBJ-</kbd></td><td>[J-1]、[J-2]… と角かっこで通し番号（B = bracket）</td></tr><tr><td><kbd>#HPJ-</kbd></td><td>(J-1)、(J-2)… と丸かっこで（P = parenthesis）</td></tr><tr><td><kbd>#HJ-</kbd></td><td>J-1、J-2… とかっこなしで</td></tr><tr><td><kbd>#HB</kbd></td><td>接頭辞なし：[1]、[2]…</td></tr><tr><td><kbd>#HBG- {lbl:x}</kbd></td><td>「J-」の部分は英数字＋「-」なら何でもよく、接頭辞ごとに別々に 1, 2, 3… と数える。{lbl:x} を付ければ {ref:x} で [G-1]、{refn:x} で G-1 と参照できる</td></tr></table>
     </div>
   </div>
@@ -928,6 +938,8 @@ function compileOne(tree, opts) {
     const hm = t.match(/(?:^|\s)#H([BP]?)((?:[A-Za-z0-9]+-)?)(?=\s|$)/);
     const hyp = hm ? { style: hm[1] || "", prefix: hm[2] || "" } : null;
     t = t.replace(/(^|\s)#hfill(?=\s|$)/gi, (m, pre) => { tags.add("hfill"); return pre + "\uE000 "; });
+    // 右寄せの部分の全角スペースは、行末でも消さずに残す（「(英語)　」のように幅をそろえるため）
+    if (tags.has("hfill")) { const k = t.indexOf("\uE000"); t = t.slice(0, k) + t.slice(k).replace(/\u3000/g, "\uE004"); }
     // 文の途中の #p（段落を改める）・#br（字下げなしの改行）は、その場所の印にする。行末のものはこれまでどおりタグとして
     t = t.replace(/(^|\s)#(p|br)(?=\s)(?!\s*(?:#[\p{L}\p{N}_-]+\s*)*$)/giu, (m, pre, w) => pre + (w.toLowerCase() === "p" ? "\uE001 " : "\uE002 "));
     // タグ：記法のタグ（#sec など）はいつも外す。それ以外の #タグ・@タグは「タグを表示」のときだけ残す
@@ -1339,6 +1351,7 @@ function compileOne(tree, opts) {
     try {
       let h = R0(t); const k = h.indexOf("\uE000");
       if (k >= 0) h = h.slice(0, k).replace(/\s+$/, "") + `<span class="hfill">` + h.slice(k + 1).replace(/\uE000/g, "").replace(/^\s+/, "") + `</span>`;
+      h = h.replace(/\uE004/g, "\u3000");
       return `<span class="reptext" data-code="${esc("{reptext" + (cut ? "-" + cut : "") + ":" + arg + "}")}">${h}</span>`;
     } finally { repTextDepth--; }
   }
@@ -1375,7 +1388,7 @@ function compileOne(tree, opts) {
     s = String(s).replace(/\s*[\uE001\uE002]\s*/g, "\uE003");
     const html = R0(s).replace(/\uE003/g, "<br>"), k = html.indexOf("\uE000");
     if (k < 0) return html;
-    return html.slice(0, k).replace(/\s+$/, "") + `<span class="hfill">` + html.slice(k + 1).replace(/\uE000/g, "").replace(/^\s+/, "") + `</span>`;
+    return html.slice(0, k).replace(/\s+$/, "") + `<span class="hfill">` + html.slice(k + 1).replace(/\uE000/g, "").replace(/^\s+/, "").replace(/\uE004/g, "\u3000") + `</span>`;
   }
   function R0(s) {
     let i = 0;
@@ -2062,6 +2075,12 @@ const SHORTCUTS = [
   { mods: "cos", code: "Digit5", label: "#ex {lbl:…}（ランダム）", text: () => `#ex {lbl:${newExLabel(-1)}} ▮` },
   { mods: "co", code: "Digit5", label: "#ex {lbl:…}", text: ta => `#ex {lbl:${newExLabel(taSrcLine(ta))}} ▮` }
 ];
+// 自分用のショートカット（このブラウザだけに保存。ほかの人がこのアプリを使っても混ざらない）
+// 形：[{ mods: "co" など, code: "KeyJ" など, text: "#hfill (日本語)▮" }]。▮ がなければ末尾にカーソル
+function loadMySc() { try { const a = JSON.parse(store.get("thync.mysc") || "[]"); return Array.isArray(a) ? a.filter(x => x && x.code && typeof x.text === "string") : []; } catch (_) { return []; } }
+let MY_SC = loadMySc();
+function saveMySc() { store.set("thync.mysc", JSON.stringify(MY_SC)); }
+function allShortcuts() { return [...MY_SC.map(x => ({ ...x, text: x.text.includes("▮") ? x.text : x.text + "▮", mine: true })), ...SHORTCUTS]; }
 // 欄のカーソルがある行が、入力全体の何行目か
 function taSrcLine(ta) {
   if (ta._ov) { if (ta._mir) return ta._mir.li; return ta._ov.lineOf(ta._ov.active); }
@@ -2456,7 +2475,7 @@ function attachKeys(ta) {
     if (e.isComposing || e.keyCode === 229) return; // 日本語入力の変換中は触らない
     const cmd = CMD(e);
     if (cmd && e.altKey && e.shiftKey && e.code === "KeyM") { e.preventDefault(); sendToMemo(ta); return; }
-    for (const sc of SHORTCUTS) {
+    for (const sc of allShortcuts()) {
       const want = { c: sc.mods.includes("c"), o: sc.mods.includes("o"), s: sc.mods.includes("s") };
       if (cmd === want.c && e.altKey === want.o && e.shiftKey === want.s && e.code === sc.code) {
         e.preventDefault();
@@ -3630,7 +3649,7 @@ class OutlineView {
 // 1行の欄の中で使う共通のキー（自作のショートカット、太字など）。処理したら true
 function handleInlineKeys(e, ta) {
   const cmd = CMD(e);
-  for (const sc of SHORTCUTS) {
+  for (const sc of allShortcuts()) {
     const want = { c: sc.mods.includes("c"), o: sc.mods.includes("o"), s: sc.mods.includes("s") };
     if (cmd === want.c && e.altKey === want.o && e.shiftKey === want.s && e.code === sc.code) {
       e.preventDefault();
@@ -6107,8 +6126,54 @@ function renderKs() {
   const own = SHORTCUTS.map(sc => `<div class="ks-row"><kbd>${esc(keyLabel(sc))}</kbd><span><code>${esc(sc.label || sc.text.replace("▮", "").trim())}</code></span></div>`).join("");
   const more = [["⇧Return", "段落 #p"], ["⇧⌥Return", "改行 #br"], ["⌘Return", "編集欄を確定"], ["⌘⇧V", "文字だけ貼る"], ["⌘⌥⇧M", "行をメモ集へ"], ["⌘⌥E", "選んだ範囲を編集"], ["⌘⌥F", "検索と置換"], ["⌘クリック", "タグを消す"], ["⌘S", "記録・保存"], ["⌘.", "ズーム"], ["⌘,", "ズームを戻す"], ["⌥⌘＝/−", "拡大・縮小"]]
     .map(([k, t]) => `<div class="ks-row"><kbd>${esc(k)}</kbd><span>${esc(t)}</span></div>`).join("");
-  $("ks-body").innerHTML = `<div class="ks-sep">記法を入れる</div>` + own + `<div class="ks-sep">thyncSourceの操作</div>` + more + `<div class="ks-sep">すべての一覧は ⌘/</div>`;
+  const mine = MY_SC.map((sc, k) => `<div class="ks-row ks-mine" data-k="${k}" title="クリックで直す"><kbd>${esc(keyLabel(sc))}</kbd><span><code>${esc(sc.text.replace("▮", "").replace(/\u3000/g, "□"))}</code></span></div>`).join("");
+  $("ks-body").innerHTML = `<div class="ks-sep">自分用（このブラウザだけ）</div>` + (mine || `<div class="ks-row"><span class="ks-none">まだありません</span></div>`) + `<div class="ks-row"><button type="button" class="ks-add" id="ks-add">＋ 自分用を追加</button></div>`
+    + `<div class="ks-sep">記法を入れる</div>` + own + `<div class="ks-sep">thyncSourceの操作</div>` + more + `<div class="ks-sep">すべての一覧は ⌘/</div>`;
+  $("ks-add").onclick = () => editMySc(-1);
+  for (const r of $("ks-body").querySelectorAll(".ks-mine")) r.onclick = () => editMySc(+r.dataset.k);
 }
+// 自分用ショートカットの登録・直し・削除
+function editMySc(k) {
+  const cur = k >= 0 ? MY_SC[k] : { mods: "", code: "", text: "" };
+  let mods = cur.mods, code = cur.code;
+  const d = document.createElement("div"); d.className = "mysc-pop"; d.setAttribute("role", "dialog");
+  d.innerHTML = `<div class="mysc-h">${k >= 0 ? "自分用ショートカットを直す" : "自分用ショートカットを追加"}</div>
+    <label>キー<input id="mysc-key" readonly placeholder="ここを押してから、使いたいキーを押す（⌘ か ⌥ を含める）"></label>
+    <label>入れる文字<input id="mysc-text" placeholder="例：#hfill (日本語)"></label>
+    <div class="mysc-note">▮ を書くとそこにカーソルが来ます（書かなければ末尾）。全角スペースも入れられます。文字を選んでから押すと、▮ の位置に選んだ文字が入ります。</div>
+    <div class="mysc-warn" id="mysc-warn"></div>
+    <div class="mysc-btns">${k >= 0 ? `<button type="button" id="mysc-del">削除</button>` : ""}<span style="flex:1"></span><button type="button" id="mysc-cancel">やめる</button><button type="button" id="mysc-ok" class="primary">保存</button></div>`;
+  document.body.appendChild(d);
+  const key = d.querySelector("#mysc-key"), tx = d.querySelector("#mysc-text"), wn = d.querySelector("#mysc-warn");
+  tx.value = cur.text;
+  const show = () => {
+    key.value = code ? keyLabel({ mods, code }) : "";
+    const clash = code && [...MY_SC.filter((_, j) => j !== k), ...SHORTCUTS].find(x => x.mods.split("").sort().join("") === mods.split("").sort().join("") && x.code === code);
+    wn.textContent = clash ? `このキーは「${clash.label || clash.text.replace("▮", "")}」にも使われています。自分用のほうが優先されます。` : "";
+  };
+  show();
+  key.addEventListener("keydown", e => {
+    if (["Meta", "Control", "Alt", "Shift"].includes(e.key)) return;
+    e.preventDefault(); e.stopPropagation();
+    if (e.key === "Escape") { close(); return; }
+    const m = (CMD(e) ? "c" : "") + (e.altKey ? "o" : "") + (e.shiftKey ? "s" : "");
+    if (!/[co]/.test(m)) { wn.textContent = "⌘ か ⌥ を含むキーにしてください（ふつうの文字入力とぶつからないように）"; return; }
+    mods = m; code = e.code; show();
+  });
+  const close = () => d.remove();
+  d.querySelector("#mysc-cancel").onclick = close;
+  if (k >= 0) d.querySelector("#mysc-del").onclick = () => { MY_SC.splice(k, 1); saveMySc(); close(); renderKs(); toast("削除しました"); };
+  d.querySelector("#mysc-ok").onclick = () => {
+    if (!code) { wn.textContent = "キーを決めてください"; key.focus(); return; }
+    if (!tx.value) { wn.textContent = "入れる文字を書いてください"; tx.focus(); return; }
+    const item = { mods, code, text: tx.value };
+    if (k >= 0) MY_SC[k] = item; else MY_SC.push(item);
+    saveMySc(); close(); renderKs(); toast(`${keyLabel(item)} を登録しました`);
+  };
+  d.addEventListener("keydown", e => { if (e.key === "Escape") { e.stopPropagation(); close(); } });
+  (k >= 0 ? tx : key).focus();
+}
+window.addEventListener("storage", e => { if (e.key && e.key.endsWith("thync.mysc")) { MY_SC = loadMySc(); if (!$("ks-side").hidden) renderKs(); } });
 $("ks-btn").addEventListener("mousedown", e => e.preventDefault());
 $("ks-btn").addEventListener("click", () => {
   const s = $("ks-side"); s.hidden = !s.hidden;
