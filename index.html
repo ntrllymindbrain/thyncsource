@@ -138,6 +138,7 @@ textarea {
 .ex-line > .judg { grid-column: 1; grid-row: 1; } .ex-line > .ex-text { grid-column: 2; grid-row: 1; }
 .ex-head { color: var(--ink); }
 .ex-line { display: grid; grid-template-columns: var(--ex-judg, 1.3em) 1fr; }
+.ex-nojudg > .ex-body > .ex-line { grid-template-columns: 0 1fr; } .ex-nojudg > .ex-body > .ex-line > .judg { padding: 0; }
 .ex-item { display: grid; grid-template-columns: var(--ex-let, 1.75em) var(--ex-judg, 1.3em) 1fr; }
 .judg { text-align: right; padding-right: var(--ex-gap, .25em); white-space: nowrap; }
 .ex-subhead { }
@@ -556,7 +557,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.36</div>
+    <div class="ver">v1.37</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1509,7 +1510,9 @@ function compileOne(tree, opts) {
     else body += b.items.map(it => lineHTML(it, it.letter, ctx)).join("");
     if (!b.header && b.fns && b.fns.length) body += fnHTML(b.fns);
     const num = `<button type="button" class="ex-num"${lnAttr(b.min)} data-exline="${b.min}" data-path="" data-ref="${esc(b.label || "")}" title="クリックで参照を入れる／コピーする">${esc(fmt(b.num))}</button>`;
-    return `<div class="ex"${isRep ? "" : ` id="${b.id}"`}${attr}>${num}<div class="ex-body">${body}</div></div>`;
+    // 1行だけで判定記号のない例文は、判定記号の欄を空けずに左端から（見出しの行と同じ位置）
+    const nj = b.single && !b.single.judg && !b.single.subitems ? " ex-nojudg" : "";
+    return `<div class="ex${nj}"${isRep ? "" : ` id="${b.id}"`}${attr}>${num}<div class="ex-body">${body}</div></div>`;
   }
 
   const ranges = opts.ranges || [];
@@ -1558,7 +1561,7 @@ function compileOne(tree, opts) {
         const src0 = byId.get(r.id);
         // 新しい番号で出すとき：番号と飛び先・下位例文の道筋を、この場所のものにする
         if (b.newNum) { const p0 = exPaths.get(src0.id); if (p0) exPaths.set(b.newId, new Set(p0)); }
-        let x = exHTML(b.newNum ? { ...src0, num: b.newNum, id: b.newId, label: b.newLabel } : src0, !b.newNum, at).replace(/ data-ln="\d+" data-le="\d+"/g, "").replace('<div class="ex"', '<div class="ex' + (b.mirror !== undefined ? " mir-ex" : "") + '"' + lnAttr(b.min));
+        let x = exHTML(b.newNum ? { ...src0, num: b.newNum, id: b.newId, label: b.newLabel } : src0, !b.newNum, at).replace(/ data-ln="\d+" data-le="\d+"/g, "").replace(/^<div class="ex( ex-nojudg)?"/, (m, nj) => '<div class="ex' + (nj || "") + (b.mirror !== undefined ? " mir-ex" : "") + '"' + lnAttr(b.min));
         if (b.mirror !== undefined) x = x.replace(/(<div class="ex mir-ex"[^>]*>)/, `$1<button type="button" class="mir-mark mir-ex-mark" data-mirror-src="${b.mirror}" title="ミラー：押すと元の場所へ">◇</button>`);
         html += x;
       }
