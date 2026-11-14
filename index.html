@@ -556,7 +556,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.35</div>
+    <div class="ver">v1.36</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -710,7 +710,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
   <div class="keys-pop" id="keys-pop" hidden role="dialog" aria-label="ショートカット一覧">
     <div class="kp-head"><b>ショートカット（Mac）</b><button type="button" id="kp-close">閉じる</button></div>
     <div class="kp-body">
-      <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌘+クリック（タグ・コードの上）</kbd></td><td>そのタグ・コードを消す（#タグ・@タグ・{lbl:…}・{ref:…} など。{sc:…} のような囲みは中身を残して外す）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>bulletを子ごとすぐ下に複製（中の {lbl:…} は付け替える：zzzb のような連番なら zzzc と続け、それ以外はランダムの3字。範囲を選んでいるときはまとめて）</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>Backspace（行頭）</kbd></td><td>前の行につなぐ（子は前の行の子になる）</td></tr><tr><td><kbd>⇧+⌥+⌘+↑ ／ ↓</kbd></td><td>このbulletの変更履歴を開く（↑↓で選び Return で差し替え・Escで閉じる・各版を「コピー」できる）</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
+      <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌘+クリック（タグ・コードの上）</kbd></td><td>そのタグ・コードを消す（#タグ・@タグ・{lbl:…}・{ref:…} など。{sc:…} のような囲みは中身を残して外す）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>⌥+↑ ／ ↓</kbd></td><td>横の位置をそのままに、上／下の行へカーソルを移す（bulletをまたいでも）</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>bulletを子ごとすぐ下に複製（中の {lbl:…} は付け替える：zzzb のような連番なら zzzc と続け、それ以外はランダムの3字。範囲を選んでいるときはまとめて）</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>Backspace（行頭）</kbd></td><td>前の行につなぐ（子は前の行の子になる）</td></tr><tr><td><kbd>⇧+⌥+⌘+↑ ／ ↓</kbd></td><td>このbulletの変更履歴を開く（↑↓で選び Return で差し替え・Escで閉じる・各版を「コピー」できる）</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
       <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:xxx}（xxx はまだ使っていない小文字3字のランダム）</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex {lbl:xxx}（xxx はまだ使っていない小文字3字。#ex {lbl:zzz} の子なら zzza, zzzb…）</td></tr><tr><td><kbd>⇧+⌥+⌘+5</kbd></td><td>#ex {lbl:xxx}（xxx はいつもランダムの3字）</td></tr><tr><td><kbd>⇧+⌥+⌘+1</kbd></td><td>#sec {lbl:xxx}（xxx はランダムの3字）</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>カーソルの場所に #p（そこで段落を改める）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>カーソルの場所に #br（そこで字下げなしに改行）</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr><tr><td><kbd>{lbl:…}・{ref:…} などをドラッグ</kbd></td><td>その記法を落とした場所へ移す（クリックはふつうの文字の編集）</td></tr><tr><td><kbd>Shift+↑ ／ ↓</kbd></td><td>最初／最後の表示行で押すとbullet全体を選び、続けて押すと上下の兄弟を選択に加える</td></tr></table>
       <h4>覚え書き：[J-1] のような通し番号（仮説・一般化など）</h4><table><tr><td><kbd>#HBJ-</kbd></td><td>[J-1]、[J-2]… と角かっこで通し番号（B = bracket）</td></tr><tr><td><kbd>#HPJ-</kbd></td><td>(J-1)、(J-2)… と丸かっこで（P = parenthesis）</td></tr><tr><td><kbd>#HJ-</kbd></td><td>J-1、J-2… とかっこなしで</td></tr><tr><td><kbd>#HB</kbd></td><td>接頭辞なし：[1]、[2]…</td></tr><tr><td><kbd>#HBG- {lbl:x}</kbd></td><td>「J-」の部分は英数字＋「-」なら何でもよく、接頭辞ごとに別々に 1, 2, 3… と数える。{lbl:x} を付ければ {ref:x} で [G-1]、{refn:x} で G-1 と参照できる</td></tr></table>
     </div>
@@ -3027,6 +3027,10 @@ class OutlineView {
       setTimeout(() => { if (this.ta === ta && ta.selectionStart === s0 && ta.selectionEnd === e0) this.startSel(i); }, 0);
       return;
     }
+    // ⌥↑↓：横の位置をそのままに、上下の行（折り返しの行・隣のbullet）へ移る
+    if (e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey && (k === "ArrowUp" || k === "ArrowDown") && ta._rich && !e.isComposing) {
+      e.preventDefault(); this.vertMove(i, k === "ArrowUp" ? -1 : 1); return;
+    }
     if (bare && !e.shiftKey && (k === "ArrowUp" || k === "ArrowDown")) {
       const up = k === "ArrowUp", pos = ta.selectionStart;
       const go = () => this.step(i, up ? -1 : 1);
@@ -3104,6 +3108,36 @@ class OutlineView {
     toast("履歴の文に差し替えました。差し替える前の文も履歴に残したので、⇧⌥⌘↑↓ や ⌘Z で戻せます");
   }
   // 上下の行へ。ミラーの中身（入れ子の欄）にも出入りする
+  vertMove(i, d) {
+    const ta = this.ta; if (!ta) return;
+    const caretRect = () => {
+      const q = richPoint(ta, ta.selectionStart), r = document.createRange(); r.setStart(q.node, q.off); r.collapse(true);
+      const rs = r.getClientRects(); if (rs.length) return rs[rs.length - 1];
+      const b = ta.getBoundingClientRect(); const lh = parseFloat(getComputedStyle(ta).lineHeight) || 20;
+      return { left: b.left + (parseFloat(getComputedStyle(ta).paddingLeft) || 0), top: b.top, bottom: b.top + lh, height: lh };
+    };
+    const c = caretRect(), x = this.vx != null && this.vxAt === ta.selectionStart && this.vxRow === i ? this.vx : c.left, lh = c.height || 20;
+    const put = (el, y) => {
+      const b = el.getBoundingClientRect();
+      const xx = Math.max(b.left + 1, Math.min(b.right - 1, x)), yy = Math.max(b.top + 1, Math.min(b.bottom - 1, y));
+      const rng = document.caretRangeFromPoint && document.caretRangeFromPoint(xx, yy);
+      if (!rng || !el.contains(rng.startContainer)) return false;
+      const pos = richPos(el, rng.startContainer, rng.startOffset); el.setSelectionRange(pos, pos); return true;
+    };
+    // 同じbulletの中に、上（下）の表示行がまだあるか
+    if (!onEdgeLine(ta, ta.selectionStart, d < 0)) {
+      const keep = x;
+      if (put(ta, d < 0 ? c.top - lh / 2 : c.bottom + lh / 2)) { this.vx = keep; this.vxAt = ta.selectionStart; this.vxRow = i; return; }
+    }
+    const n = d < 0 ? this.prevVisible(i) : this.nextVisible(i);
+    if (n < 0 || (d > 0 && this.subOf(i))) { this.step(i, d); return; }
+    this.edit(n, 0);
+    const el = this.ta; if (!el) return;
+    const b = el.getBoundingClientRect(), lh2 = parseFloat(getComputedStyle(el).lineHeight) || lh;
+    const pt = parseFloat(getComputedStyle(el).paddingTop) || 0, pb = parseFloat(getComputedStyle(el).paddingBottom) || 0;
+    put(el, d > 0 ? b.top + pt + lh2 / 2 : b.bottom - pb - lh2 / 2);
+    this.vx = x; this.vxAt = el.selectionStart; this.vxRow = n;
+  }
   step(i, d) {
     if (d > 0) {
       const s = this.subOf(i);
