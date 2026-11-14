@@ -153,11 +153,13 @@ textarea {
 .gl-tr { }
 .sc { font-variant: small-caps; letter-spacing: .02em; }
 /* 傍点：{boten:…}。横書きでは字の上、縦書きでは右に黒丸「●」 */
-.boten { -webkit-text-emphasis: filled circle; text-emphasis: filled circle; -webkit-text-emphasis-position: over right; text-emphasis-position: over right; }
+.boten { }
+.bt-c { position: relative; }
+.bt-c::before { content: ""; position: absolute; left: 50%; top: -.28em; width: .19em; height: .19em; margin-left: -.095em; border-radius: 50%; background: currentColor; pointer-events: none; }
 /* 編集欄でも見た目どおりに（{sc:…} は小型大文字、{boten:…} は傍点） */
 .wy-sc { font-variant: small-caps; letter-spacing: .02em; }
 .ta-back .wy-sc { font-variant: normal; letter-spacing: normal; }  /* テキスト欄の下絵は字幅を変えない（カーソルとずれないように） */
-.wy-bt { -webkit-text-emphasis: filled circle; text-emphasis: filled circle; -webkit-text-emphasis-position: over right; text-emphasis-position: over right; }
+.wy-bt { }
 .xref { color: var(--accent); text-decoration: none; cursor: pointer; }
 .xref:hover { text-decoration: underline; }
 .xref.bad { color: var(--bad); font-weight: 600; cursor: help; }
@@ -489,6 +491,11 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .paper p[data-env="abstract"] { text-indent: 1em; }
 .ref-entry { text-indent: -2em !important; padding-left: 2em; margin: 0 0 .35em; text-align: left; }
 .fns li.fn-star { list-style: none; }
+/* Web表示：脚注は、その番号を含む段落・例文のすぐ後ろに（短い罫線で区切る）。ページ表示ではページの下 */
+.fn-inline { margin: .5em 0 1.3em; font-size: .84em; line-height: 1.75; text-indent: 0; }
+.fn-inline::before { content: ""; display: block; width: 9em; border-top: 1px solid var(--rule); margin-bottom: .35em; }
+.fn-inline ol { margin: 0; padding-left: 1.6em; }
+.fn-inline li.fn-star { list-style: none; } .fn-inline li.fn-star::before { content: "* "; margin-left: -1em; }
 .fns li.fn-star::before { content: "* "; margin-left: -1em; }
 .hpop { position: fixed; z-index: 60; max-height: 60vh; overflow: auto; background: #fffdf8; border: 1px solid #b9b2a3; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.18); font-size: 13px; line-height: 1.5; }
 .hpop .hp-head { position: sticky; top: 0; background: #f3efe6; padding: 6px 10px; font-size: 11.5px; color: #555; border-bottom: 1px solid #ddd5c5; }
@@ -578,7 +585,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.49</div>
+    <div class="ver">v1.50</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1490,7 +1497,7 @@ function compileOne(tree, opts) {
     function wrap(name, inner) {
       switch (name) {
         case "sc": return `<span class="sc">${inner}</span>`;
-        case "boten": case "bt": return `<span class="boten">${inner}</span>`;
+        case "boten": case "bt": return `<span class="boten">${botenChars(inner)}</span>`;
         case "sup": return `<sup>${inner}</sup>`;
         case "sub": return `<sub>${inner}</sub>`;
         case "t": return `t<sub>${inner}</sub>`;
@@ -1742,6 +1749,7 @@ function renderInner() {
   applyZoomView();
   equalizeTables(paper);
   lastPaperHTML = paper.innerHTML;
+  placeFootnotesInline(paper);
   lastDocSettings = res.settings || {};
   mountEditors();
   if (src._paint) src._paint();
@@ -3921,6 +3929,27 @@ paper.addEventListener("click", e => {
   else toast("参照先は、いま開いている編集欄の中にあります。");
 });
 
+// Web表示の脚注：番号を含むブロックのすぐ後ろへ脚注を移す（最後の一覧からは抜く）
+function placeFootnotesInline(root) {
+  if (!root) return;
+  const list = root.querySelectorAll(":scope > .fns"); if (!list.length) return;
+  for (const blk of [...root.children]) {
+    if (blk.classList.contains("fns") || blk.classList.contains("fn-inline")) continue;
+    const ids = [...new Set([...blk.querySelectorAll("sup.fnref a[data-fn]")].map(a => a.dataset.fn))];
+    if (!ids.length) continue;
+    const ol = document.createElement("ol");
+    for (const id of ids) {
+      const li = root.querySelector(`:scope > .fns [id="fn-${id}"]`); if (!li) continue;
+      const n = parseInt(id.replace(/^.*?(\d+)$/, "$1"), 10);
+      if (!li.classList.contains("fn-star") && n) li.value = n;
+      ol.appendChild(li);
+    }
+    if (!ol.children.length) continue;
+    const box = document.createElement("aside"); box.className = "fn-inline"; box.appendChild(ol);
+    blk.after(box);
+  }
+  for (const l of list) if (!l.querySelector("li")) l.remove();
+}
 function autoLabel(line) {
   const all = srcLines();
   let lbl;
@@ -4860,12 +4889,16 @@ renderHist();
 /* ---------- 入力欄の記法の色分け ---------- */
 const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid", "evenly", "toc", "toc-n", "toc-1", "toc-2", "toc-3", "toc-4", "toc-5", "fnmark", "fntext", "footnotemark", "footnotetext"]);
 const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|repn|reptext(?:-\d{1,2})?|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
+// 傍点：1字ずつ包んで、字の上に小さな黒丸を置く（text-emphasis は点の大きさを変えられないため）
+function botenChars(html) {
+  return html.replace(/(^|>)([^<]+)/g, (m, gt, txt) => gt + txt.replace(/&[#\w]+;|[\s\S]/gu, ch => /^\s$/.test(ch) ? ch : `<span class="bt-c">${ch}</span>`));
+}
 const WY_CLASS = { sc: "wy-sc", boten: "wy-bt", bt: "wy-bt" };
 function hlRest(s) {
   let out = "", last = 0;
   // {sc:…}・{boten:…} の中の文字は、編集欄でも小型大文字・傍点で見せる（入れ子も数える）
   const open = [];
-  const plain = t => { if (!t) return ""; const cl = [...new Set(open.filter(Boolean))].join(" "); return cl ? `<span class="${cl}">${esc(t)}</span>` : esc(t); };
+  const plain = t => { if (!t) return ""; const cl = [...new Set(open.filter(Boolean))].join(" "); const h = cl.includes("wy-bt") ? botenChars(esc(t)) : esc(t); return cl ? `<span class="${cl}">${h}</span>` : h; };
   s.replace(HL_RE, (m, lbl, ref, cmd, tag, html, br, off) => {
     out += plain(s.slice(last, off));
     if (cmd) {
@@ -5569,7 +5602,8 @@ class SideView {
       if (this.sel.startsWith("sec:")) {
         const h = lastHeads.find(x => "sec:" + x.plain === this.sel);
         if (h) filterToRange(this.paper, h.line, h.end);
-      }
+        else placeFootnotesInline(this.paper);
+      } else placeFootnotesInline(this.paper);
     }
     this.body.scrollTop = top;
   }
@@ -5601,6 +5635,7 @@ function filterToRange(container, lo, hi) {
   }
   for (const el of container.querySelectorAll(".bk[data-ln], .ex-item[data-ln], li[data-ln]")) if (!inR(+el.dataset.ln, +el.dataset.le)) el.remove();
   const fns = container.querySelector(".fns"); if (fns && !fns.querySelector("li")) fns.remove();
+  placeFootnotesInline(container);
 }
 const sideViews = [new SideView($("sv1"), "s1", "toc"), new SideView($("sv2"), "s2", "all"), new SideView($("lview"), "lview", "all")];
 const sideByPane = { s1: sideViews[0], s2: sideViews[1], lview: sideViews[2] };
