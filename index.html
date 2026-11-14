@@ -578,7 +578,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.47</div>
+    <div class="ver">v1.48</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -2146,6 +2146,10 @@ function newExLabel(line) {
 /* ---------- アウトライナとしての操作（Workflowy の Mac 版ショートカットに合わせる） ---------- */
 const IS_MAC = /Mac|iPhone|iPad/.test(navigator.userAgent);
 const CMD = e => (IS_MAC ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey);
+// ショートカットの修飾キー：c = ⌘（Mac以外は Ctrl）・r = ^Control（Macだけ）・o = ⌥・s = ⇧
+function scMods(e) { return (IS_MAC ? (e.metaKey ? "c" : "") + (e.ctrlKey ? "r" : "") : (e.ctrlKey ? "c" : "")) + (e.altKey ? "o" : "") + (e.shiftKey ? "s" : ""); }
+const normMods = m => "rcos".split("").filter(c => m.includes(c)).join("");
+function scMatch(e, sc) { return e.code === sc.code && normMods(scMods(e)) === normMods(sc.mods); }
 function focusSibling(ta, dir) {
   const L = linesOf(ta), cur = caretLC(ta), i = ownerLine(L, cur.line);
   if (!isBullet(L[i])) return;
@@ -2476,8 +2480,7 @@ function attachKeys(ta) {
     const cmd = CMD(e);
     if (cmd && e.altKey && e.shiftKey && e.code === "KeyM") { e.preventDefault(); sendToMemo(ta); return; }
     for (const sc of allShortcuts()) {
-      const want = { c: sc.mods.includes("c"), o: sc.mods.includes("o"), s: sc.mods.includes("s") };
-      if (cmd === want.c && e.altKey === want.o && e.shiftKey === want.s && e.code === sc.code) {
+      if (scMatch(e, sc)) {
         e.preventDefault();
         const sel = ta.value.slice(ta.selectionStart, ta.selectionEnd);
         const scText = typeof sc.text === "function" ? sc.text(ta) : sc.text;
@@ -3650,8 +3653,7 @@ class OutlineView {
 function handleInlineKeys(e, ta) {
   const cmd = CMD(e);
   for (const sc of allShortcuts()) {
-    const want = { c: sc.mods.includes("c"), o: sc.mods.includes("o"), s: sc.mods.includes("s") };
-    if (cmd === want.c && e.altKey === want.o && e.shiftKey === want.s && e.code === sc.code) {
+    if (scMatch(e, sc)) {
       e.preventDefault();
       const sel = ta.value.slice(ta.selectionStart, ta.selectionEnd);
       const scText = typeof sc.text === "function" ? sc.text(ta) : sc.text;
@@ -6120,7 +6122,7 @@ $("btn-pdf").addEventListener("click", async () => {
 /* ---------- 自分で決めたショートカットの小さな一覧（右端のアイコン） ---------- */
 function keyLabel(sc) {
   const k = sc.code.replace(/^Key/, "").replace(/^Digit/, "");
-  return (sc.mods.includes("c") ? "⌘" : "") + (sc.mods.includes("o") ? "⌥" : "") + (sc.mods.includes("s") ? "⇧" : "") + k;
+  return (sc.mods.includes("r") ? "^" : "") + (sc.mods.includes("c") ? "⌘" : "") + (sc.mods.includes("o") ? "⌥" : "") + (sc.mods.includes("s") ? "⇧" : "") + k;
 }
 function renderKs() {
   const own = SHORTCUTS.map(sc => `<div class="ks-row"><kbd>${esc(keyLabel(sc))}</kbd><span><code>${esc(sc.label || sc.text.replace("▮", "").trim())}</code></span></div>`).join("");
@@ -6138,7 +6140,7 @@ function editMySc(k) {
   let mods = cur.mods, code = cur.code;
   const d = document.createElement("div"); d.className = "mysc-pop"; d.setAttribute("role", "dialog");
   d.innerHTML = `<div class="mysc-h">${k >= 0 ? "自分用ショートカットを直す" : "自分用ショートカットを追加"}</div>
-    <label>キー<input id="mysc-key" readonly placeholder="ここを押してから、使いたいキーを押す（⌘ か ⌥ を含める）"></label>
+    <label>キー<input id="mysc-key" readonly placeholder="ここを押してから、使いたいキーを押す（⌘・⌥・^ のどれかを含める）"></label>
     <label>入れる文字<input id="mysc-text" placeholder="例：#hfill (日本語)"></label>
     <div class="mysc-note">▮ を書くとそこにカーソルが来ます（書かなければ末尾）。全角スペースも入れられます。文字を選んでから押すと、▮ の位置に選んだ文字が入ります。</div>
     <div class="mysc-warn" id="mysc-warn"></div>
@@ -6148,7 +6150,7 @@ function editMySc(k) {
   tx.value = cur.text;
   const show = () => {
     key.value = code ? keyLabel({ mods, code }) : "";
-    const clash = code && [...MY_SC.filter((_, j) => j !== k), ...SHORTCUTS].find(x => x.mods.split("").sort().join("") === mods.split("").sort().join("") && x.code === code);
+    const clash = code && [...MY_SC.filter((_, j) => j !== k), ...SHORTCUTS].find(x => normMods(x.mods) === normMods(mods) && x.code === code);
     wn.textContent = clash ? `このキーは「${clash.label || clash.text.replace("▮", "")}」にも使われています。自分用のほうが優先されます。` : "";
   };
   show();
@@ -6156,8 +6158,8 @@ function editMySc(k) {
     if (["Meta", "Control", "Alt", "Shift"].includes(e.key)) return;
     e.preventDefault(); e.stopPropagation();
     if (e.key === "Escape") { close(); return; }
-    const m = (CMD(e) ? "c" : "") + (e.altKey ? "o" : "") + (e.shiftKey ? "s" : "");
-    if (!/[co]/.test(m)) { wn.textContent = "⌘ か ⌥ を含むキーにしてください（ふつうの文字入力とぶつからないように）"; return; }
+    const m = normMods(scMods(e));
+    if (!/[cor]/.test(m)) { wn.textContent = "⌘・⌥・^（Control）のどれかを含むキーにしてください（ふつうの文字入力とぶつからないように）"; return; }
     mods = m; code = e.code; show();
   });
   const close = () => d.remove();
