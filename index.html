@@ -152,12 +152,12 @@ textarea {
 .gl-src { }
 .gl-tr { }
 .sc { font-variant: small-caps; letter-spacing: .02em; }
-/* 傍点：{boten:…}。横書きでは字の上、縦書きでは右に「﹅」 */
-.boten { -webkit-text-emphasis: filled sesame; text-emphasis: filled sesame; -webkit-text-emphasis-position: over right; text-emphasis-position: over right; }
+/* 傍点：{boten:…}。横書きでは字の上、縦書きでは右に黒丸「●」 */
+.boten { -webkit-text-emphasis: filled circle; text-emphasis: filled circle; -webkit-text-emphasis-position: over right; text-emphasis-position: over right; }
 /* 編集欄でも見た目どおりに（{sc:…} は小型大文字、{boten:…} は傍点） */
 .wy-sc { font-variant: small-caps; letter-spacing: .02em; }
 .ta-back .wy-sc { font-variant: normal; letter-spacing: normal; }  /* テキスト欄の下絵は字幅を変えない（カーソルとずれないように） */
-.wy-bt { -webkit-text-emphasis: filled sesame; text-emphasis: filled sesame; -webkit-text-emphasis-position: over right; text-emphasis-position: over right; }
+.wy-bt { -webkit-text-emphasis: filled circle; text-emphasis: filled circle; -webkit-text-emphasis-position: over right; text-emphasis-position: over right; }
 .xref { color: var(--accent); text-decoration: none; cursor: pointer; }
 .xref:hover { text-decoration: underline; }
 .xref.bad { color: var(--bad); font-weight: 600; cursor: help; }
@@ -569,7 +569,7 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.45</div>
+    <div class="ver">v1.46</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -2036,6 +2036,20 @@ function insertText(ta, text, caretOffset) {
   if (caretOffset !== undefined) ta.selectionStart = ta.selectionEnd = s + caretOffset;
 }
 
+// 囲む形のショートカット（{sc:▮}・{boten:▮} など）：選んだ文字があれば囲み、囲んだ中身を選んだままにする（⌘B と同じ感覚）。
+// すでにちょうど囲まれていれば外す
+function applyShortcutText(ta, before, after, sel) {
+  const s0 = ta.selectionStart, e0 = ta.selectionEnd, v = ta.value;
+  if (sel && after) {
+    if (v.slice(s0 - before.length, s0) === before && v.slice(e0, e0 + after.length) === after) {
+      ta.setSelectionRange(s0 - before.length, e0 + after.length); insertText(ta, sel);
+      const a = s0 - before.length; ta.setSelectionRange(a, a + sel.length); return;
+    }
+    insertText(ta, before + sel + after);
+    const a = s0 + before.length; ta.setSelectionRange(a, a + sel.length); return;
+  }
+  insertText(ta, before + after, before.length);
+}
 /* ショートカット（仕様書11節）。▮ の位置にカーソルを置く */
 const SHORTCUTS = [
   { mods: "cos", code: "KeyR", text: "{ref:▮}" },
@@ -2450,8 +2464,7 @@ function attachKeys(ta) {
         const scText = typeof sc.text === "function" ? sc.text(ta) : sc.text;
         const pos = scText.indexOf("▮");
         const before = scText.slice(0, pos), after = scText.slice(pos + 1);
-        if (sel && after) insertText(ta, before + sel + after);
-        else insertText(ta, before + after, before.length);
+        applyShortcutText(ta, before, after, sel);
         return;
       }
     }
@@ -3625,8 +3638,7 @@ function handleInlineKeys(e, ta) {
       const scText = typeof sc.text === "function" ? sc.text(ta) : sc.text;
       const pos = scText.indexOf("▮");
       const before = scText.slice(0, pos), after = scText.slice(pos + 1);
-      if (sel && after) insertText(ta, before + sel + after);
-      else insertText(ta, before + after, before.length);
+      applyShortcutText(ta, before, after, sel);
       return true;
     }
   }
