@@ -603,7 +603,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.59</div>
+    <div class="ver">v1.60</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -3659,17 +3659,35 @@ class OutlineView {
     // ⌘⇧↑↓：選んだまとまりごと、上下の兄弟と入れ替える
     if ((up || down) && e.shiftKey && cmd && !e.altKey) {
       e.preventDefault();
-      const s = a, t = z;
+      const s = a, t = z, items = this.items, lv = items[s].lv;
       if (up) {
-        const p = this.prevSib(s); if (p < 0) return;
-        const d = s - p;
-        this.structural(() => { const blk = this.items.splice(s, t - s + 1); this.items.splice(p, 0, ...blk); });
-        this.sel = { a: this.sel.a - d, z: this.sel.z - d };
+        const p = this.prevSib(s);
+        if (p >= 0) {
+          const d = s - p;
+          this.structural(() => { const blk = items.splice(s, t - s + 1); items.splice(p, 0, ...blk); });
+          this.sel = { a: this.sel.a - d, z: this.sel.z - d };
+        } else {
+          // 兄弟の先頭：親の前の兄弟の、末尾の子へ（階層はそのまま）
+          const par = s - 1; if (par < 0 || items[par].lv !== lv - 1) return;
+          let q = par - 1; while (q >= 0 && items[q].lv > items[par].lv) q--;
+          if (q < 0 || items[q].lv !== items[par].lv) return;
+          const d = s - par;
+          this.structural(() => { const blk = items.splice(s, t - s + 1); items.splice(par, 0, ...blk); });
+          this.sel = { a: this.sel.a - d, z: this.sel.z - d };
+        }
       } else {
-        const n = this.nextSib(Math.max(this.sel.a, this.sel.z)); if (n < 0) return;
-        const d = this.end(n) - n + 1;
-        this.structural(() => { const blk = this.items.splice(n, d); this.items.splice(s, 0, ...blk); });
-        this.sel = { a: this.sel.a + d, z: this.sel.z + d };
+        const n = this.nextSib(Math.max(this.sel.a, this.sel.z));
+        if (n >= 0) {
+          const d = this.end(n) - n + 1;
+          this.structural(() => { const blk = items.splice(n, d); items.splice(s, 0, ...blk); });
+          this.sel = { a: this.sel.a + d, z: this.sel.z + d };
+        } else {
+          // 兄弟の末尾：親の次の兄弟の、先頭の子へ（階層はそのまま）
+          const k = t + 1; if (k >= items.length || items[k].lv !== lv - 1) return;
+          const d = 1;
+          this.structural(() => { const nb = items.splice(k, 1); items.splice(s, 0, ...nb); });
+          this.sel = { a: this.sel.a + d, z: this.sel.z + d };
+        }
       }
       this.showSel();
       return;
