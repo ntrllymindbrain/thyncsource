@@ -603,7 +603,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.57</div>
+    <div class="ver">v1.58</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -4098,10 +4098,59 @@ window.addEventListener("storage", e => {
   if (e.key !== "thync.src" || e.newValue == null) return;
   lastRemoteSrc = e.newValue;
   if (e.newValue === src.value) return;
-  if (editors.length) { pendingRemote = e.newValue; $("remote-chip").hidden = false; return; }
+  if (editors.length) { applyRemoteWithEditors(e.newValue); remoteOutlineRefresh(); return; }
   src.value = e.newValue;
   keepScroll(render);
+  remoteOutlineRefresh();
 });
+// 紙面の上で編集欄（ダブルクリックで開くもの）を開いたままでも、ほかのウィンドウの変更をすぐ映す。
+// 変わった行より下の編集欄は行の番号をずらし、重なる編集欄は中身を読み直す（カーソルの位置は保つ）
+function applyRemoteWithEditors(nv) {
+  const A = src.value.split("\n"), B = nv.split("\n");
+  let p = 0; while (p < A.length && p < B.length && A[p] === B[p]) p++;
+  let q = 0; while (q < A.length - p && q < B.length - p && A[A.length - 1 - q] === B[B.length - 1 - q]) q++;
+  const oldEnd = A.length - q, delta = B.length - A.length;   // 旧の [p, oldEnd) が新の [p, oldEnd+delta) に
+  const touched = [];
+  for (const ed of editors) {
+    if (ed.min >= oldEnd) { ed.min += delta; ed.max += delta; }
+    else if (ed.max < p) { /* 変わらない */ }
+    else { ed.max = Math.max(ed.min, ed.max + delta); touched.push(ed); }
+  }
+  src.value = nv;
+  for (const ed of touched) {
+    const ov = ed.ov, a = ov.active, ta = ov.ta, c = ta ? ta.selectionStart : 0;
+    reload(ed);
+    if (a >= 0 && a < ov.items.length) ov.edit(a, Math.min(c, ov.items[a].text.length));
+  }
+  keepScroll(render);
+}
+// ほかのウィンドウで直された原稿を、こちらの編集欄（アウトライン）にもすぐ映す。
+// こちらで開いていた行はそのまま開いておき、カーソルの位置も保つ
+function remoteOutlineRefresh() {
+  if (typeof lpOv === "undefined" || lpMode !== "outline") return;
+  const a = lpOv.active, ta = lpOv.ta;
+  if (a < 0 || !ta) { lpRefresh(); return; }
+  const oldText = lpOv.items[a] ? lpOv.items[a].text : null, c0 = ta.selectionStart, c1 = ta.selectionEnd, n0 = lpOv.items.length;
+  const sc = lpOv.scrollState ? lpOv.scrollState() : null;
+  lpOv.deactivate && lpOv.deactivate(true);
+  lpRefresh(true);
+  let i = a;
+  if (lpOv.items.length !== n0 || !lpOv.items[i] || lpOv.items[i].text !== oldText) {
+    // 同じ文の行を近くから探す（上に行が増えた・減ったとき）
+    let best = -1;
+    for (let d = 0; d < lpOv.items.length; d++) {
+      if (lpOv.items[a + d] && lpOv.items[a + d].text === oldText) { best = a + d; break; }
+      if (lpOv.items[a - d] && lpOv.items[a - d].text === oldText) { best = a - d; break; }
+    }
+    if (best >= 0) i = best;
+  }
+  if (i >= lpOv.items.length) i = lpOv.items.length - 1;
+  if (i >= 0) {
+    lpOv.edit(i, Math.min(c0, lpOv.items[i].text.length));
+    if (lpOv.ta && c1 !== c0) lpOv.ta.setSelectionRange(Math.min(c0, lpOv.ta.value.length), Math.min(c1, lpOv.ta.value.length));
+  }
+  if (sc) lpOv.scrollState(sc);
+}
 function applyPendingRemote() {
   if (pendingRemote === null) return;
   src.value = pendingRemote; pendingRemote = null; $("remote-chip").hidden = true;
