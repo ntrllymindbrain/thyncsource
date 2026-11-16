@@ -603,7 +603,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.58</div>
+    <div class="ver">v1.59</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -3509,13 +3509,16 @@ class OutlineView {
       // 前後の空白を1つにまとめる
       if (/\s/.test(t[z] || "") && (a === 0 || /\s/.test(t[a - 1]))) z++;
       else if (z === t.length && /\s/.test(t[a - 1] || "")) a--;
+      // 抜いた跡で、前の字と #タグがくっつかないように
+      if (a > 0 && !/\s/.test(t[a - 1]) && t[z] === "#") return { text: t.slice(0, a) + " " + t.slice(z), a, n: z - a - 1 };
       return { text: t.slice(0, a) + t.slice(z), a, n: z - a };
     };
     const ins = (t, c) => {
       let pre = "", post = "";
       const L = t[c - 1] || "", Rr = t[c] || "";
-      if (L && /[A-Za-z0-9.,;:!?)\]}]/.test(L)) pre = " ";
-      if (Rr && /[A-Za-z0-9({\[]/.test(Rr)) post = " ";
+      // 前後には必ず半角スペースを置く（#タグや他の記法とくっついて効かなくならないように）
+      if (L && !/\s/.test(L)) pre = " ";
+      if (Rr && !/\s/.test(Rr)) post = " ";
       return { text: t.slice(0, c) + pre + tok + post + t.slice(c), caret: c + pre.length + tok.length };
     };
     if (this.active >= 0 && this.ta && this.items[this.active] && !this.ta._mir) this.items[this.active].text = this.ta.value;
