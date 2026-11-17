@@ -99,6 +99,23 @@ a.xref[draggable="true"], .toc-i[draggable="true"] { -webkit-user-drag: element;
 .drop-ok { outline: 2px dashed var(--accent); outline-offset: -4px; }
 .pane-in { min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; background: var(--panel); border-right: 1px solid var(--rule); }
 .pane-in label { font-weight: 500; font-size: 13px; }
+/* 最近編集したbullet（左の欄の左端）。開いているあいだは欄の中身を右へずらし、重ならないようにする */
+.pane-in { position: relative; }
+.pane-in.rc-open { padding-left: 200px; }
+.rc-btn { position: absolute; z-index: 6; left: 0; top: 50%; transform: translateY(-50%); writing-mode: vertical-rl; padding: 8px 3px; font-size: 11px; letter-spacing: .1em; border-radius: 0 7px 7px 0; border-left: none; color: var(--muted); background: var(--panel); opacity: .8; }
+.rc-btn:hover, .rc-btn[aria-expanded="true"] { opacity: 1; color: var(--accent); }
+.pane-in.rc-open .rc-btn { left: 192px; }
+.rc-side { position: absolute; z-index: 5; left: 8px; top: 14px; bottom: 54px; width: 184px; display: flex; flex-direction: column; background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; font-size: 11.5px; overflow: hidden; }
+.rc-side[hidden] { display: none; }
+.rc-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-bottom: 1px solid var(--rule); color: var(--muted); }
+.rc-head b { font-weight: 600; font-size: 11.5px; color: var(--ink); }
+.rc-head button { border: none; background: none; padding: 0 2px; font-size: 14px; color: var(--muted); }
+.rc-list { list-style: none; margin: 0; padding: 4px 0; overflow: auto; flex: 1; }
+.rc-list li { padding: 5px 9px; line-height: 1.45; cursor: pointer; color: var(--ink); border-bottom: 1px dotted var(--rule); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rc-list li:hover { background: var(--accent-soft); }
+.rc-list li .rc-ln { color: var(--muted); font-size: 10px; margin-right: 4px; font-variant-numeric: tabular-nums; }
+.rc-list li.rc-none { color: var(--muted); cursor: default; }
+.rc-pin { display: flex !important; align-items: center; gap: 5px; padding: 6px 9px; border-top: 1px solid var(--rule); font-size: 11.5px !important; font-weight: normal !important; color: var(--muted); }
 .hint { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 0; }
 textarea {
   flex: 1; min-height: 200px; resize: none; width: 100%;
@@ -603,7 +620,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.61</div>
+    <div class="ver">v1.62</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -655,6 +672,12 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
       <textarea id="src" spellcheck="false" autocomplete="off"></textarea>
       <textarea id="zsrc" spellcheck="false" autocomplete="off" aria-label="ズーム中の部分"></textarea>
       <div id="lp-ov" aria-label="原稿の箇条書き"></div>
+      <button type="button" class="rc-btn" id="rc-btn" aria-expanded="false" title="最近編集したbullet" aria-label="最近編集したbulletを見る">最近</button>
+      <aside class="rc-side" id="rc-side" hidden aria-label="最近編集したbullet">
+        <div class="rc-head"><b>最近編集した</b><button type="button" id="rc-close" aria-label="閉じる">×</button></div>
+        <ol class="rc-list" id="rc-list"></ol>
+        <label class="rc-pin"><input type="checkbox" id="rc-pin"> 常時表示</label>
+      </aside>
       <div id="lview" class="side-in" data-pane="lview" hidden></div>
       <div class="stats" id="stats"></div>
       <ul class="warns" id="warns"></ul>
@@ -5705,6 +5728,7 @@ function lpChanged() {
   if (zoom) zoom.max = lpHi;
   src.value = L.join("\n");
   store.set("thync.src", src.value);
+  try { noteRecentEdit(); } catch (_) {}
   if (editors.length) editors = [];
   clearTimeout(lpTimer); lpTimer = setTimeout(() => keepScroll(render), 150);
 }
@@ -6512,6 +6536,67 @@ function editMySc(k) {
   (k >= 0 ? tx : key).focus();
 }
 window.addEventListener("storage", e => { if (e.key && e.key.endsWith("thync.mysc")) { MY_SC = loadMySc(); if (!$("ks-side").hidden) renderKs(); } });
+
+/* ---------- 最近編集したbullet（10件） ---------- */
+let recent = (() => { try { const a = JSON.parse(store.get("thync.recent") || "[]"); return Array.isArray(a) ? a.slice(0, 10) : []; } catch (_) { return []; } })();
+let recentTimer = 0;
+const recentPlain = t => t.replace(/<[^>]+>/g, "").replace(/\{(?:lbl|ref|refn|rep|repn|reptext[-\d]*|img|mirror|exref):[^}]*\}/g, "").replace(/(^|\s)#[\w-]+/g, "$1").replace(/\s{2,}/g, " ").trim();
+// 編集した行を記録する（同じbulletは1件にまとめ、いちばん上へ）
+function noteRecentEdit() {
+  if (typeof lpOv === "undefined" || lpOv.active < 0 || !lpOv.items[lpOv.active]) return;
+  const i = lpOv.active, line = lpOv.lineOf(i), text = lpOv.items[i].text;
+  clearTimeout(recentTimer);
+  recentTimer = setTimeout(() => {
+    const prev = recent[0];
+    recent = recent.filter((r, k) => !(r.line === line || r.text === text || (k === 0 && prev && prev.line === line)));
+    recent.unshift({ line, text, t: Date.now() });
+    recent = recent.slice(0, 10);
+    store.set("thync.recent", JSON.stringify(recent));
+    if (!$("rc-side").hidden) renderRecent();
+  }, 400);
+}
+// 記録した行が今どこにあるか：同じ文の行を、記録した位置のいちばん近くから探す
+function recentLine(r) {
+  const L = srcLines(), want = r.text;
+  let best = -1, bd = 1e9;
+  for (let k = 0; k < L.length; k++) {
+    const m = L[k].match(/^\s*- (.*)$/); if (!m || m[1] !== want) continue;
+    const d = Math.abs(k - r.line); if (d < bd) { bd = d; best = k; }
+  }
+  return best >= 0 ? best : Math.min(r.line, L.length - 1);
+}
+function renderRecent() {
+  const ol = $("rc-list");
+  if (!recent.length) { ol.innerHTML = `<li class="rc-none">まだありません。bulletを書き直すとここに並びます。</li>`; return; }
+  ol.innerHTML = recent.map((r, k) => { const p = recentPlain(r.text) || "（空の行）"; return `<li data-k="${k}" title="${esc(p)}"><span class="rc-ln">${recentLine(r) + 1}</span>${esc(p)}</li>`; }).join("");
+}
+function setRecentOpen(on) {
+  $("rc-side").hidden = !on; $("rc-btn").setAttribute("aria-expanded", String(on));
+  document.querySelector(".pane-in").classList.toggle("rc-open", on);
+  store.set("thync.rc", on ? "1" : "0");
+  if (on) renderRecent();
+}
+$("rc-btn").addEventListener("mousedown", e => e.preventDefault());
+$("rc-btn").addEventListener("click", () => setRecentOpen($("rc-side").hidden));
+$("rc-close").addEventListener("click", () => setRecentOpen(false));
+$("rc-pin").checked = store.get("thync.rcpin") === "1";
+$("rc-pin").addEventListener("change", () => store.set("thync.rcpin", $("rc-pin").checked ? "1" : "0"));
+$("rc-list").addEventListener("mousedown", e => e.preventDefault());
+$("rc-list").addEventListener("click", e => {
+  const li = e.target.closest("li[data-k]"); if (!li) return;
+  const r = recent[+li.dataset.k]; if (!r) return;
+  const line = recentLine(r);
+  if (!$("rc-pin").checked) setRecentOpen(false);
+  jumpToLine(line);
+  // その行を開いて、文末にカーソルを置く
+  setTimeout(() => {
+    if (lpMode !== "outline") return;
+    const hit = lpOv.itemAtLine(line); if (!hit) return;
+    lpOv.edit(hit.i, lpOv.items[hit.i].text.length);
+  }, 80);
+});
+window.addEventListener("storage", e => { if (e.key && e.key.endsWith("thync.recent")) { try { recent = JSON.parse(e.newValue || "[]"); } catch (_) {} if (!$("rc-side").hidden) renderRecent(); } });
+if (store.get("thync.rc") === "1" && store.get("thync.rcpin") === "1") setRecentOpen(true);
 $("ks-btn").addEventListener("mousedown", e => e.preventDefault());
 $("ks-btn").addEventListener("click", () => {
   const s = $("ks-side"); s.hidden = !s.hidden;
