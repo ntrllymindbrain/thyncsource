@@ -3,7 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>thyncSource プレビュー試作</title>
+<title>thyncSource</title>
+<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,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">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="thyncSource-icon-192.png">
+<link rel="apple-touch-icon" href="thyncSource-icon-180.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#0646b8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
@@ -54,6 +60,7 @@ header.bar {
 }
 .mark { font-weight: 600; font-size: 15px; letter-spacing: .01em; }
 .mark span { color: var(--accent); }
+.mark-icon { width: 22px; height: 22px; border-radius: 5px; vertical-align: -5px; margin-right: 7px; }
 .ver { color: var(--muted); font-size: 12px; }
 .spacer { flex: 1; }
 button, .chk {
@@ -625,8 +632,8 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <body>
 <div class="app">
   <header class="bar">
-    <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.64</div>
+    <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
+    <div class="ver">v1.65</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
