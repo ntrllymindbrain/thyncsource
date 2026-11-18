@@ -634,7 +634,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.66</div>
+    <div class="ver">v1.67</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1518,7 +1518,7 @@ function compileOne(tree, opts) {
   }
 
   /* --- 文中の記法 --- */
-  const RAW = new Set(["ref", "refn", "rep", "repn", "reptext", "lbl", "j", "cite", "mirror", "hyp", "exref", "img", "wfimg"]);
+  const RAW = new Set(["ref", "refn", "refwop", "rep", "repn", "reptext", "lbl", "j", "cite", "mirror", "hyp", "exref", "img", "wfimg"]);
   // #hfill：その位置から後ろを、その行の右端へ寄せる（TeX の \hfill）
   function R(s) {
     s = String(s).replace(/\s*[\uE001\uE002]\s*/g, "\uE003");
@@ -1625,6 +1625,7 @@ function compileOne(tree, opts) {
       switch (name) {
         case "img": case "wfimg": return imgHTML(name, arg);
         case "ref": case "rep": case "repn": return refHTML(arg, false).replace(/<a class="xref"/g, `<a class="xref" draggable="true" data-code="${esc("{ref:" + arg + "}")}"`);
+        case "refwop":   // ref without parenthesis：{refn:} と同じ（かっこなしの番号だけ）
         case "refn": return refHTML(arg, true).replace(/<a class="xref"/g, `<a class="xref" draggable="true" data-code="${esc("{refn:" + arg + "}")}"`);
         case "reptext": return repTextHTML(arg);
         case "lbl": return "";
@@ -5198,7 +5199,7 @@ renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
 const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid", "evenly", "toc", "toc-n", "toc-1", "toc-2", "toc-3", "toc-4", "toc-5", "fnmark", "fntext", "footnotemark", "footnotetext", "terminate", "null"]);
-const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|repn|reptext(?:-\d{1,2})?|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
+const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|refwop|rep|repn|reptext(?:-\d{1,2})?|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 // 傍点：1字ずつ包んで、字の上に小さな黒丸を置く（text-emphasis は点の大きさを変えられないため）
 // 脚注番号の組み方
 // ・続く番号は上付きのカンマで区切る（¹,²）
@@ -6687,7 +6688,7 @@ window.addEventListener("storage", e => { if (e.key && e.key.endsWith("thync.mys
 /* ---------- 最近編集したbullet（10件） ---------- */
 let recent = (() => { try { const a = JSON.parse(store.get("thync.recent") || "[]"); return Array.isArray(a) ? a.slice(0, 10) : []; } catch (_) { return []; } })();
 let recentTimer = 0;
-const recentPlain = t => t.replace(/<[^>]+>/g, "").replace(/\{(?:lbl|ref|refn|rep|repn|reptext[-\d]*|img|mirror|exref):[^}]*\}/g, "").replace(/(^|\s)#[\w-]+/g, "$1").replace(/\s{2,}/g, " ").trim();
+const recentPlain = t => t.replace(/<[^>]+>/g, "").replace(/\{(?:lbl|ref|refn|refwop|rep|repn|reptext[-\d]*|img|mirror|exref):[^}]*\}/g, "").replace(/(^|\s)#[\w-]+/g, "$1").replace(/\s{2,}/g, " ").trim();
 // 編集した行を記録する（同じbulletは1件にまとめ、いちばん上へ）
 function noteRecentEdit() {
   if (typeof lpOv === "undefined" || lpOv.active < 0 || !lpOv.items[lpOv.active]) return;
