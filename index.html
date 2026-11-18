@@ -122,6 +122,7 @@ a.xref[draggable="true"], .toc-i[draggable="true"] { -webkit-user-drag: element;
 .rc-list li:hover { background: var(--accent-soft); }
 .rc-list li .rc-ln { color: var(--muted); font-size: 10px; margin-right: 4px; font-variant-numeric: tabular-nums; }
 .rc-list li.rc-none { color: var(--muted); cursor: default; }
+.m-wf { font-size: 10.5px; color: var(--accent); margin-left: 4px; } .m-wf.wait { color: var(--muted); }
 .rc-pin { display: flex !important; align-items: center; gap: 5px; padding: 6px 9px; border-top: 1px solid var(--rule); font-size: 11.5px !important; font-weight: normal !important; color: var(--muted); }
 .hint { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 0; }
 textarea {
@@ -633,7 +634,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.65</div>
+    <div class="ver">v1.66</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -820,7 +821,8 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
       <button type="button" id="dr-close" aria-label="閉じる">閉じる</button>
     </div>
     <div class="dr-body" id="dr-memo">
-      <p class="hint">書いている行で ⌘+Opt+Shift+M を押すと、その行（と子の行）がここへ移ります。Workflowyにつないだあとは、WorkflowyのInboxに入ります。</p>
+      <p class="hint">書いている行で ⌘+Opt+Shift+M を押すと、その行（と子の行）がここへ移ります。「原稿へ戻す」で、編集欄のカーソルの行のすぐ下へ戻せます。</p>
+      <p class="hint">Workflowyのキーを入れてあれば、Workflowyのいちばん上の「Inbox」（なければ「thyncSource メモ」）にも新しい順に入り、ほかの端末のメモ集にも出ます。戻したり削除したりしたメモは、Workflowyでは完了になります（消えはしません）。</p>
       <ul class="cards" id="memo-list"></ul>
     </div>
     <div class="dr-body" id="dr-hist" hidden>
@@ -3193,9 +3195,18 @@ class OutlineView {
     if (!this.items.length) this.items.push({ lv: 0, text: "", note: "", done: false });
     this.render(); this.changed();
     const memo = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text, at: new Date().toISOString(), doc: currentTitle };
-    memos.unshift(memo); saveMemos(); renderMemos();
+    memos.unshift(memo); saveMemos(); renderMemos(); memoSyncSoon();
     this.edit(Math.max(0, Math.min(prev, this.items.length - 1)));
-    toast("メモ集に送りました", { label: "取り消す", fn: () => { if (this.restoreUndo()) { memos = memos.filter(m => m.id !== memo.id); saveMemos(); renderMemos(); } } });
+    toast("メモ集に送りました", { label: "取り消す", fn: () => { if (this.restoreUndo()) memoDrop(memo); } });
+  }
+  // メモ集から戻す：カーソルの行（なければ最後に触った行）のすぐ後ろへ、同じ深さで入れる
+  insertMemo(text) {
+    const add = textToItems(text).items; if (!add.length) return false;
+    let i = this.active >= 0 ? this.active : (this.lastActive ?? -1);
+    if (i >= this.items.length) i = this.items.length - 1;
+    const lv = i >= 0 ? this.items[i].lv : 0, at = i >= 0 ? this.end(i) + 1 : this.items.length;
+    this.structural(() => { this.items.splice(at, 0, ...add.map(x => ({ ...x, lv: x.lv + lv }))); }, { i: at, c: 0 });
+    return true;
   }
   async mirror(i) {
     const it = this.items[i];
@@ -4299,28 +4310,116 @@ function sendToMemo(ta) {
   ta.setRangeText("", rs, re, "start");
   ta.dispatchEvent(new Event("input"));
   const memo = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text, at: new Date().toISOString(), doc: currentTitle };
-  memos.unshift(memo); saveMemos(); renderMemos();
+  memos.unshift(memo); saveMemos(); renderMemos(); memoSyncSoon();
   toast("メモ集に送りました", { label: "取り消す", fn: () => {
     if (!ta.isConnected) { toast("元の編集欄が閉じられたので戻せません。メモ集からコピーしてください。"); return; }
     ta.setRangeText(removed, rs, rs, "end");
     ta.dispatchEvent(new Event("input"));
-    memos = memos.filter(m => m.id !== memo.id); saveMemos(); renderMemos();
+    memoDrop(memo);
   } });
 }
 function renderMemos() {
   $("btn-memo").textContent = `メモ集 ${memos.length}`;
   const ul = $("memo-list");
   if (!memos.length) { ul.innerHTML = `<li class="empty-note">まだメモはありません。</li>`; return; }
-  ul.innerHTML = memos.map(m => `<li class="card" data-id="${m.id}"><div class="meta">${esc(stamp(m.at))} ・ ${esc(m.doc || "")}</div><pre>${esc(m.text)}</pre>
-    <div class="acts"><button type="button" data-act="copy">コピー</button><button type="button" data-act="del">削除</button></div></li>`).join("");
+  const where = m => !wfKey() ? "" : m.wfId ? `<span class="m-wf" title="Workflowyのメモ置き場に入っています">Workflowy ✓</span>` : `<span class="m-wf wait" title="つながったら送ります">Workflowyへ送る待ち</span>`;
+  ul.innerHTML = memos.map(m => `<li class="card" data-id="${m.id}"><div class="meta">${esc(stamp(m.at))} ・ ${esc(m.doc || "")} ${where(m)}</div><pre>${esc(m.text)}</pre>
+    <div class="acts"><button type="button" data-act="back" title="編集欄のカーソルの行のすぐ下へ戻し、メモ集からは消す">原稿へ戻す</button><button type="button" data-act="copy">コピー</button><button type="button" data-act="del">削除</button></div></li>`).join("");
 }
+// メモを消す（戻した・削除した）：Workflowyの側は完了にしておく（消さずに残るので、あとで拾える）
+function memoDrop(m) {
+  memos = memos.filter(x => x.id !== m.id); saveMemos(); renderMemos();
+  if (m.wfId) { let q = []; try { q = JSON.parse(store.get("thync.memodone") || "[]"); } catch (_) {} q.push(m.wfId); store.set("thync.memodone", JSON.stringify(q)); memoSyncSoon(); }
+}
+function memoRestore(m) { if (!memos.some(x => x.id === m.id)) { memos.unshift(m); memos.sort((a, b) => a.at < b.at ? 1 : -1); saveMemos(); renderMemos(); }
+  if (m.wfId) { let q = []; try { q = JSON.parse(store.get("thync.memodone") || "[]"); } catch (_) {} store.set("thync.memodone", JSON.stringify(q.filter(x => x !== m.wfId))); } }
 $("memo-list").addEventListener("click", async e => {
   const b = e.target.closest("[data-act]"); if (!b) return;
   const id = b.closest("[data-id]").dataset.id;
   const m = memos.find(x => x.id === id); if (!m) return;
   if (b.dataset.act === "copy") { const ok = await copyText(m.text); toast(ok ? "メモをコピーしました" : "コピーできませんでした"); }
-  else { memos = memos.filter(x => x.id !== id); saveMemos(); renderMemos(); }
+  else if (b.dataset.act === "back") {
+    if (typeof lpOv === "undefined" || lpMode !== "outline") { toast("左の欄を「箇条書き」にしてから戻してください"); return; }
+    if (!lpOv.insertMemo(m.text)) { toast("戻すものがありません"); return; }
+    memoDrop(m);
+    toast("原稿へ戻しました", { label: "取り消す", fn: () => { if (lpOv.restoreUndo()) memoRestore(m); } });
+  }
+  else { memoDrop(m); toast("メモを削除しました", { label: "取り消す", fn: () => memoRestore(m) }); }
 });
+
+/* メモ集をWorkflowyにも置く：いちばん上の「Inbox」（なければ「thyncSource メモ」を作る）の下に、新しいものを上から。
+   1つのメモの頭のbulletのノートに印（〔thyncSource メモ …〕）を入れ、ほかの端末からも拾えるようにする */
+const MEMO_MARK = "〔thyncSource メモ";
+async function ensureMemoTop() {
+  let id = store.get("thync.wfmemo");
+  if (id) { try { await wfFetch("/nodes/" + id); return id; } catch (_) { id = null; } }
+  const top = await wfFetch("/nodes?parent_id=None");
+  const ns = top.nodes || [], nm = n => decodeText(n.name).replace(/<[^>]+>/g, "").trim();
+  const f = ns.find(n => /^inbox$/i.test(nm(n))) || ns.find(n => nm(n) === "thyncSource メモ");
+  id = f ? f.id : (await wfFetch("/nodes", { method: "POST", body: { parent_id: "None", name: "thyncSource メモ", position: "top" } })).item_id;
+  store.set("thync.wfmemo", id);
+  return id;
+}
+async function memoPush(m) {
+  const top = await ensureMemoTop();
+  const items = textToItems(m.text).items; if (!items.length) return;
+  const stack = []; let headId = null;
+  for (const it of items) {
+    while (stack.length && stack[stack.length - 1].lv >= it.lv) stack.pop();
+    const parent = stack.length ? stack[stack.length - 1].id : top;
+    const r = await wfFetch("/nodes", { method: "POST", body: { parent_id: parent, name: "…", position: stack.length ? "bottom" : "top" } });
+    await wfFetch("/nodes/" + r.item_id, { method: "POST", body: { name: encodeText(it.text) } });
+    const mark = !headId ? `${MEMO_MARK} ${stamp(m.at)} ・ ${m.doc || ""} ・ id:${m.id}〕` : "";
+    const note = [it.note || "", mark].filter(Boolean).join("\n");
+    if (note) await wfFetch("/nodes/" + r.item_id, { method: "POST", body: { note } });
+    if (it.done) await wfFetch("/nodes/" + r.item_id + "/complete", { method: "POST" });
+    if (!headId) headId = r.item_id;
+    stack.push({ lv: it.lv, id: r.item_id });
+  }
+  m.wfId = headId;
+}
+// ほかの端末で送ったメモを拾い、ほかで消された（完了にされた）メモを外す
+async function memoPull() {
+  const top = await ensureMemoTop();
+  const kids = (await wfFetch("/nodes?parent_id=" + encodeURIComponent(top))).nodes || [];
+  const seen = new Set();
+  const subtree = async (id, lv, out) => {
+    const ks = ((await wfFetch("/nodes?parent_id=" + encodeURIComponent(id))).nodes || []).slice().sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+    for (const k of ks) { out.push({ lv, text: decodeText(k.name), note: decodeText(k.note || ""), done: !!(k.completed || k.completedAt) }); await subtree(k.id, lv + 1, out); }
+  };
+  for (const n of kids) {
+    const note = decodeText(n.note || ""), mm = note.match(/〔thyncSource メモ (\S+ \S+) ・ (.*?) ・ id:([\w]+)〕/);
+    if (!mm) continue;
+    if (n.completed || n.completedAt) continue;
+    seen.add(mm[3]);
+    if (memos.some(x => x.id === mm[3])) { const x = memos.find(y => y.id === mm[3]); if (!x.wfId) x.wfId = n.id; continue; }
+    const out = [{ lv: 0, text: decodeText(n.name), note: note.split("\n").filter(l => !l.startsWith(MEMO_MARK)).join("\n"), done: false }];
+    await subtree(n.id, 1, out);
+    const at = new Date(mm[1].replace(" ", "T")).toISOString();
+    memos.push({ id: mm[3], text: itemsToLines(out, 0).join("\n"), at, doc: mm[2], wfId: n.id });
+  }
+  // Workflowyにあったはずのメモが、完了・削除されていたら外す
+  memos = memos.filter(x => !x.wfId || seen.has(x.id));
+  memos.sort((a, b) => a.at < b.at ? 1 : -1);
+  saveMemos(); renderMemos();
+}
+let memoBusy = false, memoT = null;
+function memoSyncSoon() { clearTimeout(memoT); memoT = setTimeout(() => memoSync(false), 800); }
+async function memoSync(pull) {
+  if (memoBusy || !wfKey() || !navigator.onLine) return;
+  memoBusy = true;
+  try {
+    for (const m of memos.filter(x => !x.wfId).reverse()) { await memoPush(m); saveMemos(); }
+    let q = []; try { q = JSON.parse(store.get("thync.memodone") || "[]"); } catch (_) {}
+    while (q.length) { try { await wfFetch("/nodes/" + q[0] + "/complete", { method: "POST" }); } catch (e) { if (e.status && e.status < 500 && e.status !== 429) {} else throw e; } q.shift(); store.set("thync.memodone", JSON.stringify(q)); }
+    if (pull) await memoPull();
+    renderMemos();
+  } catch (e) { /* つながらなかった分は手元に残し、あとでまた送る */ }
+  finally { memoBusy = false; }
+}
+setInterval(() => memoSync(false), 60000);
+window.addEventListener("online", memoSyncSoon);
+window.addEventListener("storage", e => { if (e.key && e.key.endsWith("thync.memos")) { try { memos = JSON.parse(e.newValue || "[]"); } catch (_) {} renderMemos(); } });
 
 /* ---------- 変更履歴：編集欄を閉じたときと ⌘+S で記録 ---------- */
 let hist = [];
@@ -4994,9 +5093,9 @@ function openDrawer(tab) {
   $("dr-memo").hidden = tab !== "memo";
   $("dr-hist").hidden = tab !== "hist";
 }
-$("btn-memo").addEventListener("click", () => ($("drawer").hidden || $("dr-memo").hidden) ? openDrawer("memo") : ($("drawer").hidden = true));
+$("btn-memo").addEventListener("click", () => { if ($("drawer").hidden || $("dr-memo").hidden) { openDrawer("memo"); memoSync(true); } else $("drawer").hidden = true; });
 $("btn-hist").addEventListener("click", () => ($("drawer").hidden || $("dr-hist").hidden) ? openDrawer("hist") : ($("drawer").hidden = true));
-$("dt-memo").addEventListener("click", () => openDrawer("memo"));
+$("dt-memo").addEventListener("click", () => { openDrawer("memo"); memoSync(true); });
 $("dt-hist").addEventListener("click", () => openDrawer("hist"));
 $("dr-close").addEventListener("click", () => { $("drawer").hidden = true; });
 
