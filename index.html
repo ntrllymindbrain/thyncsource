@@ -579,6 +579,13 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 .sync-flash { animation: syncflash 1.2s ease-out; }
 .hfill { float: right; margin-left: 1em; text-indent: 0; }
 .paper :is(p, h1, h2, h3, h4, .ex-text, .ex-head, .ph, li, blockquote):has(.hfill)::after { content: ""; display: block; clear: both; }
+.fig { display: block; margin: 1.3em auto 1.5em; text-align: center; break-inside: avoid; text-indent: 0; }
+.fig .img-wrap { margin: 0 auto; }
+.fig img { max-width: 100%; }
+.paper.paged .fig img { max-height: 160mm; object-fit: contain; }
+.fig figcaption { margin-top: .55em; font-size: .9em; line-height: 1.6; text-align: center; }
+.fig figcaption .fig-no { font-weight: 600; }
+.fig-anchor { display: none; }
 .img-wrap { display: inline-block; position: relative; max-width: 100%; vertical-align: top; line-height: 0; text-indent: 0; }
 .img-wrap img { display: block; max-width: 100%; height: auto; }
 .img-wrap img.img-missing { min-width: 8em; min-height: 3em; border: 1px dashed #c66; font-size: .8em; line-height: 1.4; color: #a33; }
@@ -634,7 +641,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.67</div>
+    <div class="ver">v1.68</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -801,6 +808,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
       <p style="font-size:12px;color:var(--muted)">自分用のショートカット（このブラウザだけに保存）は、右端のショートカットのアイコン →「＋ 自分用を追加」で登録できます。</p>
       <h4>覚え書き：ふりがな</h4><table><tr><td><kbd>{rubi:漢字}{かんじ}</kbd></td><td>漢字の上に「かんじ」（まとめて振る）。{rubi:漢字|かんじ} とも書ける</td></tr><tr><td><kbd>{rubi:東京|とう きょう}</kbd></td><td>読みを空白か「・」で字の数だけ区切ると、1字ずつ振る（行の折り返しでも字と読みが離れない）。1字に3字以上の読みがあるときは、字の間が空かないよう熟語としてまとめて振る</td></tr><tr><td><kbd>⌘+⌥+Shift+Y</kbd></td><td>選んだ文字を {rubi:…}{} で囲み、読みの所にカーソル（何も選んでいなければ漢字の所に）</td></tr></table>
       <h4>覚え書き：文書をそこで終える・外す</h4><table><tr><td><kbd>#doc #null</kbd></td><td>その文書を丸ごと表示・PDFから外す（ほかの文書に集中したいとき）。完了にするか #null を消すと戻る</td></tr><tr><td><kbd>#terminate</kbd></td><td>このbulletから下（文書の後ろ全部）を表示・PDFに出さない。そのbulletを完了（⌘Return）にすると効かなくなる</td></tr></table>
+      <h4>覚え書き：図</h4><table><tr><td><kbd>{fig:画像}{説明}</kbd></td><td>図を入れる。画像は URL か dropbox:/… （|60 で幅60%）。番号は文書の順に「図1」（lang: en なら「Fig. 1」）、説明はその下に</td></tr><tr><td><kbd>{lbl:x} を同じbulletに</kbd></td><td>{ref:x} で「図1」と参照できる</td></tr><tr><td><kbd>置き場所</kbd></td><td>Web表示：その段落の後ろに中央寄せ／ページ表示：そのページの上か下（入りきらなければ次のページ）</td></tr><tr><td><kbd>fig-format: 図%n</kbd></td><td>#settings で番号の書き方を変えられる（例：Figure %n）</td></tr></table>
       <h4>覚え書き：脚注</h4><table><tr><td><kbd>- 本文の文。<br>&nbsp;&nbsp;- 脚注の中身 #fn</kbd></td><td>子のbulletに #fn を付けると脚注になり、親の文の末尾に番号が付く（例文の行の子でも同じ）</td></tr><tr><td><kbd>#fnmark（#footnotemark）</kbd></td><td>文の好きな位置に番号だけを置く（例文の中でも）。中身は書かない</td></tr><tr><td><kbd>#fntext（#footnotetext）</kbd></td><td>そのbulletの中身が、まだ中身のない #fnmark の脚注になる（前から順に1つずつ対応。本文には出ない）。置き場所はどこでもよい</td></tr><tr><td><kbd>#acknowledgmentsfn</kbd></td><td>謝辞を「*」の脚注にする（タイトルに付く）</td></tr></table>
       <h4>覚え書き：[J-1] のような通し番号（仮説・一般化など）</h4><table><tr><td><kbd>#HBJ-</kbd></td><td>[J-1]、[J-2]… と角かっこで通し番号（B = bracket）</td></tr><tr><td><kbd>#HPJ-</kbd></td><td>(J-1)、(J-2)… と丸かっこで（P = parenthesis）</td></tr><tr><td><kbd>#HJ-</kbd></td><td>J-1、J-2… とかっこなしで</td></tr><tr><td><kbd>#HB</kbd></td><td>接頭辞なし：[1]、[2]…</td></tr><tr><td><kbd>#HBBJ- ／ #HPBJ-</kbd></td><td>かっこの印の後ろにもう1つ B を足すと、番号を太字で：<b>[J-1]</b>、<b>(J-1)</b>（数は #HBJ- と通しで数える）</td></tr><tr><td><kbd>#HBG- {lbl:x}</kbd></td><td>「J-」の部分は英数字＋「-」なら何でもよく、接頭辞ごとに別々に 1, 2, 3… と数える。{lbl:x} を付ければ {ref:x} で [G-1]、{refn:x} で G-1 と参照できる</td></tr></table>
     </div>
@@ -1075,6 +1083,20 @@ function compileOne(tree, opts) {
       }
     })(tree);
   }
+  // 図（{fig:画像}{説明}）の通し番号を、文書の順に前もって決める。同じbulletの {lbl:x} は図のラベル
+  const figLabels = new Map(); let figN = 0;
+  {
+    const rawVis = n => !(opts.hideCompleted && n.completed) && !/(^|\s)#(draft|d)(?=\s|$)/i.test(n.name || "");
+    (function f(n) {
+      for (const c of n.children) {
+        if (!rawVis(c)) continue;
+        const k = ((c.name || "").match(/\{fig:/g) || []).length;
+        if (k) { const first = figN + 1; figN += k; const m = (c.name || "").match(/\{lbl:([^}]+)\}/); if (m && !figLabels.has(m[1].trim())) figLabels.set(m[1].trim(), first); }
+        f(c);
+      }
+    })(tree);
+  }
+  const figRendered = new Map(); let figCount = 0; const figStore = [];
   const visible = n => !(opts.hideCompleted && n.completed) && !info(n).tags.has("draft") && !info(n).tags.has("d");
   // ミラー用：ラベル → ノード
   const labelNode = new Map();
@@ -1437,6 +1459,7 @@ function compileOne(tree, opts) {
   /* --- 参照の解決 --- */
   function lookup(key) {
     key = key.trim();
+    if (figLabels.has(key)) { const n = figLabels.get(key); return { kind: "fig", num: n, sub: [], id: `fig-${P}${n}` }; }
     if (labels.has(key)) return pickDup(key, labels.get(key));
     const parts = key.split(".");
     const base = pickDup(parts[0], labels.get(parts[0]));
@@ -1496,6 +1519,7 @@ function compileOne(tree, opts) {
   const label = (r, bare, extra = "") => {
     if (r.kind === "sec") return esc(r.display);
     if (r.kind === "hyp") return esc(bare ? r.bare : r.shown);
+    if (r.kind === "fig") return esc(figName(r.num));
     const n = r.num + subStr(r.sub) + extra;
     return esc(bare ? n : fmt(n));
   };
@@ -1526,6 +1550,18 @@ function compileOne(tree, opts) {
     if (k < 0) return html;
     return html.slice(0, k).replace(/\s+$/, "") + `<span class="hfill">` + html.slice(k + 1).replace(/\uE000/g, "").replace(/^\s+/, "").replace(/\uE004/g, "\u3000") + `</span>`;
   }
+  const figName = n => (settings["fig-format"] || (/^ja/i.test(settings.lang || "ja") ? "図%n" : "Fig. %n")).replace("%n", n);
+  function figHTML(body, cap) {
+    const key = body + "\u0001" + cap;
+    let n = figRendered.get(key);
+    if (!n) { n = ++figCount; figRendered.set(key, n); }
+    else return `<span class="fig-anchor" data-fig="${P}${n}"></span>`;   // 同じ図の再掲（{rep:} など）では、もう一度は出さない
+    const id = `fig-${P}${n}`, ja = /^ja/i.test(settings.lang || "ja");
+    const img = imgHTML("img", body);
+    const capHTML = `<figcaption><span class="fig-no">${esc(figName(n))}</span>${cap.trim() ? (ja ? "\u3000" : ". ") + R0(cap) : ""}</figcaption>`;
+    figStore.push(`<figure class="fig" id="${id}" data-fig="${P}${n}">${img}${capHTML}</figure>`);
+    return `<span class="fig-anchor" data-fig="${P}${n}"></span>`;
+  }
   function rubyHTML(base, yomi) {
     yomi = yomi.trim();
     if (!yomi) { warn(`ふりがな {rubi:${base}} の読みがありません。{rubi:${base}}{よみ} のように書いてください。`); return R0(base); }
@@ -1549,6 +1585,15 @@ function compileOne(tree, opts) {
           i += m[0].length;
           if (m[2] === "}") { out += simple(name); continue; }
           // ふりがな：{rubi:漢字}{かんじ}・{rubi:漢字|かんじ}。読みを空白か「・」で字数ぶん区切ると1字ずつ（{rubi:東京|とう きょう}）
+          // 図：{fig:画像のURLか dropbox:/…（|幅% も可）}{説明}。本文からは抜き、段落の後ろ（ページ表示ではページの上か下）へ
+          if (name === "fig") {
+            const close = j => { let d = 0; for (let q = j; q < s.length; q++) { if (s[q] === "{") d++; else if (s[q] === "}") { if (!d) return q; d--; } } return s.length; };
+            const e1 = close(i); const body = s.slice(i, e1).trim(); i = Math.min(s.length, e1 + 1);
+            let cap = "";
+            if (s[i] === "{" && !/^\{[a-z]+[:}]/.test(s.slice(i))) { const e2 = close(i + 1); cap = s.slice(i + 1, e2); i = Math.min(s.length, e2 + 1); }
+            out += figHTML(body, cap);
+            continue;
+          }
           if (name === "rubi" || name === "ruby" || name === "furi") {
             const close = j => { let d = 0; for (let q = j; q < s.length; q++) { if (s[q] === "{") d++; else if (s[q] === "}") { if (!d) return q; d--; } } return s.length; };
             const e1 = close(i); let body = s.slice(i, e1); i = Math.min(s.length, e1 + 1);
@@ -1807,6 +1852,7 @@ function compileOne(tree, opts) {
     footnotes.splice(0, footnotes.length, ...footnotes.filter(Boolean));
   }
   html = fnTypeset(html);
+  if (figStore.length) html += `<div class="fig-store" hidden>${figStore.join("")}</div>`;
   if (termCut.line != null) html += `<div class="term-note" data-ln="${termCut.line}" data-le="${termCut.line}">#terminate（${termCut.line + 1} 行目）：ここから下は出力していません（PDFにも入りません）</div>`;
   if (footnotes.length || ackFn) html += `<ol class="fns">` +
     (ackFn ? `<li id="fn-${P}ack" class="fn-star" value="0"${cAttr(ackFn.line)}>${R(ackFn.text)}</li>` : "") +
@@ -1867,6 +1913,7 @@ function renderInner() {
   lastFullHTML = res.html; lastHeads = res.heads || [];
   applyZoomView();
   equalizeTables(paper);
+  placeFigures(paper);
   lastPaperHTML = paper.innerHTML;
   placeFootnotesInline(paper);
   try { const sub = n => n.children.reduce((m, k) => Math.max(m, sub(k)), n.lastLine ?? n.line ?? -1); docLineRanges = activeDocs(tree).map(d => [d.line, sub(d)]); } catch (_) {}
@@ -4103,6 +4150,20 @@ paper.addEventListener("click", e => {
   else toast("参照先は、いま開いている編集欄の中にあります。");
 });
 
+// 図：本文の中の印（.fig-anchor）を含む段落・例文の、すぐ後ろへ図を置く
+function placeFigures(root) {
+  if (!root) return;
+  const stores = [...root.querySelectorAll(".fig-store")]; if (!stores.length) return;
+  const after = new Map();
+  for (const a of root.querySelectorAll(".fig-anchor")) {
+    const f = root.querySelector(`.fig-store [data-fig="${a.dataset.fig}"]`); if (!f) continue;
+    let blk = a; while (blk.parentElement && blk.parentElement !== root) blk = blk.parentElement;
+    if (blk.parentElement !== root) continue;
+    const last = after.get(blk) || blk;
+    last.after(f); after.set(blk, f);
+  }
+  for (const s of stores) s.remove();
+}
 // Web表示の脚注：番号を含むブロックのすぐ後ろへ脚注を移す（最後の一覧からは抜く）
 function placeFootnotesInline(root) {
   if (!root) return;
@@ -5928,9 +5989,10 @@ class SideView {
       this.paper.innerHTML = lastFullHTML;
       if (this.sel.startsWith("sec:")) {
         const h = lastHeads.find(x => "sec:" + x.plain === this.sel);
+        placeFigures(this.paper);
         if (h) filterToRange(this.paper, h.line, h.end);
         else placeFootnotesInline(this.paper);
-      } else placeFootnotesInline(this.paper);
+      } else { placeFigures(this.paper); placeFootnotesInline(this.paper); }
     }
     this.body.scrollTop = top;
   }
@@ -6379,7 +6441,21 @@ async function renderPagesNow(token, force) {
   const pv = new PagedModule.Previewer();
   lastPreviewer = pv;
   try {
-    const flow = await pv.preview(frag, [{ "thyncsource-page.css": pageCSS(effectivePage()) }], host);
+    const srcHTML = work.innerHTML;
+    let flow = await pv.preview(frag, [{ "thyncsource-page.css": pageCSS(effectivePage()) }], host);
+    // 図が入りきらずに次のページへ送られ、前のページの下が大きく空いたとき：
+    // 図を1つ後ろの段落の後ろへずらして割り付け直す（空いたところを本文で埋めるため）。1回だけ
+    const pushed = pushedFigures(host);
+    if (pushed.length && token === pagesToken) {
+      const w2 = document.createElement("div"); w2.className = "paper paged"; w2.innerHTML = srcHTML;
+      for (const id of pushed) { const f = w2.querySelector(`.fig[data-fig="${id}"]`); if (f && f.nextElementSibling && !f.nextElementSibling.classList.contains("fig")) f.nextElementSibling.after(f); }
+      try { pv.polisher.destroy(); } catch (e) {}
+      host.innerHTML = "";
+      const pv2 = new PagedModule.Previewer(); lastPreviewer = pv2;
+      const fr2 = document.createDocumentFragment(); fr2.appendChild(w2);
+      flow = await pv2.preview(fr2, [{ "thyncsource-page.css": pageCSS(effectivePage()) }], host);
+    }
+    floatFigures(host);
     pagesKey = key;
     numberPages();
     $("page-count").textContent = `全 ${flow.total || (flow.pages && flow.pages.length) || host.querySelectorAll(".pagedjs_page").length} ページ`;
@@ -6392,6 +6468,32 @@ async function renderPagesNow(token, force) {
     host.style.zoom = "";
     if (ratio) pane.scrollTop = ratio * pane.scrollHeight;
   }
+}
+// ページの中の図を、そのページの上か下へ寄せる（ページの中で動かすだけなので、割り付けは変わらない）
+function pageWrap(page) { const a = page.querySelector(".pagedjs_page_content"); return a && (a.querySelector(":scope > div > .paper.paged") || a.querySelector(".paper.paged") || a.firstElementChild); }
+function floatFigures(host) {
+  for (const page of host.querySelectorAll(".pagedjs_page")) {
+    const area = page.querySelector(".pagedjs_page_content"), w = pageWrap(page); if (!area || !w) continue;
+    const ar = area.getBoundingClientRect();
+    const figs = [...w.querySelectorAll(":scope > .fig")]; if (!figs.length) continue;
+    const top = [], bottom = [];
+    for (const f of figs) { const r = f.getBoundingClientRect(); ((r.top + r.bottom) / 2 - ar.top < ar.height / 2 ? top : bottom).push(f); }
+    for (const f of top.reverse()) { f.classList.add("fig-top"); w.prepend(f); }
+    for (const f of bottom) { f.classList.add("fig-bottom"); w.append(f); }
+  }
+}
+function pushedFigures(host) {
+  const pages = [...host.querySelectorAll(".pagedjs_page")], out = [];
+  for (let k = 1; k < pages.length; k++) {
+    const w = pageWrap(pages[k]); if (!w) continue;
+    const first = [...w.children].find(x => x.getBoundingClientRect().height > 0);
+    if (!first || !first.classList.contains("fig")) continue;
+    const pa = pages[k - 1].querySelector(".pagedjs_page_content"), pw = pageWrap(pages[k - 1]); if (!pa || !pw) continue;
+    const ar = pa.getBoundingClientRect();
+    let bottom = ar.top; for (const c of pw.children) { const r = c.getBoundingClientRect(); if (r.height) bottom = Math.max(bottom, r.bottom); }
+    if (ar.bottom - bottom > ar.height * 0.12) out.push(first.dataset.fig);
+  }
+  return out;
 }
 // ページ番号：#startpagenum のあるページから 1 に戻す（最初の印より前のページには番号を付けない）。
 // 画面の右下には、印刷範囲の指定に使う通し番号を薄く出す（印刷には出ない）
