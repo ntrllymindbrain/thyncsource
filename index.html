@@ -520,6 +520,9 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .ref-entry { text-indent: -2em !important; padding-left: 2em; margin: 0 0 .35em; text-align: left; }
 .fns li.fn-star { list-style: none; }
 .hyp-b { font-weight: 700; }
+.term-note { margin: 1.6em 0 .6em; padding: .5em .8em; border-top: 2px dashed var(--warn); color: var(--warn); font: 12px/1.5 var(--font-ui); }
+.paper.paged .term-note { display: none; }
+@media print { .term-note { display: none !important; } }
 /* ふりがな：本文の行の間隔を乱さないよう、読みは小さく字の上に */
 ruby.rb { ruby-position: over; ruby-align: center; } ruby.rb rt { font-size: .5em; line-height: 1; letter-spacing: 0; font-weight: normal; }
 sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 .03em; color: var(--accent); }
@@ -620,7 +623,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark">thync<span>Source</span></div>
-    <div class="ver">v1.62</div>
+    <div class="ver">v1.63</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -786,6 +789,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
       <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:xxx}（xxx はまだ使っていない小文字3字のランダム）</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}（小型大文字。選んだ文字があれば囲む）</td></tr><tr><td><kbd>⌘+⌥+Shift+B</kbd></td><td>{boten:▮}（傍点。選んだ文字があれば囲む）</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex {lbl:xxx}（xxx はまだ使っていない小文字3字。#ex {lbl:zzz} の子なら zzza, zzzb…）</td></tr><tr><td><kbd>⇧+⌥+⌘+5</kbd></td><td>#ex {lbl:xxx}（xxx はいつもランダムの3字）</td></tr><tr><td><kbd>⇧+⌥+⌘+1</kbd></td><td>#sec {lbl:xxx}（xxx はランダムの3字）</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>カーソルの場所に #p（そこで段落を改める）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>カーソルの場所に #br（そこで字下げなしに改行）</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr><tr><td><kbd>{lbl:…}・{ref:…} などをダブルクリック</kbd></td><td>その記法をまるごとクリップボードにコピー</td></tr><tr><td><kbd>{lbl:…}・{ref:…} などをドラッグ</kbd></td><td>その記法を落とした場所へ移す（クリックはふつうの文字の編集）</td></tr><tr><td><kbd>Shift+↑ ／ ↓</kbd></td><td>最初／最後の表示行で押すとbullet全体を選び、続けて押すと上下の兄弟を選択に加える</td></tr></table>
       <p style="font-size:12px;color:var(--muted)">自分用のショートカット（このブラウザだけに保存）は、右端のショートカットのアイコン →「＋ 自分用を追加」で登録できます。</p>
       <h4>覚え書き：ふりがな</h4><table><tr><td><kbd>{rubi:漢字}{かんじ}</kbd></td><td>漢字の上に「かんじ」（まとめて振る）。{rubi:漢字|かんじ} とも書ける</td></tr><tr><td><kbd>{rubi:東京|とう きょう}</kbd></td><td>読みを空白か「・」で字の数だけ区切ると、1字ずつ振る（行の折り返しでも字と読みが離れない）。1字に3字以上の読みがあるときは、字の間が空かないよう熟語としてまとめて振る</td></tr><tr><td><kbd>⌘+⌥+Shift+Y</kbd></td><td>選んだ文字を {rubi:…}{} で囲み、読みの所にカーソル（何も選んでいなければ漢字の所に）</td></tr></table>
+      <h4>覚え書き：文書をそこで終える</h4><table><tr><td><kbd>#terminate</kbd></td><td>このbulletから下（文書の後ろ全部）を表示・PDFに出さない。そのbulletを完了（⌘Return）にすると効かなくなる</td></tr></table>
       <h4>覚え書き：脚注</h4><table><tr><td><kbd>- 本文の文。<br>&nbsp;&nbsp;- 脚注の中身 #fn</kbd></td><td>子のbulletに #fn を付けると脚注になり、親の文の末尾に番号が付く（例文の行の子でも同じ）</td></tr><tr><td><kbd>#fnmark（#footnotemark）</kbd></td><td>文の好きな位置に番号だけを置く（例文の中でも）。中身は書かない</td></tr><tr><td><kbd>#fntext（#footnotetext）</kbd></td><td>そのbulletの中身が、まだ中身のない #fnmark の脚注になる（前から順に1つずつ対応。本文には出ない）。置き場所はどこでもよい</td></tr><tr><td><kbd>#acknowledgmentsfn</kbd></td><td>謝辞を「*」の脚注にする（タイトルに付く）</td></tr></table>
       <h4>覚え書き：[J-1] のような通し番号（仮説・一般化など）</h4><table><tr><td><kbd>#HBJ-</kbd></td><td>[J-1]、[J-2]… と角かっこで通し番号（B = bracket）</td></tr><tr><td><kbd>#HPJ-</kbd></td><td>(J-1)、(J-2)… と丸かっこで（P = parenthesis）</td></tr><tr><td><kbd>#HJ-</kbd></td><td>J-1、J-2… とかっこなしで</td></tr><tr><td><kbd>#HB</kbd></td><td>接頭辞なし：[1]、[2]…</td></tr><tr><td><kbd>#HBBJ- ／ #HPBJ-</kbd></td><td>かっこの印の後ろにもう1つ B を足すと、番号を太字で：<b>[J-1]</b>、<b>(J-1)</b>（数は #HBJ- と通しで数える）</td></tr><tr><td><kbd>#HBG- {lbl:x}</kbd></td><td>「J-」の部分は英数字＋「-」なら何でもよく、接頭辞ごとに別々に 1, 2, 3… と数える。{lbl:x} を付ければ {ref:x} で [G-1]、{refn:x} で G-1 と参照できる</td></tr></table>
     </div>
@@ -973,7 +977,26 @@ function compile(tree, opts) {
   });
   return { ...first, html, warnings, ranges, heads, stats: { nodes: tree.count || 0, examples: ex, footnotes: fn, docs: docs.length } };
 }
+// #terminate：その行から下（文書の順で後ろ全部）を出力しない。完了にした #terminate は効かない（下書きの中のものも）
+function cutAtTerminate(tree) {
+  let hit = null;
+  const isT = n => /(^|\s)#terminate(?=\s|$)/i.test(n.name || "");
+  const hidden = n => n.completed || /(^|\s)#(draft|d)(?=\s|$)/i.test(n.name || "");
+  const walk = n => {
+    const kids = [];
+    for (const c of n.children || []) {
+      if (hit) break;
+      if (!hidden(c) && isT(c)) { hit = c; break; }
+      if (hidden(c)) { kids.push(c); continue; }
+      const cc = walk(c); kids.push(cc);
+    }
+    return kids.length === (n.children || []).length && !hit ? n : { ...n, children: kids };
+  };
+  const t = walk(tree);
+  return hit ? { tree: t, line: hit.line } : { tree, line: null };
+}
 function compileOne(tree, opts) {
+  const termCut = cutAtTerminate(tree); tree = termCut.tree;
   const P = opts.prefix || "";
   const warnings = [];
   const warnSet = new Set();
@@ -1757,6 +1780,7 @@ function compileOne(tree, opts) {
     footnotes.splice(0, footnotes.length, ...footnotes.filter(Boolean));
   }
   html = fnTypeset(html);
+  if (termCut.line != null) html += `<div class="term-note" data-ln="${termCut.line}" data-le="${termCut.line}">#terminate（${termCut.line + 1} 行目）：ここから下は出力していません（PDFにも入りません）</div>`;
   if (footnotes.length || ackFn) html += `<ol class="fns">` +
     (ackFn ? `<li id="fn-${P}ack" class="fn-star" value="0"${cAttr(ackFn.line)}>${R(ackFn.text)}</li>` : "") +
     footnotes.map((f, i) => `<li id="fn-${P}${i + 1}"${cAttr(f.line)}${ackFn && i === 0 ? ` value="1"` : ""}>${R(f.text)}</li>`).join("") + `</ol>`;
@@ -5050,7 +5074,7 @@ renderMemos();
 renderHist();
 
 /* ---------- 入力欄の記法の色分け ---------- */
-const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid", "evenly", "toc", "toc-n", "toc-1", "toc-2", "toc-3", "toc-4", "toc-5", "fnmark", "fntext", "footnotemark", "footnotetext"]);
+const KNOWN_TAG = new Set(["doc", "sec", "ex", "gl", "fn", "list", "olist", "draft", "d", "settings", "clearpage", "startpagenum", "title", "h1", "h2", "h3", "abstract", "acknowledgments", "acknowledgmentsfn", "references", "p", "br", "quote", "table", "hfill", "grid", "evenly", "toc", "toc-n", "toc-1", "toc-2", "toc-3", "toc-4", "toc-5", "fnmark", "fntext", "footnotemark", "footnotetext", "terminate"]);
 const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|rep|repn|reptext(?:-\d{1,2})?|mirror|exref):[^}]*\})|([_^]\{|\{[a-z]+:|\{toc-[n1-5]\}|\{[a-z]+\}|\{#\}|\{@\}|\{\/\/\}|\})|((?:^|(?<=\s))[#@][\p{L}\p{N}_-]+)|(<\/?[a-zA-Z][^<>]*>)|((?<=\s)\/\/$)/gu;
 // 傍点：1字ずつ包んで、字の上に小さな黒丸を置く（text-emphasis は点の大きさを変えられないため）
 // 脚注番号の組み方
