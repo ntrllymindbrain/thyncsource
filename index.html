@@ -404,6 +404,14 @@ mark.fp-hit { background: hsla(48, 100%, 55%, .55); color: inherit; border-radiu
 #lp-ov[hidden] { display: none; }
 .ov { outline: none; font-family: var(--font-ui); font-size: calc(14px * var(--code-scale, 1)); line-height: 1.6; padding: 8px 10px 40px 4px; color: var(--ink); }
 .ie-ov.ov { padding: 4px 4px 4px 0; background: var(--paper); border-radius: 6px; border: 1px solid var(--rule); }
+.ov-no { position: absolute; right: 3px; top: .35em; font: 9.5px/1 var(--font-ui); color: var(--muted); opacity: .5; font-variant-numeric: tabular-nums; pointer-events: none; }
+.ov-row { padding-right: 3.4em; }
+.bn-ind { position: absolute; z-index: 4; right: 22px; bottom: 48px; padding: 2px 8px; border-radius: 6px; background: color-mix(in srgb, var(--panel) 85%, transparent); border: 1px solid var(--rule); color: var(--muted); font: 11px/1.5 var(--font-ui); font-variant-numeric: tabular-nums; pointer-events: none; }
+.bn-tog { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); margin-left: 8px; cursor: pointer; }
+/* 紙面の通し番号（薄く、文の頭の少し上に） */
+.pane-out.show-bn [data-bn] { position: relative; }
+.pane-out.show-bn [data-bn]::before { content: attr(data-bn); position: absolute; left: 0; top: -.95em; font: 8.5px/1 var(--font-ui); color: #8f9bb0; opacity: .75; font-variant-numeric: tabular-nums; letter-spacing: 0; text-indent: 0; font-weight: normal; font-style: normal; white-space: nowrap; pointer-events: none; z-index: 1; }
+@media print { [data-bn]::before { display: none !important; content: none !important; } }
 .ov-row { display: grid; grid-template-columns: 1.15em 1.2em minmax(0, 1fr); align-items: start; padding-left: calc(var(--lv) * 1.45em); border-radius: 4px; position: relative; }
 .ov-tog { width: 1.15em; height: 1.6em; border: none; background: none; padding: 0; margin: 0; color: var(--muted); font-size: .78em; line-height: 1; cursor: pointer; }
 .ov-tog.none { visibility: hidden; }
@@ -641,7 +649,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.68</div>
+    <div class="ver">v1.69</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -693,6 +701,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
       <textarea id="src" spellcheck="false" autocomplete="off"></textarea>
       <textarea id="zsrc" spellcheck="false" autocomplete="off" aria-label="ズーム中の部分"></textarea>
       <div id="lp-ov" aria-label="原稿の箇条書き"></div>
+      <div class="bn-ind" id="bn-ind" aria-live="off"></div>
       <button type="button" class="rc-btn" id="rc-btn" aria-expanded="false" title="最近編集したbullet" aria-label="最近編集したbulletを見る">最近</button>
       <aside class="rc-side" id="rc-side" hidden aria-label="最近編集したbullet">
         <div class="rc-head"><b>最近編集した</b><button type="button" id="rc-close" aria-label="閉じる">×</button></div>
@@ -706,7 +715,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
     <div class="vsplit" id="vsplit" title="ドラッグで左右の幅を変える（ダブルクリックで元に戻す）" role="separator" aria-orientation="vertical"></div>
     <section class="pane-out" id="pane-out" data-pane="main">
       <div class="viewbar">
-        <div class="seg" role="group" aria-label="表示の形"><button type="button" data-vm="web">Web</button><button type="button" data-vm="page">ページ</button></div>
+        <div class="seg" role="group" aria-label="表示の形"><button type="button" data-vm="web">Web</button><button type="button" data-vm="page">ページ</button></div><label class="bn-tog" title="紙面に、元のbulletの通し番号を薄く出す（印刷・PDFには出ません）"><input type="checkbox" id="bn-show"> 番号</label>
         <button type="button" id="btn-pageset" aria-expanded="false">ページ設定</button>
         <span class="pdf-range"><input type="text" id="pdf-pages" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="全体" aria-label="PDFにするページ（各ページ右下の通し番号で。例：5-7、2,4-10。空なら全体）" title="各ページ右下の薄い通し番号で指定（例：5-7、2,4-10）。空なら全体"><button type="button" id="btn-pdf">をPDF出力</button></span>
         <span class="page-count" id="page-count"></span>
@@ -1914,6 +1923,7 @@ function renderInner() {
   applyZoomView();
   equalizeTables(paper);
   placeFigures(paper);
+  try { if (store.get("thync.bnshow") === "1") markBulletNos(paper); updateBnInd(); } catch (_) {}
   lastPaperHTML = paper.innerHTML;
   placeFootnotesInline(paper);
   try { const sub = n => n.children.reduce((m, k) => Math.max(m, sub(k)), n.lastLine ?? n.line ?? -1); docLineRanges = activeDocs(tree).map(d => [d.line, sub(d)]); } catch (_) {}
@@ -2904,7 +2914,7 @@ class OutlineView {
       `<button type="button" class="ov-tog${kids ? "" : " none"}" tabindex="-1" aria-label="${col ? "開く" : "閉じる"}">${kids ? (col ? "▸" : "▾") : ""}</button>` +
       `<span class="ov-bul${col ? " col" : ""}${mirror ? " mir" : ""}" draggable="true" title="クリックでズーム・ドラッグで移動・Shift+クリックで範囲を選ぶ"></span>` +
       `<div class="ov-main"><div class="ov-text">${this.textHTML(i) || "​"}</div>` +
-      `</div></div>`;
+      `</div><span class="ov-no" aria-hidden="true">${abs >= 0 ? bnOf(abs) || "" : ""}</span></div>`;
   }
   render() {
     const v = this.visible(), stack = this.opts.mirStack || [];
@@ -3051,7 +3061,7 @@ class OutlineView {
     ta.setAttribute("aria-label", "bulletの文");
     div.replaceWith(ta);
     this.active = i; this.ta = ta; this.lastActive = i; this.typed = false;
-    if (typeof lpOv !== "undefined" && this === lpOv) { try { noteEditLine(this.lineOf(i)); } catch (_) {} }
+    if (typeof lpOv !== "undefined" && this === lpOv) { try { noteEditLine(this.lineOf(i)); updateBnInd(); } catch (_) {} }
     ta._abs = () => this.lineOf(this.active);
     ta._ov = this;
     ta.focus({ preventScroll: true });
@@ -5937,7 +5947,7 @@ function lpChanged() {
   if (zoom) zoom.max = lpHi;
   src.value = L.join("\n");
   store.set("thync.src", src.value);
-  try { noteRecentEdit(); } catch (_) {}
+  try { noteRecentEdit(); updateBnInd(); } catch (_) {}
   if (editors.length) editors = [];
   clearTimeout(lpTimer); lpTimer = setTimeout(() => keepScroll(render), 150);
 }
@@ -6787,6 +6797,39 @@ function editMySc(k) {
 }
 window.addEventListener("storage", e => { if (e.key && e.key.endsWith("thync.mysc")) { MY_SC = loadMySc(); if (!$("ks-side").hidden) renderKs(); } });
 
+/* ---------- bulletの通し番号（入力全体の何番目のbulletか。折りたたんでも変わらない） ---------- */
+var bnCache;
+function bulletNos() {
+  // 行ごとに呼ばれるので、50ミリ秒のあいだは読み直さない（原稿の全文を毎回取り出すと重いため）
+  const now = performance.now();
+  if (bnCache && now - bnCache.at < 50) return bnCache;
+  const v = src.value;
+  if (bnCache && bnCache.v === v) { bnCache.at = now; return bnCache; }
+  const L = v.split("\n"), arr = new Array(L.length); let n = 0;
+  for (let k = 0; k < L.length; k++) { if (/^\s*- /.test(L[k])) n++; arr[k] = n; }
+  bnCache = { v, arr, total: n, at: now }; return bnCache;
+}
+function bnOf(line) { const c = bulletNos(); return line >= 0 && line < c.arr.length ? c.arr[line] : 0; }
+function updateBnInd() {
+  const el = $("bn-ind"); if (!el) return;
+  const c = bulletNos();
+  let cur = "–";
+  if (typeof lpOv !== "undefined" && lpMode === "outline") { const i = lpOv.active >= 0 ? lpOv.active : lpOv.lastActive; if (i != null && i >= 0 && lpOv.items[i]) cur = bnOf(lpOv.lineOf(i)).toLocaleString(); }
+  el.textContent = `${cur} / ${c.total.toLocaleString()}`;
+  el.title = "いまのbulletが入力全体の何番目か ／ bulletの総数";
+}
+// 表示の紙面：bulletに当たる所に通し番号を付けておく（見せるかどうかは「番号」で切り替え）
+function markBulletNos(root) {
+  for (const el of root.querySelectorAll("[data-ln]")) {
+    if (el.tagName === "BUTTON") continue;
+    const p = el.parentElement && el.parentElement.closest("[data-ln]");
+    if (p && p.dataset.ln === el.dataset.ln) continue;
+    const n = bnOf(+el.dataset.ln); if (n) el.dataset.bn = n;
+  }
+}
+$("bn-show").checked = store.get("thync.bnshow") === "1";
+document.querySelector(".pane-out").classList.toggle("show-bn", $("bn-show").checked);
+$("bn-show").addEventListener("change", () => { const on = $("bn-show").checked; store.set("thync.bnshow", on ? "1" : "0"); document.querySelector(".pane-out").classList.toggle("show-bn", on); if (on) keepScroll(render); });
 /* ---------- 最近編集したbullet（10件） ---------- */
 let recent = (() => { try { const a = JSON.parse(store.get("thync.recent") || "[]"); return Array.isArray(a) ? a.slice(0, 10) : []; } catch (_) { return []; } })();
 let recentTimer = 0;
