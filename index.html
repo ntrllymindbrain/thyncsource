@@ -649,7 +649,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.69</div>
+    <div class="ver">v1.70</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -5274,13 +5274,15 @@ const HL_RE = /(\{lbl:[^}]*\})|(\{(?:ref|refn|refwop|rep|repn|reptext(?:-\d{1,2}
 // 傍点：1字ずつ包んで、字の上に小さな黒丸を置く（text-emphasis は点の大きさを変えられないため）
 // 脚注番号の組み方
 // ・続く番号は上付きのカンマで区切る（¹,²）
-// ・日本語の句点「。」「．」の後ろに来た番号は、句点の前へ（…である¹。）
+// ・日本語の句読点「。」「．」「、」「，」の後ろに来た番号は、その前へ（…である¹。／…あるが²、）
 // ・全角の閉じかっこ（）」』など）のすぐ後ろの番号は、かっこの右の空きの分だけ詰める
 function fnTypeset(html) {
   const REF = '<sup class="fnref"[^>]*>(?:(?!</sup>)[\\s\\S])*</sup>';
   html = html.replace(new RegExp(`(${REF})(?=<sup class="fnref")`, "g"), '$1<sup class="fn-sep">,</sup>');
   const RUN = `(?:${REF}(?:<sup class="fn-sep">,</sup>)?)+`;
-  html = html.replace(new RegExp(`([。．])(${RUN})`, "g"), "$2$1");
+  // 日本語の句読点と番号のあいだ・番号のすぐ後ろの余分な空白は取る（…あるが²、このような）
+  html = html.replace(new RegExp(`([。．、，])[ \\t]*(${RUN})[ \\t]*`, "g"), "$2$1");
+  html = html.replace(new RegExp(`(${RUN})[ \\t]+([。．、，])`, "g"), "$1$2");
   html = html.replace(new RegExp(`([）」』】〕〉》］｝])(${RUN})`, "g"), '<span class="fn-keep"><span class="jp-halt">$1</span>$2</span>');
   return html;
 }
