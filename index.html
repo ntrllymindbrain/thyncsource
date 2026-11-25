@@ -123,6 +123,8 @@ a.xref[draggable="true"], .toc-i[draggable="true"] { -webkit-user-drag: element;
 .rc-list li .rc-ln { color: var(--muted); font-size: 10px; margin-right: 4px; font-variant-numeric: tabular-nums; }
 .rc-list li.rc-none { color: var(--muted); cursor: default; }
 .m-wf { font-size: 10.5px; color: var(--accent); margin-left: 4px; } .m-wf.wait { color: var(--muted); }
+.btn-link { display: inline-flex; align-items: center; padding: 6px 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); color: var(--ink); font-size: 13px; text-decoration: none; }
+.btn-link:hover { border-color: var(--accent); color: var(--accent); }
 .rc-pin { display: flex !important; align-items: center; gap: 5px; padding: 6px 9px; border-top: 1px solid var(--rule); font-size: 11.5px !important; font-weight: normal !important; color: var(--muted); }
 .hint { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 0; }
 textarea {
@@ -649,7 +651,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.70</div>
+    <div class="ver">v1.71</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -662,6 +664,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
     <label class="chk" for="hide-done"><input type="checkbox" id="hide-done" checked>完了ノードを隠す</label>
     <label class="chk" for="show-tags" title="表示に #タグ・@タグを出す（#sec などの記法のタグは出しません）"><input type="checkbox" id="show-tags">タグを表示</label>
     <button id="btn-wf" type="button" aria-expanded="false">Workflowy接続</button>
+    <a class="btn-link" id="btn-manual" href="https://claude.ai/artifact/WohQ54bbMg7rzVXwdXisrX" target="_blank" rel="noopener" title="記法とショートカットの仕様書（別のタブで開きます）">マニュアル</a>
     <button id="btn-keys" type="button" title="ショートカット一覧（⌘+/）">ショートカット</button>
     <button id="btn-font" type="button" aria-expanded="false">表示</button>
     <button id="btn-memo" type="button">メモ集 0</button>
