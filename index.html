@@ -651,7 +651,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.71</div>
+    <div class="ver">v1.72</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -820,7 +820,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
       <p style="font-size:12px;color:var(--muted)">自分用のショートカット（このブラウザだけに保存）は、右端のショートカットのアイコン →「＋ 自分用を追加」で登録できます。</p>
       <h4>覚え書き：ふりがな</h4><table><tr><td><kbd>{rubi:漢字}{かんじ}</kbd></td><td>漢字の上に「かんじ」（まとめて振る）。{rubi:漢字|かんじ} とも書ける</td></tr><tr><td><kbd>{rubi:東京|とう きょう}</kbd></td><td>読みを空白か「・」で字の数だけ区切ると、1字ずつ振る（行の折り返しでも字と読みが離れない）。1字に3字以上の読みがあるときは、字の間が空かないよう熟語としてまとめて振る</td></tr><tr><td><kbd>⌘+⌥+Shift+Y</kbd></td><td>選んだ文字を {rubi:…}{} で囲み、読みの所にカーソル（何も選んでいなければ漢字の所に）</td></tr></table>
       <h4>覚え書き：文書をそこで終える・外す</h4><table><tr><td><kbd>#doc #null</kbd></td><td>その文書を丸ごと表示・PDFから外す（ほかの文書に集中したいとき）。完了にするか #null を消すと戻る</td></tr><tr><td><kbd>#terminate</kbd></td><td>このbulletから下（文書の後ろ全部）を表示・PDFに出さない。そのbulletを完了（⌘Return）にすると効かなくなる</td></tr></table>
-      <h4>覚え書き：図</h4><table><tr><td><kbd>{fig:画像}{説明}</kbd></td><td>図を入れる。画像は URL か dropbox:/… （|60 で幅60%）。番号は文書の順に「図1」（lang: en なら「Fig. 1」）、説明はその下に</td></tr><tr><td><kbd>{lbl:x} を同じbulletに</kbd></td><td>{ref:x} で「図1」と参照できる</td></tr><tr><td><kbd>置き場所</kbd></td><td>Web表示：その段落の後ろに中央寄せ／ページ表示：そのページの上か下（入りきらなければ次のページ）</td></tr><tr><td><kbd>fig-format: 図%n</kbd></td><td>#settings で番号の書き方を変えられる（例：Figure %n）</td></tr></table>
+      <h4>覚え書き：図</h4><table><tr><td><kbd>{fig:画像}{説明}</kbd></td><td>図を入れる。画像は URL か dropbox:/… （後ろに |60 か w=60 で幅60%）。番号は文書の順に「図1」（lang: en なら「Fig. 1」）、説明はその下に</td></tr><tr><td><kbd>{lbl:x} を同じbulletに</kbd></td><td>{ref:x} で「図1」と参照できる</td></tr><tr><td><kbd>置き場所</kbd></td><td>Web表示：その段落の後ろに中央寄せ／ページ表示：そのページの上か下（入りきらなければ次のページ）</td></tr><tr><td><kbd>fig-format: 図%n</kbd></td><td>#settings で番号の書き方を変えられる（例：Figure %n）</td></tr></table>
       <h4>覚え書き：脚注</h4><table><tr><td><kbd>- 本文の文。<br>&nbsp;&nbsp;- 脚注の中身 #fn</kbd></td><td>子のbulletに #fn を付けると脚注になり、親の文の末尾に番号が付く（例文の行の子でも同じ）</td></tr><tr><td><kbd>#fnmark（#footnotemark）</kbd></td><td>文の好きな位置に番号だけを置く（例文の中でも）。中身は書かない</td></tr><tr><td><kbd>#fntext（#footnotetext）</kbd></td><td>そのbulletの中身が、まだ中身のない #fnmark の脚注になる（前から順に1つずつ対応。本文には出ない）。置き場所はどこでもよい</td></tr><tr><td><kbd>#acknowledgmentsfn</kbd></td><td>謝辞を「*」の脚注にする（タイトルに付く）</td></tr></table>
       <h4>覚え書き：[J-1] のような通し番号（仮説・一般化など）</h4><table><tr><td><kbd>#HBJ-</kbd></td><td>[J-1]、[J-2]… と角かっこで通し番号（B = bracket）</td></tr><tr><td><kbd>#HPJ-</kbd></td><td>(J-1)、(J-2)… と丸かっこで（P = parenthesis）</td></tr><tr><td><kbd>#HJ-</kbd></td><td>J-1、J-2… とかっこなしで</td></tr><tr><td><kbd>#HB</kbd></td><td>接頭辞なし：[1]、[2]…</td></tr><tr><td><kbd>#HBBJ- ／ #HPBJ-</kbd></td><td>かっこの印の後ろにもう1つ B を足すと、番号を太字で：<b>[J-1]</b>、<b>(J-1)</b>（数は #HBJ- と通しで数える）</td></tr><tr><td><kbd>#HBG- {lbl:x}</kbd></td><td>「J-」の部分は英数字＋「-」なら何でもよく、接頭辞ごとに別々に 1, 2, 3… と数える。{lbl:x} を付ければ {ref:x} で [G-1]、{refn:x} で G-1 と参照できる</td></tr></table>
     </div>
@@ -4174,6 +4174,8 @@ function placeFigures(root) {
     if (blk.parentElement !== root) continue;
     const last = after.get(blk) || blk;
     last.after(f); after.set(blk, f);
+    // 図の行番号（画像の幅をドラッグで変えたとき、元の行を探すため）
+    const src = a.closest("[data-ln]"); if (src) { f.dataset.ln = src.dataset.ln; f.dataset.le = src.dataset.le ?? src.dataset.ln; }
   }
   for (const s of stores) s.remove();
 }
@@ -5402,8 +5404,12 @@ function setSrcLine(li, nl) {
 const dbxURLs = new Map();   // Dropboxの場所 → 手元の写しのURL
 let imgWidths = {}; try { imgWidths = JSON.parse(store.get("thync.imgw") || "{}"); } catch (_) {}
 function parseImgArg(arg) {
-  const m = String(arg).trim().match(/^(\S+)(?:\s+w=(\d+(?:\.\d+)?))?/);
-  return m ? { url: m[1], w: m[2] ? +m[2] : null } : { url: "", w: null };
+  // 幅の指定は「 w=40」（ドラッグで変えたときの書き方）か「|40」（%は付けても付けなくても）
+  const t = String(arg).trim();
+  const m = t.match(/^(\S+?)(?:\|(\d+(?:\.\d+)?)%?)?(?:\s+w=(\d+(?:\.\d+)?)%?)?\s*$/);
+  if (!m) { const m2 = t.match(/^(\S+)/); return { url: m2 ? m2[1] : "", w: null }; }
+  const w = m[3] || m[2];
+  return { url: m[1], w: w ? Math.min(100, +w) : null };
 }
 function imgHTML(kind, arg) {
   const { url, w } = parseImgArg(arg);
@@ -7090,10 +7096,11 @@ function imgCommitWidth(wrap, pct) {
   const ln = wrap.closest("[data-ln]"); if (!ln) return;
   const li = +ln.dataset.ln, le = +(ln.dataset.le ?? li), L = srcLines();
   for (let k = li; k <= le && k < L.length; k++) {
-    const i = L[k].indexOf("{img:" + url);
+    let code = "img", i = L[k].indexOf("{img:" + url);
+    if (i < 0) { code = "fig"; i = L[k].indexOf("{fig:" + url); }   // 図の画像も同じように幅を書き込む
     if (i < 0) continue;
     const j = L[k].indexOf("}", i);
-    const tok = "{img:" + url + (pct === null ? "" : " w=" + pct) + "}";
+    const tok = `{${code}:` + url + (pct === null ? "" : " w=" + pct) + "}";
     setSrcLine(k, L[k].slice(0, i) + tok + L[k].slice(j + 1));
     keepScroll(render);
     return;
