@@ -669,7 +669,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.79</div>
+    <div class="ver">v1.80</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -6540,13 +6540,15 @@ async function renderPagesNow(token, force) {
   const pv = new PagedModule.Previewer();
   lastPreviewer = pv;
   try {
-    const srcHTML = work.innerHTML;
+    // 割り付け直し用の写し。HTMLの文字列に戻して読み直すと、文の中の脚注（<span>）に入った例文の <div> で
+    // <p> が切れ、例文が本文へこぼれる。だから DOM のまま写す
+    const srcClone = work.cloneNode(true);
     let flow = await pv.preview(frag, [{ "thyncsource-page.css": pageCSS(effectivePage()) }], host);
     // 図が入りきらずに次のページへ送られ、前のページの下が大きく空いたとき：
     // 図を1つ後ろの段落の後ろへずらして割り付け直す（空いたところを本文で埋めるため）。1回だけ
     const pushed = pushedFigures(host);
     if (pushed.length && token === pagesToken) {
-      const w2 = document.createElement("div"); w2.className = "paper paged"; w2.innerHTML = srcHTML;
+      const w2 = srcClone;
       for (const id of pushed) { const f = w2.querySelector(`.fig[data-fig="${id}"]`); if (f && f.nextElementSibling && !f.nextElementSibling.classList.contains("fig")) f.nextElementSibling.after(f); }
       try { pv.polisher.destroy(); } catch (e) {}
       host.innerHTML = "";
