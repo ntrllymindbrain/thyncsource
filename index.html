@@ -549,6 +549,9 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .paper p[data-env="abstract"] { text-indent: 1em; }
 .ref-entry { text-indent: -2em !important; padding-left: 2em; margin: 0 0 .35em; text-align: left; }
 .fns li.fn-star { list-style: none; }
+/* 脚注の中の例文：番号は脚注の中だけで (i) (ii) … */
+.fns .ex, .fn-inline .ex, .pfn .ex { margin: .35em 0 .35em; font-size: 1em; }
+.fn-cont { margin-top: .2em; }
 .hyp-b { font-weight: 700; }
 .term-note { margin: 1.6em 0 .6em; padding: .5em .8em; border-top: 2px dashed var(--warn); color: var(--warn); font: 12px/1.5 var(--font-ui); }
 .paper.paged .term-note { display: none; }
@@ -663,7 +666,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.75</div>
+    <div class="ver">v1.76</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1215,11 +1218,25 @@ function compileOne(tree, opts) {
     for (const k of node.children) if (visible(k)) parts.push(collectText(k));
     return smartJoin(parts.filter(Boolean));
   }
+  // 脚注の中身：文と、#ex の子（脚注の中だけで (i) (ii) (iii) … と数える例文）
+  const roman = n => { const t = [[1000, "m"], [900, "cm"], [500, "d"], [400, "cd"], [100, "c"], [90, "xc"], [50, "l"], [40, "xl"], [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"]]; let r = ""; for (const [v, c] of t) while (n >= v) { r += c; n -= v; } return r; };
+  function fnBody(node) {
+    // 並びは書いた順のまま：文 → 例文 → 文 …（例文の前までの文が脚注の書き出し）
+    const kids = node.children.filter(visible), parts = []; let buf = [info(node).text], j = 0;
+    const flushT = () => { const t = smartJoin(buf.filter(Boolean)); if (t) parts.push({ text: t }); buf = []; };
+    for (const k of kids) {
+      if (info(k).tags.has("ex")) { flushT(); const b = buildEx(k, info(k), roman(++j)); b.min = k.line; b.max = subEnd(k); parts.push({ ex: b }); }
+      else buf.push(collectText(k));
+    }
+    flushT();
+    const text = parts[0] && parts[0].text !== undefined ? parts.shift().text : "";
+    return { text, rest: parts, line: node.line };
+  }
   const addFn = node => {
     if (info(node).fntext) return null;
     const n = fnNum.get(node);
-    if (n) { footnotes[n - 1] = { text: collectText(node), line: node.line }; return n; }
-    footnotes.push({ text: collectText(node), line: node.line }); return footnotes.length;
+    if (n) { footnotes[n - 1] = fnBody(node); return n; }
+    footnotes.push(fnBody(node)); return footnotes.length;
   };
 
   function splitJudg(t) {
@@ -1303,9 +1320,9 @@ function compileOne(tree, opts) {
     return item;
   }
 
-  function buildEx(c, inf) {
-    exCount++; exTotal++;
-    const num = settings["ex-scope"] === "section" && chapter ? `${chapter}.${exCount}` : String(exCount);
+  function buildEx(c, inf, numOverride) {
+    if (!numOverride) { exCount++; exTotal++; }
+    const num = numOverride || (settings["ex-scope"] === "section" && chapter ? `${chapter}.${exCount}` : String(exCount));
     const id = uid();
     exPaths.set(id, new Set());
     if (!inf.hyp) inf.labels.forEach(l => defLabel(l, { kind: "ex", num, sub: [], id }, inf.line));
@@ -1865,7 +1882,7 @@ function compileOne(tree, opts) {
   // #fnmark の脚注の中身：#fntext を出てきた順に当てる
   fnMarkSlots.forEach((n, j) => {
     const ft = fnTextQ[j];
-    if (ft) footnotes[n - 1] = { text: collectText(ft), line: ft.line };
+    if (ft) footnotes[n - 1] = fnBody(ft);
     else { footnotes[n - 1] = { text: "", line: undefined }; warn("#fnmark に対応する #fntext が足りません（脚注の中身が空です）。"); }
   });
   if (fnTextQ.length > fnMarkSlots.length) warn("#fntext が #fnmark より多くあります。余った #fntext は使われていません。");
@@ -1881,7 +1898,7 @@ function compileOne(tree, opts) {
   if (termCut.line != null) html += `<div class="term-note" data-ln="${termCut.line}" data-le="${termCut.line}">#terminate（${termCut.line + 1} 行目）：ここから下は出力していません（PDFにも入りません）</div>`;
   if (footnotes.length || ackFn) html += `<ol class="fns">` +
     (ackFn ? `<li id="fn-${P}ack" class="fn-star" value="0"${cAttr(ackFn.line)}>${R(ackFn.text)}</li>` : "") +
-    footnotes.map((f, i) => `<li id="fn-${P}${i + 1}"${cAttr(f.line)}${ackFn && i === 0 ? ` value="1"` : ""}>${R(f.text)}</li>`).join("") + `</ol>`;
+    footnotes.map((f, i) => `<li id="fn-${P}${i + 1}"${cAttr(f.line)}${ackFn && i === 0 ? ` value="1"` : ""}>${R(f.text)}${(f.rest || []).map(x => x.ex ? exHTML(x.ex, false, lnAttr(x.ex.min)) : `<div class="fn-cont">${R(x.text)}</div>`).join("")}</li>`).join("") + `</ol>`;
   if (!blocks.length && !title) html = `<div class="empty">左の欄にWorkflowyの箇条書きを貼り付けると、ここに論文の形で表示されます。</div>`;
 
   const heads = blocks.filter(x => x.type === "h").map(x => ({ id: x.id, level: x.level, num: x.num, line: x.min, end: x.end, html: R(x.text), plain: x.text.replace(/<[^>]+>|\{[^}]*\}/g, "").trim() }));
