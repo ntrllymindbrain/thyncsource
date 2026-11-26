@@ -669,7 +669,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.77</div>
+    <div class="ver">v1.78</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -2130,8 +2130,9 @@ function wfDateLabel(raw) {
   const g = k => { const m = raw.match(new RegExp(k + '="(\\d+)"')); return m ? +m[1] : null; };
   const y = g("startYear"), mo = g("startMonth"), d = g("startDay");
   if (!y || !mo || !d) return raw.replace(/<[^>]+>/g, "");
+  // 見せ方は 20261126thu（年月日をつなげて、曜日を小文字3字）
   const dt = new Date(y, mo - 1, d);
-  return dt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+  return `${y}${String(mo).padStart(2, "0")}${String(d).padStart(2, "0")}${["sun", "mon", "tue", "wed", "thu", "fri", "sat"][dt.getDay()]}`;
 }
 function richHTML(v) {
   const re = /<(\/?)(b|i|u|s)>/gi;
