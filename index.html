@@ -137,6 +137,9 @@ a.xref[draggable="true"], .toc-i[draggable="true"] { -webkit-user-drag: element;
 .m-wf { font-size: 10.5px; color: var(--accent); margin-left: 4px; } .m-wf.wait { color: var(--muted); }
 .btn-link { display: inline-flex; align-items: center; padding: 6px 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); color: var(--ink); font-size: 13px; text-decoration: none; }
 .btn-link:hover { border-color: var(--accent); color: var(--accent); }
+.wf-date { display: inline-block; padding: 0 .35em; margin: 0 .05em; border-radius: 4px; background: #e6effc; color: #1d55c0; font-size: .92em; line-height: 1.35; white-space: nowrap; cursor: default; user-select: all; }
+.date-sug { position: fixed; z-index: 80; padding: 4px 9px; border-radius: 7px; background: #1d55c0; color: #fff; font: 12px/1.5 var(--font-ui); box-shadow: 0 4px 14px rgba(0,0,0,.18); pointer-events: auto; cursor: pointer; white-space: nowrap; }
+.date-sug kbd { background: rgba(255,255,255,.2); border-radius: 3px; padding: 0 4px; font: inherit; margin-left: 6px; }
 .rc-pin { display: flex !important; align-items: center; gap: 5px; padding: 6px 9px; border-top: 1px solid var(--rule); font-size: 11.5px !important; font-weight: normal !important; color: var(--muted); }
 .hint { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 0; }
 textarea {
@@ -666,7 +669,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.76</div>
+    <div class="ver">v1.77</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -837,6 +840,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
       <h4>覚え書き：ふりがな</h4><table><tr><td><kbd>{rubi:漢字}{かんじ}</kbd></td><td>漢字の上に「かんじ」（まとめて振る）。{rubi:漢字|かんじ} とも書ける</td></tr><tr><td><kbd>{rubi:東京|とう きょう}</kbd></td><td>読みを空白か「・」で字の数だけ区切ると、1字ずつ振る（行の折り返しでも字と読みが離れない）。1字に3字以上の読みがあるときは、字の間が空かないよう熟語としてまとめて振る</td></tr><tr><td><kbd>⌘+⌥+Shift+Y</kbd></td><td>選んだ文字を {rubi:…}{} で囲み、読みの所にカーソル（何も選んでいなければ漢字の所に）</td></tr></table>
       <h4>覚え書き：文書をそこで終える・外す</h4><table><tr><td><kbd>#doc #null</kbd></td><td>その文書を丸ごと表示・PDFから外す（ほかの文書に集中したいとき）。完了にするか #null を消すと戻る</td></tr><tr><td><kbd>#terminate</kbd></td><td>このbulletから下（文書の後ろ全部）を表示・PDFに出さない。そのbulletを完了（⌘Return）にすると効かなくなる</td></tr></table>
       <h4>覚え書き：図</h4><table><tr><td><kbd>{fig:画像}{説明}</kbd></td><td>図を入れる。画像は URL か dropbox:/… （後ろに |60 か w=60 で幅60%）。番号は文書の順に「図1」（lang: en なら「Fig. 1」）、説明はその下に</td></tr><tr><td><kbd>{lbl:x} を同じbulletに</kbd></td><td>{ref:x} で「図1」と参照できる</td></tr><tr><td><kbd>置き場所</kbd></td><td>Web表示：その段落の後ろに中央寄せ／ページ表示：そのページの上か下（入りきらなければ次のページ）</td></tr><tr><td><kbd>fig-format: 図%n</kbd></td><td>#settings で番号の書き方を変えられる（例：Figure %n）</td></tr></table>
+      <h4>覚え書き：日付（Workflowyの日付タグ）</h4><table><tr><td><kbd>12/26 ・ 2026-12-26 ・ 12月26日</kbd></td><td>打つとすぐ下に候補が出る。Tab（か候補を押す）でWorkflowyと同じ日付タグに（Workflowyで開くと日付として働く）。Esc でそのまま</td></tr><tr><td><kbd>today ・ tomorrow ・ fri ・ this fri ・ next tue ・ last mon</kbd></td><td>曜日だけならこれから来るその曜日、this は今週、next は来週、last は先週（週は月曜から）</td></tr><tr><td><kbd>今日 ・ 明日 ・ 昨日 ・ 来週火曜 ・ 今週の金曜日</kbd></td><td>日本語でも同じ</td></tr></table>
       <h4>覚え書き：脚注</h4><table><tr><td><kbd>- 本文の文。<br>&nbsp;&nbsp;- 脚注の中身 #fn</kbd></td><td>子のbulletに #fn を付けると脚注になり、親の文の末尾に番号が付く（例文の行の子でも同じ）</td></tr><tr><td><kbd>#fnmark（#footnotemark）</kbd></td><td>文の好きな位置に番号だけを置く（例文の中でも）。中身は書かない</td></tr><tr><td><kbd>#fntext（#footnotetext）</kbd></td><td>そのbulletの中身が、まだ中身のない #fnmark の脚注になる（前から順に1つずつ対応。本文には出ない）。置き場所はどこでもよい</td></tr><tr><td><kbd>#acknowledgmentsfn</kbd></td><td>謝辞を「*」の脚注にする（タイトルに付く）</td></tr></table>
       <h4>覚え書き：[J-1] のような通し番号（仮説・一般化など）</h4><table><tr><td><kbd>#HBJ-</kbd></td><td>[J-1]、[J-2]… と角かっこで通し番号（B = bracket）</td></tr><tr><td><kbd>#HPJ-</kbd></td><td>(J-1)、(J-2)… と丸かっこで（P = parenthesis）</td></tr><tr><td><kbd>#HJ-</kbd></td><td>J-1、J-2… とかっこなしで</td></tr><tr><td><kbd>#HB</kbd></td><td>接頭辞なし：[1]、[2]…</td></tr><tr><td><kbd>#HBBJ- ／ #HPBJ-</kbd></td><td>かっこの印の後ろにもう1つ B を足すと、番号を太字で：<b>[J-1]</b>、<b>(J-1)</b>（数は #HBJ- と通しで数える）</td></tr><tr><td><kbd>#HBG- {lbl:x}</kbd></td><td>「J-」の部分は英数字＋「-」なら何でもよく、接頭辞ごとに別々に 1, 2, 3… と数える。{lbl:x} を付ければ {ref:x} で [G-1]、{refn:x} で G-1 と参照できる</td></tr></table>
     </div>
@@ -1672,6 +1676,8 @@ function compileOne(tree, opts) {
             i += m[0].length;
             continue;
           }
+          const tm = rest.match(/^<time\b[^<>]*>[\s\S]*?<\/time>/i);
+          if (tm) { out += `<span class="wf-date-p">${esc(wfDateLabel(tm[0]))}</span>`; i += tm[0].length; continue; }
           const imgTag = rest.match(/^<img\b[^<>]*\bsrc="([^"]+)"[^<>]*>/i);
           if (imgTag) { out += imgHTML("wfimg", imgTag[1]); i += imgTag[0].length; continue; }
           const tagLike = rest.match(/^<\/?[a-zA-Z][^<>]*>/);
@@ -2118,11 +2124,21 @@ function colorSlot(line) {
 }
 function isTA(el) { return !!el && (el.tagName === "TEXTAREA" || !!el._rich); }
 function rtOf(n) { return n.nodeType === 1 ? (n.dataset && n.dataset.rt) || RT_OF[n.tagName.toLowerCase()] || "" : ""; }
+// Workflowyの日付（<time startYear=… startMonth=… startDay=…>…</time>）：編集欄では1つの部品として見せる
+const WF_TIME_RE = /<time\b[^<>]*>[\s\S]*?<\/time>/gi;
+function wfDateLabel(raw) {
+  const g = k => { const m = raw.match(new RegExp(k + '="(\\d+)"')); return m ? +m[1] : null; };
+  const y = g("startYear"), mo = g("startMonth"), d = g("startDay");
+  if (!y || !mo || !d) return raw.replace(/<[^>]+>/g, "");
+  const dt = new Date(y, mo - 1, d);
+  return dt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+}
 function richHTML(v) {
   const re = /<(\/?)(b|i|u|s)>/gi;
   let out = "", last = 0;
   const stack = [];
-  const seg = t => hlRest(t);
+  const seg = t => t.split(/(<time\b[^<>]*>[\s\S]*?<\/time>)/i).map((x, k) => k % 2
+    ? `<span class="wf-date" contenteditable="false" data-raw="${esc(x)}">${esc(wfDateLabel(x))}</span>` : hlRest(x)).join("");
   let m;
   while ((m = re.exec(v))) {
     out += seg(v.slice(last, m.index)); last = m.index + m[0].length;
@@ -2153,6 +2169,7 @@ function richSerialize(el) {
     for (const c of n.childNodes) {
       if (c.nodeType === 3) { s += c.data.replace(/​/g, "").replace(/ /g, " "); continue; }
       if (c.nodeType !== 1 || c.tagName === "BR") continue;
+      if (c.dataset && c.dataset.raw) { s += c.dataset.raw; continue; }
       const t = rtOf(c);
       if (t) { s += `<${t}>`; walk(c); if (!c.dataset.open) s += `</${t}>`; }
       else walk(c);
@@ -2179,6 +2196,7 @@ function richPos(el, node, off) {
       const c = n.childNodes[k];
       if (c.nodeType === 3) { if (c === node) { s += tl(c.data.slice(0, off)); done = true; return; } s += tl(c.data); }
       else if (c.nodeType === 1 && c.tagName !== "BR") {
+        if (c.dataset && c.dataset.raw) { if (c === node || c.contains(node)) { done = true; return; } s += c.dataset.raw.length; continue; }
         const t = rtOf(c);
         if (t) s += t.length + 2;
         walk(c); if (done) return;
@@ -2193,8 +2211,15 @@ function richPoint(el, pos) {
   let s = 0, res = null;
   const endOf = n => ({ node: n, off: n.childNodes.length });
   (function walk(n) {
-    for (const c of n.childNodes) {
+    for (let ci = 0; ci < n.childNodes.length; ci++) {
+      const c = n.childNodes[ci];
       if (res) return;
+      if (c.nodeType === 1 && c.dataset && c.dataset.raw) {
+        const L = c.dataset.raw.length;
+        if (pos <= s) { res = { node: n, off: ci }; return; }
+        if (pos < s + L) { res = { node: n, off: ci + 1 }; return; }
+        s += L; continue;
+      }
       if (c.nodeType === 3) {
         const d = c.data, len = d.replace(/​/g, "").length;
         if (pos <= s + len) {
@@ -6889,6 +6914,77 @@ function markBulletNos(root) {
 $("bn-show").checked = store.get("thync.bnshow") === "1";
 document.querySelector(".pane-out").classList.toggle("show-bn", $("bn-show").checked);
 $("bn-show").addEventListener("change", () => { const on = $("bn-show").checked; store.set("thync.bnshow", on ? "1" : "0"); document.querySelector(".pane-out").classList.toggle("show-bn", on); if (on) keepScroll(render); });
+
+/* ---------- 日付（Workflowyと同じ日付タグ） ----------
+   12/26・2026-12-26・today・tomorrow・this fri・next tue・明日・来週火曜・12月26日 などを打つと、すぐ横に候補が出る。
+   Tab（または候補を押す）で、Workflowyの日付タグ <time …> に置き換える。Esc で取り消し */
+const WD = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 }, WDJ = { 日: 0, 月: 1, 火: 2, 水: 3, 木: 4, 金: 5, 土: 6 };
+function dayOff(base, n) { const d = new Date(base); d.setDate(d.getDate() + n); return d; }
+function weekdayIn(base, wd, weekShift) {   // 月曜はじまりの週で、その曜日
+  const monIdx = (base.getDay() + 6) % 7, wantIdx = (wd + 6) % 7;
+  return dayOff(base, wantIdx - monIdx + 7 * weekShift);
+}
+function parseDateExpr(t, now = new Date()) {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let m;
+  const s = t.trim().toLowerCase();
+  if (/^(today|今日|きょう)$/.test(s)) return today;
+  if (/^(tomorrow|tmrw|明日|あした)$/.test(s)) return dayOff(today, 1);
+  if (/^(yesterday|昨日|きのう)$/.test(s)) return dayOff(today, -1);
+  if ((m = s.match(/^(?:(this|next|last)\s+)?(sun|mon|tue|wed|thu|fri|sat)[a-z]*$/))) {
+    const wd = WD[m[2]];
+    if (m[1] === "next") return weekdayIn(today, wd, 1);
+    if (m[1] === "last") return weekdayIn(today, wd, -1);
+    if (m[1] === "this") return weekdayIn(today, wd, 0);
+    const d = weekdayIn(today, wd, 0); return d < today ? dayOff(d, 7) : d;   // 曜日だけ：これから来るその曜日
+  }
+  if ((m = t.trim().match(/^(今週|来週|先週)の?([日月火水木金土])曜日?$/))) return weekdayIn(today, WDJ[m[2]], m[1] === "来週" ? 1 : m[1] === "先週" ? -1 : 0);
+  if ((m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/))) return new Date(+m[1], +m[2] - 1, +m[3]);
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2}|\d{4}))?$/))) { let y = m[3] ? +m[3] : today.getFullYear(); if (y < 100) y += 2000; return new Date(y, +m[1] - 1, +m[2]); }
+  if ((m = t.trim().match(/^(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日$/))) return new Date(m[1] ? +m[1] : today.getFullYear(), +m[2] - 1, +m[3]);
+  return null;
+}
+function validDate(d, y, mo, da) { return d && !isNaN(d) && d.getFullYear() >= 1900 && d.getFullYear() <= 2200; }
+function wfTimeTag(d) {
+  const y = d.getFullYear(), mo = d.getMonth() + 1, da = d.getDate();
+  const raw = `<time startYear="${y}" startMonth="${mo}" startDay="${da}">`;
+  return raw + wfDateLabel(raw + "</time>") + "</time>";
+}
+// カーソルの直前にある日付らしい言葉（前は行頭か空白）
+const DATE_TAIL = /(?:^|[\s(（])((?:(?:this|next|last)\s+)?(?:sun|mon|tue|wed|thu|fri|sat)[a-z]*|today|tomorrow|tmrw|yesterday|今日|明日|昨日|きょう|あした|きのう|(?:今週|来週|先週)の?[日月火水木金土]曜日?|\d{4}[-\/.]\d{1,2}[-\/.]\d{1,2}|\d{1,2}\/\d{1,2}(?:\/(?:\d{4}|\d{2}))?|(?:\d{4}年)?\d{1,2}月\d{1,2}日)$/i;
+let dateSug = null;
+function closeDateSug() { if (dateSug) { dateSug.el.remove(); dateSug = null; } }
+function checkDateSug(ta) {
+  closeDateSug();
+  if (!ta || !ta._rich || ta.selectionStart !== ta.selectionEnd) return;
+  const c = ta.selectionStart, before = ta.value.slice(0, c);
+  if (/<time\b[^>]*>[^<]*$/i.test(before)) return;
+  const m = before.match(DATE_TAIL); if (!m) return;
+  const word = m[1], d = parseDateExpr(word); if (!validDate(d)) return;
+  const el = document.createElement("div"); el.className = "date-sug";
+  el.innerHTML = `${esc(wfDateLabel(`<time startYear="${d.getFullYear()}" startMonth="${d.getMonth() + 1}" startDay="${d.getDate()}"></time>`))} にする<kbd>Tab</kbd>`;
+  el.title = "Workflowyの日付タグにする（Esc で取り消し）";
+  document.body.appendChild(el);
+  try { const q = richPoint(ta, c), r = document.createRange(); r.setStart(q.node, q.off); r.collapse(true); const rc = r.getClientRects()[0] || ta.getBoundingClientRect(); el.style.left = Math.min(innerWidth - el.offsetWidth - 8, rc.left) + "px"; el.style.top = (rc.bottom + 6) + "px"; } catch (_) {}
+  el.addEventListener("mousedown", e => { e.preventDefault(); acceptDateSug(); });
+  dateSug = { el, ta, start: c - word.length, end: c, date: d };
+}
+function acceptDateSug() {
+  if (!dateSug) return false;
+  const { ta, start, end, date } = dateSug; closeDateSug();
+  if (!ta.isConnected || ta.selectionStart !== end) return false;
+  ta.setSelectionRange(start, end);
+  insertText(ta, wfTimeTag(date) + " ");
+  return true;
+}
+document.addEventListener("input", e => { if (e.target && e.target._rich && !e.isComposing) checkDateSug(e.target); else closeDateSug(); }, true);
+document.addEventListener("keydown", e => {
+  if (!dateSug) return;
+  if (e.key === "Tab" && !e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); e.stopPropagation(); acceptDateSug(); return; }
+  if (e.key === "Escape") { e.stopPropagation(); closeDateSug(); return; }
+  if (!["Shift", "Meta", "Control", "Alt"].includes(e.key)) closeDateSug();
+}, true);
+document.addEventListener("mousedown", e => { if (dateSug && !dateSug.el.contains(e.target)) closeDateSug(); }, true);
 /* ---------- 最近編集したbullet（10件） ---------- */
 let recent = (() => { try { const a = JSON.parse(store.get("thync.recent") || "[]"); return Array.isArray(a) ? a.slice(0, 10) : []; } catch (_) { return []; } })();
 let recentTimer = 0;
