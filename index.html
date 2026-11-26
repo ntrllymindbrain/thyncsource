@@ -458,6 +458,9 @@ textarea.ov-ta { display: block; width: 100%; min-height: 1.6em; border: none; b
 .toc-i:hover { color: var(--accent); }
 .toc-i .secnum { color: var(--muted); }
 .viewbar { max-width: 760px; margin: 0 auto 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+/* 表示モードの1行目（Web/ページ・PDF出力・表示の大きさ）は、スクロールしても上に残す。下の説明文は流れてよい */
+.pane-out > .viewbar { position: sticky; top: -28px; z-index: 20; margin-top: -28px; padding: 10px 0 6px; background: var(--desk); box-shadow: 0 0 0 100vmax var(--desk); clip-path: inset(0 -100vmax); }
+.pane-out { scroll-padding-top: 48px; }
 .viewbar > button { font-size: 12px; padding: 2px 9px; }
 .viewbar .vb-space { flex: 1; }
 .pane-out .viewbar .scalebar { margin: 0; }
@@ -657,6 +660,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
   .pane-in { border-right: none; }
   .paper { padding: 28px 20px 36px; }
   .pane-out { padding: 12px 0 40px; }
+  .pane-out > .viewbar { top: -12px; margin-top: -12px; padding-top: 6px; }
   .out-hint { padding: 0 16px; }
   header.bar { gap: 6px; padding: 8px 10px; }
   header.bar button, header.bar .chk { padding: 4px 8px; font-size: 12.5px; }
@@ -669,7 +673,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.80</div>
+    <div class="ver">v1.81</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
