@@ -669,7 +669,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.78</div>
+    <div class="ver">v1.79</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -3888,16 +3888,21 @@ class OutlineView {
     // ⌘⇧↑↓：選んだまとまりごと、上下の兄弟と入れ替える
     if ((up || down) && e.shiftKey && cmd && !e.altKey) {
       e.preventDefault();
-      const s = a, t = z, items = this.items, lv = items[s].lv;
+      // 選んだ範囲の中でいちばん浅い階層のbulletを基準に、その兄弟どうしで入れ替える（範囲が複数の階層にまたがっていても）
+      let s = a; const t = z, items = this.items;
+      let lv = Infinity; for (let k = s; k <= t; k++) lv = Math.min(lv, items[k].lv);
+      // 範囲の頭が、それより浅いbulletの子の途中から始まっているとき：その子たちは今の親の下に残し、
+      // いちばん浅い階層のbulletから下をまとめて動かす
+      if (items[s].lv > lv) { while (items[s].lv > lv) s++; this.sel = { a: s, z: Math.max(this.sel.a, this.sel.z) }; }
       if (up) {
-        const p = this.prevSib(s);
-        if (p >= 0) {
+        let p = s - 1; while (p >= 0 && items[p].lv > lv) p--;
+        if (p >= 0 && items[p].lv === lv) {
           const d = s - p;
           this.structural(() => { const blk = items.splice(s, t - s + 1); items.splice(p, 0, ...blk); });
           this.sel = { a: this.sel.a - d, z: this.sel.z - d };
         } else {
           // 兄弟の先頭：親の前の兄弟の、末尾の子へ（階層はそのまま）
-          const par = s - 1; if (par < 0 || items[par].lv !== lv - 1) return;
+          const par = p; if (par < 0 || items[par].lv !== lv - 1) return;
           let q = par - 1; while (q >= 0 && items[q].lv > items[par].lv) q--;
           if (q < 0 || items[q].lv !== items[par].lv) return;
           const d = s - par;
@@ -3905,17 +3910,16 @@ class OutlineView {
           this.sel = { a: this.sel.a - d, z: this.sel.z - d };
         }
       } else {
-        const n = this.nextSib(Math.max(this.sel.a, this.sel.z));
-        if (n >= 0) {
+        const n = t + 1;
+        if (n < items.length && items[n].lv === lv) {
           const d = this.end(n) - n + 1;
           this.structural(() => { const blk = items.splice(n, d); items.splice(s, 0, ...blk); });
           this.sel = { a: this.sel.a + d, z: this.sel.z + d };
         } else {
           // 兄弟の末尾：親の次の兄弟の、先頭の子へ（階層はそのまま）
-          const k = t + 1; if (k >= items.length || items[k].lv !== lv - 1) return;
-          const d = 1;
-          this.structural(() => { const nb = items.splice(k, 1); items.splice(s, 0, ...nb); });
-          this.sel = { a: this.sel.a + d, z: this.sel.z + d };
+          if (n >= items.length || items[n].lv !== lv - 1) return;
+          this.structural(() => { const nb = items.splice(n, 1); items.splice(s, 0, ...nb); });
+          this.sel = { a: this.sel.a + 1, z: this.sel.z + 1 };
         }
       }
       this.showSel();
