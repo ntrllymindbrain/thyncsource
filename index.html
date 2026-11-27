@@ -679,7 +679,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.87</div>
+    <div class="ver">v1.88</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1352,7 +1352,15 @@ function compileOne(tree, opts) {
     const content = kids.filter(x => !info(x).tags.has("fn"));
     const ex = { type: "ex", num, id, header: "", items: [], single: null, label: inf.labels[0] || null };
     const exRef = { num, sub: [], id };
-    if (inf.tags.has("gl")) { ex.header = hypify(c, inf, inf.text, exRef); ex.single = { gloss: glossFrom(content, `(${num})`) }; }
+    if (inf.tags.has("gl") && content.some(x => info(x).tags.has("ex")) && content.some(x => !info(x).tags.has("ex"))) {
+      // #ex #gl の子に #ex があるとき：#ex の付いていない子がこの例文のグロス（a.）、#ex の子は b. c. …
+      const subs = content.filter(x => info(x).tags.has("ex")), rest = content.filter(x => !info(x).tags.has("ex"));
+      ex.header = hypify(c, inf, inf.text, exRef);
+      exPaths.get(id).add(LETTERS[0]);
+      ex.items = [{ letter: LETTERS[0], gloss: glossFrom(rest, `(${num}${LETTERS[0]})`), fns: [], label: null, line: rest[0].line, path: [LETTERS[0]] },
+        ...subs.map((k, i) => buildItem(k, num, [LETTERS[i + 1] || String(i + 2)], id))];
+    }
+    else if (inf.tags.has("gl")) { ex.header = hypify(c, inf, inf.text, exRef); ex.single = { gloss: glossFrom(content.filter(x => !info(x).tags.has("ex")), `(${num})`) }; }
     else if (!content.length) { ex.single = splitJudg(inf.text); ex.single.text = hypify(c, inf, ex.single.text, exRef); }
     else if (content.some(x => info(x).tags.has("ex"))) {
       // #ex の付いた子だけが下位例文（a. b.）。付いていない子は見出しの続きの行
