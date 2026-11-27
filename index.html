@@ -192,6 +192,7 @@ textarea {
 .gl-w > span { padding-right: 1em; }
 .gl-w { display: inline-flex; flex-direction: column; }
 .gl-src { }
+.gl-pad { visibility: hidden; user-select: none; }
 .gl-tr { }
 .sc { font-variant: small-caps; letter-spacing: .02em; }
 /* 傍点：{boten:…}。横書きでは字の上、縦書きでは右に黒丸「●」 */
@@ -678,7 +679,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.83</div>
+    <div class="ver">v1.84</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -1279,8 +1280,13 @@ function compileOne(tree, opts) {
       // {} は空欄（その語にはグロスを付けない／原文の側なら語を置かない）
       const blank = w => w === "{}" ? "" : (w || "");
       const src = blank(wa[i]).replace(/_(?!\{)/g, " ");
+      // 語の頭の開きかっこ（[ { ( と、[_{NP} のような下付きの印。[[ や [{ のように重なってもよい）は、
+      // グロスとのそろえから外す：かっこの後ろの語の頭とグロスの頭を左でそろえる
+      let open = "", m;
+      while ((m = src.slice(open.length).match(/^(?:\[|\(|\{(?![\w-]+:)(?!\})(?!$))(?:_\{[^{}]*\})?/)) && m[0]) open += m[0];
+      if (open.length >= src.length) open = "";
       const gl = blank(wb[i]).replace(/_(?!\{)/g, " ").replace(/\b(?:\d*[A-Z]{2,}[A-Z0-9]*|\d+[A-Z]+[A-Z0-9]*)\b/g, m => `{sc:${m.toLowerCase()}}`);
-      words.push([src, gl]);
+      words.push([src, gl, open]);
     }
     return { judg, pre, words, tr, rowLines };
   }
@@ -1769,8 +1775,11 @@ function compileOne(tree, opts) {
     const rl = g.rowLines;
     let h = "";
     if (g.pre !== null) h += `<div class="gl-pre"${cAttr(rl.pre)}>${R(g.pre)}</div>`;
-    h += `<div class="gl-words">` + g.words.map(([a, b]) =>
-      `<span class="gl-w"><span class="gl-src${isCJK(a) ? " cjk" : ""}"${cAttr(rl.src)}>${R(a) || "&nbsp;"}</span><span class="gl-gl"${cAttr(rl.gl)}>${R(b) || "&nbsp;"}</span></span>`).join("") + `</div>`;
+    h += `<div class="gl-words">` + g.words.map(([a, b, open]) => {
+      // 開きかっこの分だけ、グロスの頭を見えない同じ幅の文字で下げる
+      const pad = open ? `<span class="gl-pad" aria-hidden="true">${R(open)}</span>` : "";
+      return `<span class="gl-w"><span class="gl-src${isCJK(a) ? " cjk" : ""}"${cAttr(rl.src)}>${R(a) || "&nbsp;"}</span><span class="gl-gl"${cAttr(rl.gl)}>${pad}${R(b) || (pad ? "" : "&nbsp;")}</span></span>`;
+    }).join("") + `</div>`;
     h += `<div class="gl-tr"${cAttr(rl.tr)}>${R(g.tr)}</div>`;
     return `<div class="gl-block">${h}</div>`;
   }
