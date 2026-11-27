@@ -679,7 +679,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.85</div>
+    <div class="ver">v1.86</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -2390,6 +2390,8 @@ function applyShortcutText(ta, before, after, sel) {
   }
   insertText(ta, before + after, before.length);
 }
+// ショートカットの文の {lbl:…}（{lbl:...} でも）は、押すたびにランダムの3字のラベルに置き換える
+function fillRandLbl(t) { return typeof t === "string" ? t.replace(/\{lbl:(?:…|\.\.\.)\}/g, () => `{lbl:${newExLabel(-1)}}`) : t; }
 /* ショートカット（仕様書11節）。▮ の位置にカーソルを置く */
 const SHORTCUTS = [
   { mods: "cos", code: "KeyR", text: "{ref:▮}" },
@@ -2811,7 +2813,7 @@ function attachKeys(ta) {
       if (scMatch(e, sc)) {
         e.preventDefault();
         const sel = ta.value.slice(ta.selectionStart, ta.selectionEnd);
-        const scText = typeof sc.text === "function" ? sc.text(ta) : sc.text;
+        const scText = fillRandLbl(typeof sc.text === "function" ? sc.text(ta) : sc.text);
         const pos = scText.indexOf("▮");
         const before = scText.slice(0, pos), after = scText.slice(pos + 1);
         applyShortcutText(ta, before, after, sel);
@@ -4043,7 +4045,7 @@ function handleInlineKeys(e, ta) {
     if (scMatch(e, sc)) {
       e.preventDefault();
       const sel = ta.value.slice(ta.selectionStart, ta.selectionEnd);
-      const scText = typeof sc.text === "function" ? sc.text(ta) : sc.text;
+      const scText = fillRandLbl(typeof sc.text === "function" ? sc.text(ta) : sc.text);
       const pos = scText.indexOf("▮");
       const before = scText.slice(0, pos), after = scText.slice(pos + 1);
       applyShortcutText(ta, before, after, sel);
@@ -6877,7 +6879,7 @@ function editMySc(k) {
   d.innerHTML = `<div class="mysc-h">${k >= 0 ? "自分用ショートカットを直す" : "自分用ショートカットを追加"}</div>
     <label>キー<input id="mysc-key" readonly placeholder="ここを押してから、使いたいキーを押す（⌘・⌥・^ のどれかを含める）"></label>
     <label>入れる文字<input id="mysc-text" placeholder="例：#hfill (日本語)"></label>
-    <div class="mysc-note">▮ を書くとそこにカーソルが来ます（書かなければ末尾）。全角スペースも入れられます。文字を選んでから押すと、▮ の位置に選んだ文字が入ります。</div>
+    <div class="mysc-note">▮ を書くとそこにカーソルが来ます（書かなければ末尾）。全角スペースも入れられます。文字を選んでから押すと、▮ の位置に選んだ文字が入ります。{lbl:…} と書くと、押すたびにランダムの3字のラベルになります（例：#ex {lbl:…} ▮）。</div>
     <div class="mysc-warn" id="mysc-warn"></div>
     <div class="mysc-btns">${k >= 0 ? `<button type="button" id="mysc-del">削除</button>` : ""}<span style="flex:1"></span><button type="button" id="mysc-cancel">やめる</button><button type="button" id="mysc-ok" class="primary">保存</button></div>`;
   document.body.appendChild(d);
