@@ -679,7 +679,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
 <div class="app">
   <header class="bar">
     <div class="mark"><img class="mark-icon" src="thyncSource-icon-64.png" alt="" width="22" height="22" onerror="this.remove()">thync<span>Source</span></div>
-    <div class="ver">v1.86</div>
+    <div class="ver">v1.87</div>
     <button id="btn-color" type="button" aria-pressed="false">バレットごとに色分け</button>
     <button id="btn-split" type="button" aria-pressed="false" title="下に2つの表示欄を出す（目次・参考文献など）">上下分割</button>
     <button id="btn-win" type="button" aria-expanded="false" title="編集と表示を別々のウィンドウ・別のディスプレイに分ける">ウィンドウ</button>
@@ -845,7 +845,7 @@ sup.fn-sep { font-size: .62em; line-height: 0; vertical-align: super; margin: 0 
     <div class="kp-head"><b>ショートカット（Mac）</b><button type="button" id="kp-close">閉じる</button></div>
     <div class="kp-body">
       <h4>Workflowyと同じもの</h4><table><tr><td><kbd>Enter</kbd></td><td>次のbulletを作る（子がある行の末尾では最初の子）</td></tr><tr><td><kbd>⌘+クリック（タグ・コードの上）</kbd></td><td>そのタグ・コードを消す（#タグ・@タグ・{lbl:…}・{ref:…} など。{sc:…} のような囲みは中身を残して外す）</td></tr><tr><td><kbd>Tab ／ Shift+Tab</kbd></td><td>階層を下げる／上げる（子も一緒）</td></tr><tr><td><kbd>⌘+Shift+↑ ／ ↓</kbd></td><td>上下に移動（階層はできるだけ保つ）</td></tr><tr><td><kbd>⌥+⌘+↑ ／ ↓</kbd></td><td>前／次の兄弟へカーソルを移す</td></tr><tr><td><kbd>↑ ／ ↓</kbd></td><td>横の位置をそのままに、上／下の行へカーソルを移す（bulletをまたいでも）</td></tr><tr><td><kbd>⌥+← ／ →</kbd></td><td>このbulletの文頭／文末へカーソルを移す</td></tr><tr><td><kbd>⌘+Enter</kbd></td><td>完了にする／戻す</td></tr><tr><td><kbd>⌘+Shift+D</kbd></td><td>bulletを子ごとすぐ下に複製（中の {lbl:…} は付け替える：zzzb のような連番なら zzzc と続け、それ以外はランダムの3字。範囲を選んでいるときはまとめて）</td></tr><tr><td><kbd>⌘+Shift+Backspace</kbd></td><td>削除</td></tr><tr><td><kbd>Backspace（行頭）</kbd></td><td>前の行につなぐ（子は前の行の子になる）</td></tr><tr><td><kbd>⇧+⌥+⌘+↑ ／ ↓</kbd></td><td>このbulletの変更履歴を開く（↑↓で選び Return で差し替え・Escで閉じる・各版を「コピー」できる）</td></tr><tr><td><kbd>⌘+Shift+M</kbd></td><td>ミラーをコピー（「((」でミラー元を探す）</td></tr><tr><td><kbd>⌘+B ／ I ／ U</kbd></td><td>太字／斜体／下線</td></tr><tr><td><kbd>⌘+Shift+X</kbd></td><td>取り消し線</td></tr><tr><td><kbd>⌘+Shift+C</kbd></td><td>コード</td></tr><tr><td><kbd>⌘+K</kbd></td><td>選んだ文字をリンクにする</td></tr><tr><td><kbd>⌘+O</kbd></td><td>完了した項目の表示／非表示</td></tr><tr><td><kbd>⌘+S</kbd></td><td>履歴に記録</td></tr><tr><td><kbd>⌘+Z ／ ⌘+Y ／ ⌘+Shift+Z</kbd></td><td>取り消し／やり直し</td></tr><tr><td><kbd>⌘+.</kbd></td><td>カーソルのあるbulletにズーム</td></tr><tr><td><kbd>⌘+,</kbd></td><td>ひとつ上へズームアウト</td></tr><tr><td><kbd>黒丸をクリック</kbd></td><td>そのbulletにズーム</td></tr><tr><td><kbd>黒丸をドラッグ</kbd></td><td>そのbulletを子ごと移動（右へずらして落とすと子になる）</td></tr><tr><td><kbd>Shift+黒丸をクリック</kbd></td><td>範囲を選ぶ（選んだあと ⌘+C／⌘+X／Delete／Tab）</td></tr><tr><td><kbd>▾ ／ ▸</kbd></td><td>子を閉じる／開く</td></tr><tr><td><kbd>⌘+⌥+F</kbd></td><td>検索と置換（Enterで次、Shift+Enterで前、⌘+G／⌘+Shift+Gでも移動。置換欄でEnterは1か所、⌘+Enterはすべて）</td></tr><tr><td><kbd>⌘+/</kbd></td><td>この一覧</td></tr></table>
-      <h4>thyncSource独自</h4><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:xxx}（xxx はまだ使っていない小文字3字のランダム）</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}（小型大文字。選んだ文字があれば囲む）</td></tr><tr><td><kbd>⌘+⌥+Shift+B</kbd></td><td>{boten:▮}（傍点。選んだ文字があれば囲む）</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex {lbl:xxx}（xxx はまだ使っていない小文字3字。#ex {lbl:zzz} の子なら zzza, zzzb…）</td></tr><tr><td><kbd>⇧+⌥+⌘+5</kbd></td><td>#ex {lbl:xxx}（xxx はいつもランダムの3字）</td></tr><tr><td><kbd>⇧+⌥+⌘+1</kbd></td><td>#sec {lbl:xxx}（xxx はランダムの3字）</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>カーソルの場所に #p（そこで段落を改める）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>カーソルの場所に #br（そこで字下げなしに改行）</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr><tr><td><kbd>{lbl:…}・{ref:…} などをダブルクリック</kbd></td><td>その記法をまるごとクリップボードにコピー</td></tr><tr><td><kbd>{lbl:…}・{ref:…} などをドラッグ</kbd></td><td>その記法を落とした場所へ移す（クリックはふつうの文字の編集）</td></tr><tr><td><kbd>Shift+↑ ／ ↓</kbd></td><td>最初／最後の表示行で押すとbullet全体を選び、続けて押すと上下の兄弟を選択に加える。その向きに兄弟がなければ、親のbullet（と子全部）まで広げる</td></tr></table>
+      <h4>thyncSource独自</h4><p style="font-size:12px;color:var(--muted)">この一覧の {lbl:xxx} の <b>xxx</b> は「ランダムの3字」の意味です（押すたびに、まだ使っていない小文字3字が入ります）。自分用のショートカットでも {lbl:xxx} と書けば同じになります。</p><table><tr><td><kbd>⌘+⌥+Shift+R</kbd></td><td>{ref:▮}</td></tr><tr><td><kbd>⌘+⌥+Shift+L</kbd></td><td>{lbl:xxx}（xxx はまだ使っていない小文字3字のランダム）</td></tr><tr><td><kbd>⌘+⌥+Shift+K</kbd></td><td>{sc:▮}（小型大文字。選んだ文字があれば囲む）</td></tr><tr><td><kbd>⌘+⌥+Shift+B</kbd></td><td>{boten:▮}（傍点。選んだ文字があれば囲む）</td></tr><tr><td><kbd>⌘+⌥+Shift+D</kbd></td><td>#draft</td></tr><tr><td><kbd>⌘+⌥+1</kbd></td><td>#sec</td></tr><tr><td><kbd>⌘+⌥+5</kbd></td><td>#ex {lbl:xxx}（xxx はまだ使っていない小文字3字。#ex {lbl:zzz} の子なら zzza, zzzb…）</td></tr><tr><td><kbd>⇧+⌥+⌘+5</kbd></td><td>#ex {lbl:xxx}（xxx はいつもランダムの3字）</td></tr><tr><td><kbd>^+⌘+Shift+5</kbd></td><td>#ex {lbl:xxx} #gl（グロス付きの例文。xxx はランダムの3字）</td></tr><tr><td><kbd>⇧+⌥+⌘+1</kbd></td><td>#sec {lbl:xxx}（xxx はランダムの3字）</td></tr><tr><td><kbd>⌘+⌥+Shift+M</kbd></td><td>カーソルの行をメモ集へ</td></tr><tr><td><kbd>⌘+⌥+E</kbd></td><td>表示で選んだ範囲を編集欄で開く</td></tr><tr><td><kbd>Shift+Return</kbd></td><td>カーソルの場所に #p（そこで段落を改める）</td></tr><tr><td><kbd>Shift+⌥+Return</kbd></td><td>カーソルの場所に #br（そこで字下げなしに改行）</td></tr><tr><td><kbd>⌘+Return</kbd></td><td>表示の中の編集欄：確定して表示に戻る</td></tr><tr><td><kbd>⌘+Shift+V</kbd></td><td>書式を落として文字だけ貼る（ふつうの ⌘V は太字・斜体を保つ）</td></tr><tr><td><kbd>Esc</kbd></td><td>編集欄を閉じる</td></tr><tr><td><kbd>⌥+クリック</kbd></td><td>表示の上で、その文のbulletにズーム</td></tr><tr><td><kbd>⌥+⌘+＝ ／ −</kbd></td><td>拡大／縮小（書いている欄ではコード、それ以外では表示）</td></tr><tr><td><kbd>⌥+⌘+0</kbd></td><td>拡大・縮小を100%に戻す</td></tr><tr><td><kbd>{lbl:…}・{ref:…} などをダブルクリック</kbd></td><td>その記法をまるごとクリップボードにコピー</td></tr><tr><td><kbd>{lbl:…}・{ref:…} などをドラッグ</kbd></td><td>その記法を落とした場所へ移す（クリックはふつうの文字の編集）</td></tr><tr><td><kbd>Shift+↑ ／ ↓</kbd></td><td>最初／最後の表示行で押すとbullet全体を選び、続けて押すと上下の兄弟を選択に加える。その向きに兄弟がなければ、親のbullet（と子全部）まで広げる</td></tr></table>
       <p style="font-size:12px;color:var(--muted)">自分用のショートカット（このブラウザだけに保存）は、右端のショートカットのアイコン →「＋ 自分用を追加」で登録できます。</p>
       <h4>覚え書き：ふりがな</h4><table><tr><td><kbd>{rubi:漢字}{かんじ}</kbd></td><td>漢字の上に「かんじ」（まとめて振る）。{rubi:漢字|かんじ} とも書ける</td></tr><tr><td><kbd>{rubi:東京|とう きょう}</kbd></td><td>読みを空白か「・」で字の数だけ区切ると、1字ずつ振る（行の折り返しでも字と読みが離れない）。1字に3字以上の読みがあるときは、字の間が空かないよう熟語としてまとめて振る</td></tr><tr><td><kbd>⌘+⌥+Shift+Y</kbd></td><td>選んだ文字を {rubi:…}{} で囲み、読みの所にカーソル（何も選んでいなければ漢字の所に）</td></tr></table>
       <h4>覚え書き：文書をそこで終える・外す</h4><table><tr><td><kbd>#doc #null</kbd></td><td>その文書を丸ごと表示・PDFから外す（ほかの文書に集中したいとき）。完了にするか #null を消すと戻る</td></tr><tr><td><kbd>#terminate</kbd></td><td>このbulletから下（文書の後ろ全部）を表示・PDFに出さない。そのbulletを完了（⌘Return）にすると効かなくなる</td></tr></table>
@@ -2390,20 +2390,21 @@ function applyShortcutText(ta, before, after, sel) {
   }
   insertText(ta, before + after, before.length);
 }
-// ショートカットの文の {lbl:…}（{lbl:...} でも）は、押すたびにランダムの3字のラベルに置き換える
-function fillRandLbl(t) { return typeof t === "string" ? t.replace(/\{lbl:(?:…|\.\.\.)\}/g, () => `{lbl:${newExLabel(-1)}}`) : t; }
+// ショートカットの文の {lbl:xxx} は、押すたびにランダムの3字のラベルに置き換える（{lbl:…}・{lbl:⋯}・{lbl:...} も同じ扱い）
+function fillRandLbl(t) { return typeof t === "string" ? t.replace(/\{lbl:(?:xxx|…|⋯|\.\.\.)\}/g, () => `{lbl:${newExLabel(-1)}}`) : t; }
 /* ショートカット（仕様書11節）。▮ の位置にカーソルを置く */
 const SHORTCUTS = [
   { mods: "cos", code: "KeyR", text: "{ref:▮}" },
-  { mods: "cos", code: "KeyL", label: "{lbl:…}（ランダム）", text: () => `{lbl:${newExLabel(-1)}} ▮` },
+  { mods: "cos", code: "KeyL", label: "{lbl:xxx}（xxx＝ランダム）", text: () => `{lbl:${newExLabel(-1)}} ▮` },
   { mods: "cos", code: "KeyK", text: "{sc:▮}" },
   { mods: "cos", code: "KeyB", text: "{boten:▮}" },
   { mods: "cos", code: "KeyY", label: "{rubi:…}{よみ}", text: "{rubi:▮}{}" },
   { mods: "cos", code: "KeyD", text: "#draft ▮" },
   { mods: "co", code: "Digit1", text: "#sec ▮" },
-  { mods: "cos", code: "Digit1", label: "#sec {lbl:…}（ランダム）", text: () => `#sec {lbl:${newExLabel(-1)}} ▮` },
-  { mods: "cos", code: "Digit5", label: "#ex {lbl:…}（ランダム）", text: () => `#ex {lbl:${newExLabel(-1)}} ▮` },
-  { mods: "co", code: "Digit5", label: "#ex {lbl:…}", text: ta => `#ex {lbl:${newExLabel(taSrcLine(ta))}} ▮` }
+  { mods: "cos", code: "Digit1", label: "#sec {lbl:xxx}（xxx＝ランダム）", text: () => `#sec {lbl:${newExLabel(-1)}} ▮` },
+  { mods: "cos", code: "Digit5", label: "#ex {lbl:xxx}（xxx＝ランダム）", text: () => `#ex {lbl:${newExLabel(-1)}} ▮` },
+  { mods: "rcs", code: "Digit5", label: "#ex {lbl:xxx} #gl（xxx＝ランダム）", text: () => `#ex {lbl:${newExLabel(-1)}} #gl ▮` },
+  { mods: "co", code: "Digit5", label: "#ex {lbl:…}（親のラベルを引き継ぐ）", text: ta => `#ex {lbl:${newExLabel(taSrcLine(ta))}} ▮` }
 ];
 // 自分用のショートカット（このブラウザだけに保存。ほかの人がこのアプリを使っても混ざらない）
 // 形：[{ mods: "co" など, code: "KeyJ" など, text: "#hfill (日本語)▮" }]。▮ がなければ末尾にカーソル
@@ -6879,7 +6880,7 @@ function editMySc(k) {
   d.innerHTML = `<div class="mysc-h">${k >= 0 ? "自分用ショートカットを直す" : "自分用ショートカットを追加"}</div>
     <label>キー<input id="mysc-key" readonly placeholder="ここを押してから、使いたいキーを押す（⌘・⌥・^ のどれかを含める）"></label>
     <label>入れる文字<input id="mysc-text" placeholder="例：#hfill (日本語)"></label>
-    <div class="mysc-note">▮ を書くとそこにカーソルが来ます（書かなければ末尾）。全角スペースも入れられます。文字を選んでから押すと、▮ の位置に選んだ文字が入ります。{lbl:…} と書くと、押すたびにランダムの3字のラベルになります（例：#ex {lbl:…} ▮）。</div>
+    <div class="mysc-note">▮ を書くとそこにカーソルが来ます（書かなければ末尾）。全角スペースも入れられます。文字を選んでから押すと、▮ の位置に選んだ文字が入ります。{lbl:xxx} と書くと、xxx が押すたびにランダムの3字のラベルになります（例：#ex {lbl:xxx} ▮）。</div>
     <div class="mysc-warn" id="mysc-warn"></div>
     <div class="mysc-btns">${k >= 0 ? `<button type="button" id="mysc-del">削除</button>` : ""}<span style="flex:1"></span><button type="button" id="mysc-cancel">やめる</button><button type="button" id="mysc-ok" class="primary">保存</button></div>`;
   document.body.appendChild(d);
